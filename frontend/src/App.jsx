@@ -5,6 +5,7 @@ import AdminDashboard from './components/AdminDashboard';
 import { supabase } from './services/supabase';
 import ReleaseManager from './components/ReleaseManager';
 
+
 export default function App() {
   const [releases, setReleases] = useState([]);
   const [tracks, setTracks] = useState([]);
@@ -16,9 +17,7 @@ export default function App() {
       setReleases(resR.data);
       const resT = await api.get('/upload/list'); 
       setTracks(resT.data);
-    } catch (e) { 
-      console.log('Error cargando datos'); 
-    }
+    } catch (e) { console.log('Error cargando datos'); }
   };
 
   useEffect(() => { 
@@ -44,52 +43,43 @@ export default function App() {
           </div>
         </div>
         
-        {!user ? (
-          <div className="mt-32 text-center">
-            <h2 className="text-4xl font-bold mb-4">Bienvenido a Zonyd OS</h2>
-            <p className="text-slate-400">Por favor, inicia sesión para gestionar tus lanzamientos.</p>
-          </div>
-        ) : (
-          <>
-            <ReleaseManager onUploadSuccess={load} />
-            
-            <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-12">
-              <div>
-                <h2 className="text-xl font-bold mb-4 border-b border-slate-700 pb-2 flex justify-between items-center">
-                  🎵 Tracks Recientes
-                </h2>
-                {tracks.length === 0 && <p className="text-slate-500 italic">No hay tracks subidos aún.</p>}
-                {tracks.map(t => (
-                  <div key={t.id} className="bg-slate-800 p-3 mb-2 rounded border border-slate-700 flex justify-between items-center group">
-                    <span>{t.title}</span>
-                    <button 
-                      onClick={() => createRelease(t.id, t.title)}
-                      className="opacity-0 group-hover:opacity-100 bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1 rounded transition-all"
-                    >
-                      + Crear Lanzamiento
-                    </button>
-                  </div>
-                ))}
-              </div>
+        <ReleaseManager onUploadSuccess={load} />
+        
+        <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-12">
 
-              <div>
-                <h2 className="text-xl font-bold mb-4 border-b border-slate-700 pb-2">📦 Lanzamientos (Releases)</h2>
-                {releases.length === 0 && <p className="text-slate-500 italic">No hay lanzamientos oficiales.</p>}
-                {releases.map(r => (
-                  <div key={r.id} className="bg-slate-800 p-3 mb-2 rounded border border-slate-700">
-                    <strong>{r.title}</strong> - UPC: {r.upc}
-                  </div>
-                ))}
-              </div>
+        <div>
+          <h2 className="text-xl font-bold mb-4 border-b border-slate-700 pb-2 flex justify-between items-center">
+            🎵 Tracks Recientes
+          </h2>
+          {tracks.length === 0 && <p className="text-slate-500 italic">No hay tracks subidos aún.</p>}
+          {tracks.map(t => (
+            <div key={t.id} className="bg-slate-800 p-3 mb-2 rounded border border-slate-700 flex justify-between items-center group">
+              <span>{t.title}</span>
+              <button 
+                className="opacity-0 group-hover:opacity-100 bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1 rounded transition-all"
+              >
+                + Crear Lanzamiento
+              </button>
             </div>
-            
-            <AdminDashboard />
-          </>
-        )}
+          ))}
+        </div>
+
+        <div>
+          <h2 className="text-xl font-bold mb-4 border-b border-slate-700 pb-2">📦 Lanzamientos (Releases)</h2>
+          {releases.length === 0 && <p className="text-slate-500 italic">No hay lanzamientos oficiales.</p>}
+          {releases.map(r => (
+            <div key={r.id} className="bg-slate-800 p-3 mb-2 rounded border border-slate-700">
+              <strong>{r.title}</strong> - UPC: {r.upc}
+            </div>
+          ))}
+        </div>
+        </div>
+        <AdminDashboard />
       </div>
     </div>
   );
 }
+
 
 
 

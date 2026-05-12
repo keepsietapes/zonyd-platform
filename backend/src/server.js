@@ -42,6 +42,7 @@ const allowedOrigins = [
   'https://www.zonyd.com',
   'https://app.zonyd.com',
   'https://api.zonyd.com',
+  'https://zonyd.pages.dev',
   'https://tiny-bread-e6ab.keepsietapes.workers.dev'
 ];
 
