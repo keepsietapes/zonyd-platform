@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zonyd - Propuestas de Identidad Visual</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:wght@900&family=Playfair+Display:ital,wght@1,700&family=JetBrains+Mono&family=Plus+Jakarta+Sans:wght@700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #0f172a;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { font-weight: 900; letter-spacing: -1px; margin-bottom: 40px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .logo-container {
+            width: 150px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .logo-text { font-size: 24px; margin-top: 10px; }
+        
+        /* SVG LOGO BASE */
+        .z-loop {
+            fill: none;
+            stroke: #facc15;
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* VARIACIONES */
+        .v1 .z-loop { stroke: #3b82f6; filter: drop-shadow(0 0 8px #3b82f6); }
+        .v1 .logo-text { font-family: 'Montserrat', sans-serif; color: #3b82f6; }
+
+        .v2 .z-loop { stroke: #ec4899; }
+        .v2 .logo-text { font-family: 'Playfair Display', serif; font-style: italic; color: #ec4899; }
+
+        .v3 .z-loop { stroke: #10b981; }
+        .v3 .logo-text { font-family: 'JetBrains Mono', monospace; color: #10b981; }
+
+        .v4 .z-loop { stroke: url(#grad); }
+        .v4 .logo-text { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(45deg, #facc15, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .v5 .z-loop { stroke: #0f172a; }
+        .v5 .logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; }
+
+        .desc { font-size: 12px; color: #64748b; text-align: center; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <h1>Zonyd Identity Showcase</h1>
+    <div class="grid">
+        <!-- V1 -->
+        <div class="card v1">
+            <div class="logo-container">
+                <svg viewBox="0 0 100 100" width="100" height="100">
+                    <path class="z-loop" d="M20,40 L80,40 L20,70 L80,70 C95,70 95,40 80,40" />
+                    <!-- Nodos -->
+                    <circle cx="20" cy="40" r="4" fill="#3b82f6" />
+                    <circle cx="80" cy="40" r="4" fill="#3b82f6" />
+                    <circle cx="20" cy="70" r="4" fill="#3b82f6" />
+                </svg>
+            </div>
+            <div class="logo-text">ZONYD</div>
+            <p class="desc"><strong>Integración:</strong> Digital Nodes (Conectividad)<br><strong>Tipografía:</strong> Montserrat Black</p>
+        </div>
+
+        <!-- V2 -->
+        <div class="card v2">
+            <div class="logo-container">
+                <svg viewBox="0 0 100 100" width="100" height="100">
+                    <circle cx="50" cy="55" r="40" fill="none" stroke="#ec4899" stroke-width="1" opacity="0.3" />
+                    <circle cx="50" cy="55" r="35" fill="none" stroke="#ec4899" stroke-width="1" opacity="0.2" />
+                    <path class="z-loop" d="M20,40 L80,40 L20,70 L80,70 C95,70 95,40 80,40" />
+                </svg>
+            </div>
+            <div class="logo-text">Zonyd</div>
+            <p class="desc"><strong>Integración:</strong> Sonic Aura (Eco/Resonancia)<br><strong>Tipografía:</strong> Playfair Display Italic</p>
+        </div>
+
+        <!-- V3 -->
+        <div class="card v3">
+            <div class="logo-container">
+                <svg viewBox="0 0 100 100" width="100" height="100">
+                    <path class="z-loop" d="M20,40 L80,40 L20,70 L80,70 C95,70 95,40 80,40" />
+                    <polygon points="55,50 65,55 55,60" fill="#10b981" />
+                </svg>
+            </div>
+            <div class="logo-text">ZONYD.IO</div>
+            <p class="desc"><strong>Integración:</strong> The Play Center (Acción)<br><strong>Tipografía:</strong> JetBrains Mono</p>
+        </div>
+
+        <!-- V4 -->
+        <div class="card v4">
+            <div class="logo-container">
+                <svg viewBox="0 0 100 100" width="100" height="100">
+                    <defs>
+                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#facc15;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <path class="z-loop" d="M20,40 L80,40 L20,70 L80,70 C95,70 95,40 80,40" />
+                </svg>
+            </div>
+            <div class="logo-text">Zonyd</div>
+            <p class="desc"><strong>Integración:</strong> Gradient Flow (Modernidad)<br><strong>Tipografía:</strong> Plus Jakarta Sans</p>
+        </div>
+
+        <!-- V5 -->
+        <div class="card v5">
+            <div class="logo-container">
+                <svg viewBox="0 0 100 100" width="100" height="100">
+                    <circle cx="50" cy="55" r="42" fill="none" stroke="#0f172a" stroke-width="2" />
+                    <circle cx="50" cy="55" r="38" fill="none" stroke="#0f172a" stroke-width="1" stroke-dasharray="2,2" />
+                    <path class="z-loop" d="M20,40 L80,40 L20,70 L80,70 C95,70 95,40 80,40" />
+                </svg>
+            </div>
+            <div class="logo-text">ZONYD</div>
+            <p class="desc"><strong>Integración:</strong> Vinyl Groove (Autenticidad)<br><strong>Tipografía:</strong> Bebas Neue</p>
+        </div>
+    </div>
+</body>
+</html>

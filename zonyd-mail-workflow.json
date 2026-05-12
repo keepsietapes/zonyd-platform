@@ -1,0 +1,64 @@
+{
+  "name": "Zonyd Mail Engine",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send-zonyd-email",
+        "options": {}
+      },
+      "id": "webhook-zonyd",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "send-zonyd-email"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "email": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "bodyType": "html",
+        "text": "={{ $json.html }}",
+        "additionalFields": {
+          "appendLabels": []
+        }
+      },
+      "id": "gmail-send",
+      "name": "Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        470,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2Api": {
+          "id": "tu-credencial-de-gmail",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "hash": "zonyd-mail-engine-v1"
+}

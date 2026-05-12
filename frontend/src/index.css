@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --zonyd-bg: #0A0A0A;
+  --zonyd-accent: #2563EB;
+}
+
+body {
+  margin: 0;
+  background: var(--zonyd-bg);
+  color: white;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.neo-shadow {
+  box-shadow: 0 0 20px rgba(37, 99, 235, 0.15);
+}

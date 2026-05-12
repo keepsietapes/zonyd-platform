@@ -1,0 +1,251 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ------------------------------------------------------
+// 1. USUARIOS Y AUTENTICACIÓN
+// ------------------------------------------------------
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  role          Role      @default(ARTIST) // ARTIST, ADMIN, LABEL, SUPPORT
+  passwordHash  String?   // Si usamos Supabase Auth, esto puede ser opcional
+  firstName     String?
+  lastName      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLogin     DateTime?
+
+  artistProfiles Artist[]
+  organizations OrganizationMember[]
+  wallets       Wallet?
+  auditLogs     AuditLog[]
+  tickets       SupportTicket[]
+}
+
+enum Role {
+  ARTIST
+  ADMIN
+  LABEL
+  SUPPORT
+  TEAM_MEMBER
+}
+
+// ------------------------------------------------------
+// 2. ARTISTAS Y ORGANIZACIONES
+// ------------------------------------------------------
+model Artist {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  stageName       String
+  country         String?
+  spotifyUrl      String?
+  appleMusicUrl   String?
+  instagramUrl    String?
+  avatarUrl       String?
+  plan            PlanType @default(FREE)
+  createdAt       DateTime @default(now())
+  
+  releases        Release[]
+  collaborations  Collaborator[]
+  splits          Split[]
+}
+
+enum PlanType {
+  FREE
+  PRO
+  LABEL
+}
+
+model Organization {
+  id          String   @id @default(uuid())
+  name        String
+  createdAt   DateTime @default(now())
+  members     OrganizationMember[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(uuid())
+  userId         String
+  organizationId String
+  user           User         @relation(fields: [userId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  role           String       // ADMIN, VIEWER, etc.
+}
+
+// ------------------------------------------------------
+// 3. LANZAMIENTOS (RELEASES) Y TRACKS
+// ------------------------------------------------------
+model Release {
+  id              String   @id @default(uuid())
+  title           String
+  primaryArtistId String
+  artist          Artist   @relation(fields: [primaryArtistId], references: [id])
+  upc             String?  @unique
+  releaseDate     DateTime?
+  coverUrl        String?
+  genre           String?
+  status          ReleaseStatus @default(DRAFT)
+  preSaveUrl      String?
+  distributedAt   DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tracks          Track[]
+  deliveries      DspDelivery[]
+}
+
+enum ReleaseStatus {
+  DRAFT
+  PROCESSING
+  PENDING_APPROVAL
+  APPROVED
+  DISTRIBUTED
+  LIVE
+  REJECTED
+  FAILED
+}
+
+model Track {
+  id          String   @id @default(uuid())
+  releaseId   String
+  release     Release  @relation(fields: [releaseId], references: [id])
+  title       String
+  isrc        String?  @unique
+  duration    Int?     // en segundos
+  explicit    Boolean  @default(false)
+  audioUrl    String?  // Master path
+  flacPath    String?
+  aacPath     String?
+  mp3Path     String?
+  status      String   @default("pending")
+  lyrics      String?  @db.Text
+  authorName  String?
+  createdAt   DateTime @default(now())
+
+  collaborators Collaborator[]
+  splits        Split[]
+  analytics     Analytics[]
+}
+
+model Collaborator {
+  id        String @id @default(uuid())
+  trackId   String
+  artistId  String
+  role      String // FEATURED, PRODUCER, WRITER
+  track     Track  @relation(fields: [trackId], references: [id])
+  artist    Artist @relation(fields: [artistId], references: [id])
+}
+
+// ------------------------------------------------------
+// 4. REGALÍAS, SPLITS Y FINANZAS
+// ------------------------------------------------------
+model Split {
+  id          String  @id @default(uuid())
+  trackId     String
+  artistId    String
+  percentage  Float
+  track       Track   @relation(fields: [trackId], references: [id])
+  artist      Artist  @relation(fields: [artistId], references: [id])
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  balance   Float    @default(0.0)
+  currency  String   @default("USD")
+  payouts   Payout[]
+  royalties Royalty[]
+}
+
+model Royalty {
+  id          String   @id @default(uuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  amount      Float
+  source      String   // Spotify, Apple Music, etc.
+  reportDate  DateTime
+  createdAt   DateTime @default(now())
+}
+
+model Payout {
+  id          String   @id @default(uuid())
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  amount      Float
+  status      PayoutStatus @default(PENDING)
+  method      String   // PAYPAL, BANK
+  createdAt   DateTime @default(now())
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+}
+
+// ------------------------------------------------------
+// 5. DISTRIBUCIÓN DSP, ANALYTICS Y SISTEMA
+// ------------------------------------------------------
+model DspDelivery {
+  id        String   @id @default(uuid())
+  releaseId String
+  release   Release  @relation(fields: [releaseId], references: [id])
+  dspName   String   // Spotify, Apple...
+  status    String   // DELIVERED, TAKEDOWN
+  deliveredAt DateTime @default(now())
+}
+
+model Analytics {
+  id        String   @id @default(uuid())
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id])
+  dspName   String
+  streams   Int
+  country   String?
+  date      DateTime
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  subject   String
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+}
+
+model AiConversation {
+  id        String   @id @default(uuid())
+  userId    String
+  prompt    String
+  response  String
+  createdAt DateTime @default(now())
+}
