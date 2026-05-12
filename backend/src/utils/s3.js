@@ -2,13 +2,14 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
+  region: "auto",
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY,
   },
-  // Si usas Cloudflare R2, necesitas el endpoint
-  endpoint: process.env.AWS_ENDPOINT || undefined,
+  endpoint: process.env.R2_ACCOUNT_ID 
+    ? `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+    : process.env.AWS_ENDPOINT,
 });
 
 /**
@@ -19,7 +20,7 @@ const s3Client = new S3Client({
  */
 const getPresignedUploadUrl = async (fileName, contentType) => {
   const command = new PutObjectCommand({
-    Bucket: process.env.AWS_BUCKET_NAME,
+    Bucket: process.env.R2_BUCKET_NAME || process.env.AWS_BUCKET_NAME,
     Key: `uploads/${Date.now()}-${fileName}`,
     ContentType: contentType,
   });
