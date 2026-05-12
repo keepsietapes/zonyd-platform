@@ -1,0 +1,182 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --radius: 16px;
+}
+
+/* =============================================
+   DESIGN TOKENS — ZONYD
+   ============================================= */
+:root {
+  --background: #0B0B0F;
+  --foreground: #FFFFFF;
+  --card: #151821;
+  --card-foreground: #FFFFFF;
+  --popover: #151821;
+  --popover-foreground: #FFFFFF;
+  --primary: #FF9F0A;
+  --primary-foreground: #0B0B0F;
+  --secondary: #232733;
+  --secondary-foreground: #FFFFFF;
+  --muted: #232733;
+  --muted-foreground: #A1A1AA;
+  --accent: #4F8CFF;
+  --accent-foreground: #FFFFFF;
+  --success: #34C759;
+  --ai: #7B61FF;
+  --border: #232733;
+  --input: #232733;
+  --ring: #FF9F0A;
+
+  /* Safe Area para iPhone X+ / Dynamic Island */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+
+  /* Bottom Nav height */
+  --bottom-nav-height: 64px;
+}
+
+/* =============================================
+   BASE RESET MOBILE FIRST
+   ============================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  height: -webkit-fill-available;
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(255, 159, 10, 0.05), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(123, 97, 255, 0.05), transparent 25%);
+}
+
+/* CRÍTICO: Previene zoom automático en iOS Safari al hacer focus en inputs */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* =============================================
+   SCROLLBAR — Oculto en mobile, sutil en desktop
+   ============================================= */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #232733 transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #232733;
+  border-radius: 4px;
+}
+
+/* En mobile, ocultar scrollbars por completo */
+@media (max-width: 768px) {
+  .custom-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .custom-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+}
+
+/* =============================================
+   SAFE AREA UTILITIES
+   ============================================= */
+.safe-top    { padding-top: var(--sat); }
+.safe-bottom { padding-bottom: var(--sab); }
+.safe-left   { padding-left: var(--sal); }
+.safe-right  { padding-right: var(--sar); }
+
+.pb-safe { padding-bottom: calc(var(--bottom-nav-height) + var(--sab)); }
+
+/* =============================================
+   UTILITY CLASSES PREMIUM
+   ============================================= */
+.glass-panel {
+  background: rgba(21, 24, 33, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #FFFFFF 0%, #A1A1AA 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-ai {
+  background: linear-gradient(90deg, #7B61FF 0%, #4F8CFF 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* =============================================
+   BOTTOM NAVIGATION — Mobile Only
+   ============================================= */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--bottom-nav-height) + var(--sab));
+  padding-bottom: var(--sab);
+  z-index: 50;
+  background: rgba(11, 11, 15, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(35, 39, 51, 0.8);
+}
+
+/* =============================================
+   TAP TARGETS — Mínimo 44px para iOS
+   ============================================= */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Override para botones icon pequeños */
+button.icon-sm {
+  min-height: 32px;
+  min-width: 32px;
+}
+
+/* =============================================
+   ANIMACIONES — Respetar preferencias del usuario
+   ============================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
