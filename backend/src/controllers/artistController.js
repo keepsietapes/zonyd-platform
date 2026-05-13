@@ -2,44 +2,80 @@ const prisma = require('../utils/prisma');
 const { sendWelcomeEmail, sendValidationSuccessEmail } = require('../services/emailService');
 
 async function createOrUpdateArtist(req, res) {
-  const { id, stageName, spotifyUrl, appleMusicUrl } = req.body;
+  const { id, stageName, spotifyUrl, appleMusicUrl, bio, genres, country, instagramUrl, tiktokUrl } = req.body;
   try {
-    // 1. Garantizar que el usuario exista (upsert por email para evitar conflictos)
+    // Garantizar que el usuario exista en la BD pública
     await prisma.user.upsert({
       where: { email: req.user.email },
-      update: { id: req.user.id },
+      update: {},
       create: {
         id: req.user.id,
         email: req.user.email,
-        role: 'LABEL'
+        role: 'ARTIST'
       }
     });
 
     let artist;
     if (id) {
-      // Actualizar existente
+      // Actualizar perfil existente por ID
       artist = await prisma.artist.update({
         where: { id },
-        data: { stageName, spotifyUrl, appleMusicUrl }
-      });
-    } else {
-      // Crear nuevo perfil
-      artist = await prisma.artist.create({
         data: {
-          userId: req.user.id,
-          stageName,
-          spotifyUrl,
-          appleMusicUrl
+          ...(stageName !== undefined && { stageName }),
+          ...(bio !== undefined && { bio }),
+          ...(genres !== undefined && { genres }),
+          ...(country !== undefined && { country }),
+          ...(spotifyUrl !== undefined && { spotifyUrl }),
+          ...(appleMusicUrl !== undefined && { appleMusicUrl }),
+          ...(instagramUrl !== undefined && { instagramUrl }),
+          ...(tiktokUrl !== undefined && { tiktokUrl }),
         }
       });
+    } else {
+      // Buscar si ya existe un perfil para este usuario
+      const existing = await prisma.artist.findFirst({
+        where: { userId: req.user.id }
+      });
+
+      if (existing) {
+        artist = await prisma.artist.update({
+          where: { id: existing.id },
+          data: {
+            ...(stageName !== undefined && { stageName }),
+            ...(bio !== undefined && { bio }),
+            ...(genres !== undefined && { genres }),
+            ...(country !== undefined && { country }),
+            ...(spotifyUrl !== undefined && { spotifyUrl }),
+            ...(appleMusicUrl !== undefined && { appleMusicUrl }),
+            ...(instagramUrl !== undefined && { instagramUrl }),
+            ...(tiktokUrl !== undefined && { tiktokUrl }),
+          }
+        });
+      } else {
+        // Crear nuevo perfil
+        artist = await prisma.artist.create({
+          data: {
+            userId: req.user.id,
+            stageName: stageName || 'Artista',
+            bio,
+            genres,
+            country,
+            spotifyUrl,
+            appleMusicUrl,
+            instagramUrl,
+            tiktokUrl,
+          }
+        });
+      }
     }
-    
+
     res.json(artist);
   } catch (error) {
     console.error('ERROR EN ARTIST CONTROLLER:', error);
     res.status(500).json({ error: error.message });
   }
 }
+
 
 async function getArtistProfile(req, res) {
   try {

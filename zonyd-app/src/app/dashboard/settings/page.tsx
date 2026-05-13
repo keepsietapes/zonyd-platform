@@ -67,13 +67,11 @@ function SettingsContent() {
             setIsAdmin(true);
           }
           if (res.artistProfiles && res.artistProfiles.length > 0) {
-            console.log('🌟 Perfiles detectados:', res.artistProfiles);
             setArtistProfiles(res.artistProfiles);
-            
-            // Usamos el primero por defecto para la vista actual
             const primary = res.artistProfiles[0];
             if (primary.plan) setCurrentPlan(primary.plan);
             if (primary.stageName) setArtistName(primary.stageName);
+            if (primary.bio) setBio(primary.bio);
             if (res.email) setContactEmail(res.email);
           } else {
             console.warn('⚠️ No se encontraron perfiles de artista.');
@@ -210,21 +208,30 @@ function SettingsContent() {
                          />
                       </div>
                       
-                      {/* BOTÓN DE GUARDADO MANUAL (Para seguridad del usuario como pediste) */}
-                      <Button 
-                        disabled={isSaving}
-                        onClick={() => {
-                          setIsSaving(true);
-                          setTimeout(() => {
-                            setIsSaving(false);
-                            alert('¡Perfil actualizado con éxito! Los cambios se han guardado en el servidor.');
-                          }, 1500);
-                        }}
-                        className="bg-[#FF9F0A] hover:bg-[#FF9F0A]/90 text-black font-black px-8 rounded-xl h-12 shadow-lg shadow-[#FF9F0A]/20"
-                      >
-                        {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-                        GUARDAR PERFIL
-                      </Button>
+                      <Button
+                         disabled={isSaving}
+                         onClick={async () => {
+                           setIsSaving(true);
+                           try {
+                             const payload: Record<string, string> = { stageName: artistName, bio };
+                             const artistId = artistProfiles[0]?.id;
+                             if (artistId) payload.id = artistId;
+                             const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
+                             if (saved && !saved.error) {
+                               setArtistProfiles((prev: any[]) => prev.map((p: any) => p.id === saved.id ? { ...p, ...saved } : p));
+                               if (saved.stageName) setArtistName(saved.stageName);
+                               if (saved.bio !== undefined) setBio(saved.bio);
+                               alert('✅ ¡Perfil guardado correctamente!');
+                             } else { alert('❌ Error al guardar. Intenta de nuevo.'); }
+                           } catch (err: any) {
+                             alert(`❌ ${err.message || 'No se pudo guardar el perfil.'}`);
+                           } finally { setIsSaving(false); }
+                         }}
+                         className="bg-[#FF9F0A] hover:bg-[#FF9F0A]/90 text-black font-black px-8 rounded-xl h-12 shadow-lg shadow-[#FF9F0A]/20"
+                       >
+                         {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+                         GUARDAR PERFIL
+                       </Button>
                    </CardContent>
                 </Card>
 
@@ -234,16 +241,23 @@ function SettingsContent() {
                    </CardHeader>
                     <CardContent className="p-0">
                        <div 
-                         onClick={() => {
+                         onClick={async () => {
                             const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.zonyd.com';
-                            window.location.href = `${API_BASE}/api/spotify/login?token=${localStorage.getItem('zonyd_token')}`;
+                            const token = localStorage.getItem('zonyd_token') ||
+                                          localStorage.getItem('sb-access-token') ||
+                                          sessionStorage.getItem('access_token');
+                            if (!token) {
+                              alert('Sesión no encontrada. Por favor cierra sesión e inicia de nuevo.');
+                              return;
+                            }
+                            window.open(`${API_BASE}/api/spotify/login?token=${encodeURIComponent(token)}`, '_blank', 'width=500,height=700,scrollbars=yes');
                          }}
                          className="block cursor-pointer no-underline"
                        >
                          <SocialRow 
-                          icon={<CheckCircle2 className="text-[#1DB954]" size={16} />} 
+                          icon={<CheckCircle2 className={artistProfiles[0]?.spotifyConnected ? 'text-[#1DB954]' : 'text-[#A1A1AA]'} size={16} />} 
                           label="Spotify for Artists" 
-                          status={artistProfiles[0]?.spotifyConnected ? `Conectado` : "No vinculado"} 
+                          status={artistProfiles[0]?.spotifyConnected ? `✅ Conectado` : "No vinculado — Clic para conectar"} 
                          />
                        </div>
                        <SocialRow 
@@ -314,7 +328,7 @@ function SettingsContent() {
                          </div>
                        </div>
                        
-                       <Button 
+                       <Button
                          disabled={isSaving}
                          onClick={() => {
                            setIsSaving(true);

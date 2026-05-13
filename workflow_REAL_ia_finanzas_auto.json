@@ -1,0 +1,48 @@
+{
+  "name": "IA Finanzas Auto",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e8834f04-6bd9-47fa-8901-5318a94c94d6",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "command": "python \"C:\\Users\\Ocelot\\Documents\\IA Finanzas\\main.py\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "6f9456f8-2d73-41dc-b433-50cfd9b1fe4a",
+      "name": "Execute Command"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
