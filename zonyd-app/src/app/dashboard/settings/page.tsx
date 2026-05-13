@@ -243,9 +243,12 @@ function SettingsContent() {
                        <div 
                          onClick={async () => {
                             const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.zonyd.com';
-                            const token = localStorage.getItem('zonyd_token') ||
-                                          localStorage.getItem('sb-access-token') ||
-                                          sessionStorage.getItem('access_token');
+                            // Usamos el cliente de Supabase para obtener el token de forma confiable
+                            const { createClientComponentClient } = await import('@supabase/auth-helpers-nextjs');
+                            const supabase = createClientComponentClient();
+                            const { data: { session } } = await supabase.auth.getSession();
+                            const token = session?.access_token;
+                            
                             if (!token) {
                               alert('Sesión no encontrada. Por favor cierra sesión e inicia de nuevo.');
                               return;

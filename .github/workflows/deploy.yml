@@ -35,8 +35,10 @@ jobs:
               git clean -fd
             fi
             
-            # Crear el archivo .env desde el secreto de GitHub
-            echo "${{ secrets.ENV_FILE }}" > backend/.env
+            # Crear el archivo .env desde el secreto de GitHub de forma segura (preservando saltos de línea)
+            cat << 'EOF' > backend/.env
+            ${{ secrets.ENV_FILE }}
+            EOF
             
             # Asegurarse de que el archivo existe y tiene contenido
             ls -la backend/.env
