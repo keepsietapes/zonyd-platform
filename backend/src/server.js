@@ -50,7 +50,10 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || 
+        allowedOrigins.includes(origin) || 
+        origin.endsWith('.zonyd.pages.dev') ||
+        origin.endsWith('.keepsietapes.workers.dev')) {
       callback(null, true);
     } else {
       callback(new Error('Bloqueado por política CORS de Zonyd'));

@@ -37,7 +37,7 @@ export async function authFetch(endpoint: string, options: RequestInit = {}) {
     return response.json();
   } catch (error: any) {
     console.error(`[authFetch Error] ${endpoint}:`, error.message);
-    // Devolvemos null para que los componentes puedan manejar la falta de datos sin explotar
-    return null;
+    // IMPORTANTE: Lanzar el error para que el componente (ej. Onboarding) lo atrape y lo muestre
+    throw error;
   }
 }
