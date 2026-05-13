@@ -17,7 +17,11 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 60m
           script: |
+            # Asegurar certificados de seguridad actualizados
+            sudo apt-get update && sudo apt-get install -y ca-certificates git
+            
             # Crear carpeta del proyecto si no existe
             mkdir -p ~/zonyd-platform
             cd ~/zonyd-platform
