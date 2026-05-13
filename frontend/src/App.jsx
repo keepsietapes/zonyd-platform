@@ -4,12 +4,16 @@ import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import { supabase } from './services/supabase';
 import ReleaseManager from './components/ReleaseManager';
-
+import Landing from './components/Landing';
 
 export default function App() {
   const [releases, setReleases] = useState([]);
   const [tracks, setTracks] = useState([]);
   const [user, setUser] = useState(null);
+
+  // Check which domain the user is visiting
+  const hostname = window.location.hostname;
+  const isLandingDomain = hostname === 'zonyd.com' || hostname === 'www.zonyd.com';
 
   const load = async () => {
     try {
@@ -21,12 +25,18 @@ export default function App() {
   };
 
   useEffect(() => { 
-    load();
-    supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
-    supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user || null);
-    });
-  }, []);
+    if (!isLandingDomain) {
+      load();
+      supabase.auth.getUser().then(({ data: { user } }) => setUser(user));
+      supabase.auth.onAuthStateChange((_, session) => {
+        setUser(session?.user || null);
+      });
+    }
+  }, [isLandingDomain]);
+
+  if (isLandingDomain) {
+    return <Landing />;
+  }
 
   return (
     <div className="min-h-screen p-10 bg-[#0A0A0A] text-white font-sans selection:bg-blue-500/30">
@@ -47,11 +57,10 @@ export default function App() {
         {!user ? (
           <div className="mt-20 py-20 text-center border border-slate-800 rounded-3xl bg-slate-900/20 backdrop-blur-sm">
             <h2 className="text-5xl font-black mb-6 bg-gradient-to-r from-white to-slate-500 bg-clip-text text-transparent">
-              Bienvenido a Zonyd OS
+              Entrar al Workspace
             </h2>
             <p className="text-xl text-slate-400 mb-10 max-w-2xl mx-auto">
-              La plataforma definitiva para la distribución de música y gestión de lanzamientos. 
-              Inicia sesión con tu correo para acceder a tu panel de control.
+              Inicia sesión con tu cuenta para acceder al panel de control de distribución.
             </p>
             <div className="flex justify-center gap-4">
               <div className="p-1 bg-gradient-to-r from-blue-600 to-blue-400 rounded-lg shadow-xl shadow-blue-600/20">
@@ -100,8 +109,3 @@ export default function App() {
     </div>
   );
 }
-
-
-
-
-
