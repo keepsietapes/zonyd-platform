@@ -45,18 +45,44 @@ model Artist {
   userId          String
   user            User     @relation(fields: [userId], references: [id])
   stageName       String
+  bio             String?  @db.Text
+  genres          String?
   country         String?
-  spotifyUrl      String?
-  appleMusicUrl   String?
-  instagramUrl    String?
   avatarUrl       String?
   plan            PlanType @default(FREE)
   createdAt       DateTime @default(now())
-  
+
+  // Plataformas musicales
+  spotifyUrl            String?
+  spotifyConnected      Boolean   @default(false)
+  spotifyUserId         String?
+  spotifyAccessToken    String?   @db.Text
+  spotifyRefreshToken   String?   @db.Text
+  spotifyTokenExpiry    DateTime?
+  spotifyFollowers      Int       @default(0)
+  spotifyPopularity     Int       @default(0)
+
+  appleMusicUrl         String?
+
+  // Redes sociales
+  instagramUrl          String?
+  instagramConnected    Boolean   @default(false)
+  instagramHandle       String?
+
+  tiktokUrl             String?
+  tiktokConnected       Boolean   @default(false)
+  tiktokHandle          String?
+
+  // Deezer (público, sin OAuth)
+  deezerArtistId        String?
+  deezerFans            Int       @default(0)
+  deezerLastSync        DateTime?
+
   releases        Release[]
   collaborations  Collaborator[]
   splits          Split[]
 }
+
 
 enum PlanType {
   FREE

@@ -102,6 +102,7 @@ app.use('/api/ai', require('./routes/aiRoutes'));
 app.use('/api/user', require('./routes/userRoutes'));
 app.use('/api/spotify', require('./routes/spotifyRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
 
 // Inicializar Workers de procesamiento (Zonyd Engine)
 // require('./jobs/audioWorker');
