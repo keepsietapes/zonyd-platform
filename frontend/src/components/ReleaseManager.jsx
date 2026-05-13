@@ -320,12 +320,17 @@ export default function ReleaseManager() {
                     try {
                       setIsUploading(true);
                       const api = (await import('../services/api')).default;
+                      const idempotencyKey = crypto.randomUUID();
                       await api.post('/releases', {
                         title: releaseData.title,
                         audioFile: releaseData.audioFile,
                         coverUrl: releaseData.coverUrl,
                         splits: releaseData.splits || [{ artistId: 'me', percentage: 100 }],
                         genre: 'Alternative'
+                      }, {
+                        headers: {
+                          'Idempotency-Key': idempotencyKey
+                        }
                       });
                       alert('¡Lanzamiento enviado a distribución exitosamente!');
                       window.location.reload(); // Recargar para ver los cambios

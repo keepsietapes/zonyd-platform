@@ -1,0 +1,39 @@
+name: Zonyd CD (Deploy to AWS)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to AWS via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Crear carpeta del proyecto si no existe
+            mkdir -p ~/zonyd-platform
+            cd ~/zonyd-platform
+            
+            # Si el repo no existe, clonarlo. Si existe, actualizarlo.
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/${{ github.repository }} .
+            else
+              git pull origin main
+            fi
+            
+            # Crear el archivo .env desde el secreto de GitHub
+            echo "${{ secrets.ENV_FILE }}" > backend/.env
+            
+            # Construir e iniciar los contenedores
+            sudo docker-compose -f docker-compose.prod.yml up -d --build
+            
+            # Limpiar imágenes antiguas para no llenar el disco
+            sudo docker image prune -f
