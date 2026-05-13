@@ -112,10 +112,24 @@ app.use(require('./middleware/errorHandler'));
 const PORT = process.env.PORT || 4000;
 const server = app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
 
+// Colas de Trabajo (BullMQ)
+let distributionQueue = null;
+
+if (process.env.REDIS_URL) {
+  try {
+    distributionQueue = new Queue('distribution', {
+      connection: { url: process.env.REDIS_URL }
+    });
+    console.log('✅ BullMQ conectado a Redis');
+  } catch (err) {
+    console.warn('⚠️ Advertencia: No se pudo conectar a Redis. Las colas de distribución están desactivadas.');
+  }
+} else {
+  console.log('ℹ️ Redis no configurado. Continuando sin colas de distribución.');
+}
+
 // Graceful Shutdown
 const prisma = require('./utils/prisma');
-const { connection } = require('./jobs/audioQueue');
-const Redis = require('ioredis');
 
 const shutdown = async () => {
   console.log('Shutting down server...');
