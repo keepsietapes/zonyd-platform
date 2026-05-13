@@ -32,6 +32,9 @@ jobs:
             # Crear el archivo .env desde el secreto de GitHub
             echo "${{ secrets.ENV_FILE }}" > backend/.env
             
+            # Asegurarse de que el archivo existe y tiene contenido
+            ls -la backend/.env
+            
             # Construir e iniciar los contenedores
             sudo docker-compose -f docker-compose.prod.yml up -d --build
             
