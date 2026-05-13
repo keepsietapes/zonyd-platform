@@ -18,11 +18,13 @@ function VerifyContent() {
 
     const verifyEmail = async () => {
       try {
-        const response = await fetch(`http://localhost:4000/api/artist/verify?email=${encodeURIComponent(email)}`, {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+        const response = await fetch(`${API_URL}/api/auth/verify?email=${encodeURIComponent(email)}&name=Artista`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
+          redirect: 'follow'
         });
 
         if (response.ok) {
