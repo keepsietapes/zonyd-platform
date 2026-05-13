@@ -43,14 +43,54 @@ async function createOrUpdateArtist(req, res) {
 
 async function getArtistProfile(req, res) {
   try {
-    const artists = await prisma.artist.findMany({
-      where: { userId: req.user.id }
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: {
+        artists: true
+      }
     });
-    res.json(artists);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const artist = user.artists[0] || null;
+
+    // Devolver estado real de conexiones OAuth
+    // spotifyConnected es true solo si existe un token OAuth almacenado en la BD
+    // Por ahora se infiere de la presencia de spotifyUrl hasta implementar OAuth completo
+    const spotifyConnected = !!(artist?.spotifyUrl && artist.spotifyUrl.startsWith('https://open.spotify.com'));
+    const instagramConnected = !!(artist?.instagramUrl);
+    const tiktokConnected = !!(artist?.tiktokUrl);
+
+    res.json({
+      id: user.id,
+      email: user.email,
+      displayName: user.displayName || artist?.stageName || '',
+      plan: user.plan || 'FREE',
+      artists: user.artists,
+      // Estado real de conexiones para el AI Command Center
+      spotifyConnected,
+      instagramConnected,
+      tiktokConnected,
+      // Métricas de influencia (0 hasta tener datos reales de las APIs)
+      metrics: {
+        viralidad: 0,
+        metadatos: artist ? Math.min(100, Math.round((
+          (artist.stageName ? 20 : 0) +
+          (artist.spotifyUrl ? 20 : 0) +
+          (artist.genres ? 20 : 0) +
+          (artist.bio ? 20 : 0) +
+          (spotifyConnected ? 20 : 0)
+        ))) : 0,
+        discovery: 0,
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
+
 
 async function verifyArtistEmail(req, res) {
   const { email } = req.query;
