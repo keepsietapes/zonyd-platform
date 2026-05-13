@@ -26,11 +26,13 @@ jobs:
             mkdir -p ~/zonyd-platform
             cd ~/zonyd-platform
             
-            # Si el repo no existe, clonarlo. Si existe, actualizarlo.
+            # Si el repo no existe, clonarlo. Si existe, forzar actualización exacta
             if [ ! -d ".git" ]; then
               git clone https://github.com/${{ github.repository }} .
             else
-              git pull origin main
+              git fetch origin
+              git reset --hard origin/main
+              git clean -fd
             fi
             
             # Crear el archivo .env desde el secreto de GitHub
