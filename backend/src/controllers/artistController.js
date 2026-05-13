@@ -4,10 +4,10 @@ const { sendWelcomeEmail, sendValidationSuccessEmail } = require('../services/em
 async function createOrUpdateArtist(req, res) {
   const { id, stageName, spotifyUrl, appleMusicUrl } = req.body;
   try {
-    // 1. Garantizar que el usuario exista
+    // 1. Garantizar que el usuario exista (upsert por email para evitar conflictos)
     await prisma.user.upsert({
-      where: { id: req.user.id },
-      update: {},
+      where: { email: req.user.email },
+      update: { id: req.user.id },
       create: {
         id: req.user.id,
         email: req.user.email,
