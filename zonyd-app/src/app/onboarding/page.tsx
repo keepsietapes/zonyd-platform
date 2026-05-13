@@ -19,18 +19,39 @@ export default function OnboardingPage() {
     appleMusicUrl: ''
   });
 
-  // 📧 Generar sugerencia basada en el email
+  // 📧 Al llegar al onboarding, disparar el correo de verificación (solo 1 vez)
   useEffect(() => {
-    const getSuggestion = async () => {
+    const initOnboarding = async () => {
       const { supabase } = await import('@/lib/supabase');
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.email) {
-        const namePart = user.email.split('@')[0];
-        const suggestion = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-        setEmailSuggestion(suggestion);
+      
+      if (!user?.email) return;
+
+      // Sugerencia de nombre artístico
+      const namePart = user.email.split('@')[0];
+      setEmailSuggestion(namePart.charAt(0).toUpperCase() + namePart.slice(1));
+
+      // Enviar correo de verificación solo si es la primera vez (no lo hemos enviado antes)
+      const alreadySent = sessionStorage.getItem(`verification_sent_${user.id}`);
+      if (!alreadySent) {
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+          await fetch(`${API_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: user.email,
+              name: user.user_metadata?.full_name || namePart
+            })
+          });
+          sessionStorage.setItem(`verification_sent_${user.id}`, 'true');
+          console.log('📧 Correo de verificación enviado a:', user.email);
+        } catch (err) {
+          console.error('Error al enviar correo de verificación:', err);
+        }
       }
     };
-    getSuggestion();
+    initOnboarding();
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {

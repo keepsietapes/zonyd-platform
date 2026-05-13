@@ -88,6 +88,7 @@ app.get('/health', async (req, res) => {
   }
 });
 
+app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 app.use('/api/billing', require('./routes/planRoutes'));
 app.use('/api/artist', require('./routes/artistRoutes'));

@@ -32,7 +32,7 @@ const sendWelcomeEmail = async (userEmail, userName) => {
           Gracias por unirte a <b>Zonyd</b>. Estamos validando tu cuenta.
         </p>
         <div style="text-align: center; margin: 40px 0;">
-          <a href="${process.env.FRONTEND_URL}/verify?email=${userEmail}" style="background-color: ${ZONYD_ORANGE}; color: ${ZONYD_BLACK}; padding: 16px 32px; border-radius: 50px; font-weight: 900; text-decoration: none; display: inline-block;">
+          <a href="${process.env.BACKEND_URL || 'https://zonyd-backend.onrender.com'}/api/auth/verify?email=${userEmail}&name=${encodeURIComponent(userName)}" style="background-color: ${ZONYD_ORANGE}; color: ${ZONYD_BLACK}; padding: 16px 32px; border-radius: 50px; font-weight: 900; text-decoration: none; display: inline-block;">
             VALIDAR MI CUENTA
           </a>
         </div>
