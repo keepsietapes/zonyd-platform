@@ -9,11 +9,6 @@ const authMiddleware = async (req, res, next) => {
 
   const token = authHeader.split(' ')[1];
 
-  // BYPASS TEMPORAL PARA DESARROLLO (Para poder probar la subida de audio sin correos)
-  if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV) {
-    req.user = { id: 'test-user-id', email: 'test@zonyd.com', role: 'ADMIN' };
-    return next();
-  }
 
   try {
 
