@@ -39,6 +39,12 @@ export default function LandingPage() {
   };
 
   useEffect(() => {
+    // Redirección automática para el subdominio de la aplicación
+    if (window.location.hostname === 'app.zonyd.com') {
+      window.location.href = '/login';
+      return;
+    }
+
     // Verificar si hay una sesión "huérfana" que el backend no reconoce
     const checkSync = async () => {
       const { data: { session } } = await supabase.auth.getSession();
