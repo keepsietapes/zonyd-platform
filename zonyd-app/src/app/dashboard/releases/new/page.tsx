@@ -406,6 +406,8 @@ export default function NewReleasePage() {
                 releaseName={releaseName} setReleaseName={setReleaseName} 
                 artistName={artistName} setArtistName={setArtistName}
                 labelName={labelName} setLabelName={setLabelName}
+                genre={genre} setGenre={setGenre}
+                isExplicit={isExplicit} setIsExplicit={setIsExplicit}
                 artistOptions={artistOptions}
               />
             )}
@@ -476,7 +478,11 @@ export default function NewReleasePage() {
 
 // --- Steps ---
 
-function StepInfoBasica({ releaseType, setReleaseType, releaseName, setReleaseName, artistName, setArtistName, labelName, setLabelName, artistOptions }: any) {
+function StepInfoBasica({ 
+  releaseType, setReleaseType, releaseName, setReleaseName, 
+  artistName, setArtistName, labelName, setLabelName, 
+  genre, setGenre, isExplicit, setIsExplicit, artistOptions 
+}: any) {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -493,6 +499,7 @@ function StepInfoBasica({ releaseType, setReleaseType, releaseName, setReleaseNa
           </select>
         </div>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
@@ -506,36 +513,38 @@ function StepInfoBasica({ releaseType, setReleaseType, releaseName, setReleaseNa
             <option value="nuevo">+ Vincular Nuevo Artista</option>
           </select>
         </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="space-y-3">
-          <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Sello Discográfico / Label</Label>
-          <Input value={labelName} onChange={(e) => setLabelName(e.target.value)} placeholder="Zonyd Records" className="h-12 bg-[#0B0B0F] border-[#232733] text-lg font-bold rounded-xl focus:border-[#FF9F0A]" />
-        </div>
-        <div className="space-y-3">
-          <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Género Principal</Label>
-          <select value={genre} onChange={(e) => setGenre(e.target.value)} className="w-full h-12 px-4 rounded-xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
-            <option>Alternative</option>
-            <option>Urban/Reggaeton</option>
-            <option>Trap</option>
-            <option>Electronic/EDM</option>
-            <option>Pop</option>
-            <option>Hip-Hop</option>
-            <option>Latin</option>
-          </select>
-        </div>
-        <div className="space-y-3 flex flex-col justify-center">
-           <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest mb-4">Contenido Explícito</Label>
-           <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setIsExplicit(!isExplicit)}
-                className={`w-14 h-8 rounded-full relative transition-colors duration-300 ${isExplicit ? 'bg-red-500' : 'bg-[#232733]'}`}
-              >
-                <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all duration-300 ${isExplicit ? 'left-7' : 'left-1'}`} />
-              </button>
-              <span className={`text-[10px] font-black uppercase ${isExplicit ? 'text-red-500' : 'text-[#A1A1AA]'}`}>
-                {isExplicit ? 'SÍ (EXPLICIT)' : 'NO'}
-              </span>
-           </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="space-y-3">
+            <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Sello / Label</Label>
+            <Input value={labelName} onChange={(e) => setLabelName(e.target.value)} placeholder="Zonyd Records" className="h-12 bg-[#0B0B0F] border-[#232733] text-lg font-bold rounded-xl focus:border-[#FF9F0A]" />
+          </div>
+          <div className="space-y-3">
+            <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Género</Label>
+            <select value={genre} onChange={(e) => setGenre(e.target.value)} className="w-full h-12 px-4 rounded-xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
+              <option>Alternative</option>
+              <option>Urban/Reggaeton</option>
+              <option>Trap</option>
+              <option>Electronic/EDM</option>
+              <option>Pop</option>
+              <option>Hip-Hop</option>
+              <option>Latin</option>
+            </select>
+          </div>
+          <div className="space-y-3 flex flex-col justify-center">
+            <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest mb-4">Explícito</Label>
+            <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setIsExplicit(!isExplicit)}
+                  className={`w-14 h-8 rounded-full relative transition-colors duration-300 ${isExplicit ? 'bg-red-500' : 'bg-[#232733]'}`}
+                >
+                  <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all duration-300 ${isExplicit ? 'left-7' : 'left-1'}`} />
+                </button>
+                <span className={`text-[10px] font-black uppercase ${isExplicit ? 'text-red-500' : 'text-[#A1A1AA]'}`}>
+                  {isExplicit ? 'SÍ' : 'NO'}
+                </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
