@@ -38,10 +38,10 @@ function SettingsContent() {
   const [passkeyStatus, setPasskeyStatus] = useState<'idle' | 'scanning' | 'success'>('idle');
 
   const [artistName, setArtistName] = useState('Artista');
-  const [contactEmail, setContactEmail] = useState('rztk82sucio@gmail.com');
-  const [bio, setBio] = useState('Productor y Artista de Zonyd...');
+  const [contactEmail, setContactEmail] = useState('');
+  const [bio, setBio] = useState('');
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [payoutMethod, setPayoutMethod] = useState('keepsietapesprod@gmail.com');
+  const [payoutMethod, setPayoutMethod] = useState('');
   const [bankAccount, setBankAccount] = useState('');
   const [spotifyDevId, setSpotifyDevId] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -267,29 +267,59 @@ function SettingsContent() {
                       <CardTitle className="text-sm font-black uppercase tracking-widest text-white transition-colors duration-500">Método de Cobro Principal</CardTitle>
                    </CardHeader>
                    <CardContent className="p-8 space-y-6">
-                      <div className="p-6 bg-black/40 border border-[#FF9F0A]/20 rounded-2xl flex items-center justify-between transition-colors duration-500">
-                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                               <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" className="w-6 h-6" alt="PayPal" />
-                            </div>
-                            <div>
-                               <p className="text-sm font-bold text-white transition-colors duration-500">PayPal Business</p>
-                               <p className="text-xs text-[#A1A1AA] transition-colors duration-500">{payoutMethod}</p>
-                            </div>
-                         </div>
-                         <Button 
-                            variant="ghost" 
-                            className="text-[10px] font-black uppercase text-[#FF9F0A] hover:bg-[#FF9F0A]/10"
-                            onClick={() => {
-                              const email = prompt('Introduce tu nuevo correo de PayPal:', payoutMethod);
-                              if (email) {
-                                setPayoutMethod(email);
-                                alert('Método de cobro actualizado.');
-                              }
-                            }}
-                          >
-                            Cambiar
-                          </Button>
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="p-6 bg-black/40 border border-[#FF9F0A]/20 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between transition-colors duration-500 gap-4">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" className="w-6 h-6" alt="PayPal" />
+                              </div>
+                              <div>
+                                 <p className="text-sm font-bold text-white transition-colors duration-500">PayPal Business</p>
+                                 <p className="text-xs text-[#A1A1AA] transition-colors duration-500">{payoutMethod || 'No configurado'}</p>
+                              </div>
+                           </div>
+                           <Button 
+                              variant="ghost" 
+                              className="text-[10px] font-black uppercase text-[#FF9F0A] hover:bg-[#FF9F0A]/10 border border-[#FF9F0A]/20"
+                              onClick={() => {
+                                const email = prompt('Introduce tu nuevo correo de PayPal:', payoutMethod);
+                                if (email !== null) {
+                                  setPayoutMethod(email);
+                                  alert('Método PayPal actualizado.');
+                                }
+                              }}
+                            >
+                              Configurar PayPal
+                            </Button>
+                        </div>
+                        <div className="p-6 bg-black/40 border border-[#34C759]/20 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between transition-colors duration-500 gap-4">
+                           <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl bg-[#34C759]/10 flex items-center justify-center border border-[#34C759]/20">
+                                 <Wallet className="text-[#34C759]" size={24} />
+                              </div>
+                              <div>
+                                 <p className="text-sm font-bold text-white transition-colors duration-500">Transferencia Bancaria (CLABE)</p>
+                                 <p className="text-xs text-[#A1A1AA] transition-colors duration-500">{bankAccount || 'No configurado'}</p>
+                              </div>
+                           </div>
+                           <Button 
+                              variant="ghost" 
+                              className="text-[10px] font-black uppercase text-[#34C759] hover:bg-[#34C759]/10 border border-[#34C759]/20"
+                              onClick={() => {
+                                const account = prompt('Introduce tu cuenta CLABE interbancaria (18 dígitos):', bankAccount);
+                                if (account !== null) {
+                                  if(account.length !== 18 && account.length !== 0) {
+                                    alert('La cuenta CLABE debe tener 18 dígitos.');
+                                    return;
+                                  }
+                                  setBankAccount(account);
+                                  alert('Método CLABE actualizado.');
+                                }
+                              }}
+                            >
+                              Configurar CLABE
+                            </Button>
+                        </div>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -56,7 +56,7 @@ const NAV_ITEMS = [
   { icon: LinkIcon,        label: 'Smart Links',   href: '/dashboard/smartlinks',       section: 'marketing' },
   { icon: Users,           label: 'Audiencia',     href: '/dashboard/audience',         section: 'marketing' },
   { icon: Globe,           label: 'Marketplace',   href: '/dashboard/marketplace',      section: 'marketing' },
-  { icon: Sparkles,        label: 'The Lab (AI)',  href: '/dashboard/lab',              section: 'marketing', highlight: true },
+  // { icon: Sparkles,        label: 'The Lab (AI)',  href: '/dashboard/lab',              section: 'marketing', highlight: true }, // Oculto temporalmente
   { icon: Megaphone,       label: 'Herramientas',  href: '/dashboard/marketing',        section: 'marketing' },
   { icon: Zap,             label: 'Zonyd AI',      href: '/dashboard/ai',               section: 'marketing', highlight: true },
   // Organización
@@ -232,10 +232,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="text-xs font-black uppercase tracking-widest text-white">Notificaciones</span>
                   <button onClick={() => setIsNotificationsOpen(false)} className="icon-sm flex items-center justify-center"><X size={14} className="text-[#A1A1AA]" /></button>
                 </div>
-                <div className="max-h-72 overflow-y-auto custom-scrollbar">
-                  <NotificationItem icon={<CheckCircle2 size={14} className="text-[#34C759]" />} title="Lanzamiento Aprobado" desc="Tu track 'Neon Nights' ya está en revisión final." time="Hace 5 min" />
-                  <NotificationItem icon={<Wallet size={14} className="text-[#FF9F0A]" />} title="Regalías Listas" desc="$1,240.50 USD generados de tu último reporte." time="Hace 2h" />
-                  <NotificationItem icon={<Zap size={14} className="text-[#7B61FF]" />} title="AI Insight" desc="Zonyd AI detectó tendencia viral en TikTok." time="Ayer" />
+                <div className="max-h-72 overflow-y-auto custom-scrollbar p-4">
+                  <div className="text-center py-6 text-[#A1A1AA]">
+                    <Bell className="mx-auto mb-2 opacity-20" size={24} />
+                    <p className="text-xs">No tienes notificaciones nuevas.</p>
+                  </div>
                 </div>
               </div>
             )}

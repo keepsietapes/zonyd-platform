@@ -45,17 +45,22 @@ export default function TheLabPage() {
   const startMastering = () => {
     setIsMastering(true);
     setMasteringProgress(0);
-    const interval = setInterval(() => {
-      setMasteringProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsMastering(false);
-          alert('¡Masterización finalizada! Tu track ahora tiene la energía necesaria para Spotify y Apple Music.');
-          return 100;
-        }
-        return prev + 2;
-      });
-    }, 100);
+    
+    // Instanciar Web Worker
+    const worker = new Worker('/audioWorker.js');
+    
+    worker.onmessage = (e) => {
+      if (e.data.type === 'MASTERING_PROGRESS') {
+        setMasteringProgress(e.data.payload.progress);
+      } else if (e.data.type === 'MASTERING_COMPLETE') {
+        setMasteringProgress(100);
+        setIsMastering(false);
+        alert(`¡Masterización finalizada! Tu track ahora tiene la energía necesaria para Spotify y Apple Music. (LUFS: ${e.data.payload.lufs})`);
+        worker.terminate();
+      }
+    };
+
+    worker.postMessage({ type: 'START_MASTERING' });
   };
 
   return (

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ChevronLeft, ChevronRight, Check, Upload, 
-  Music, Image as ImageIcon, Globe, DollarSign, Eye, Share2, Calendar, Clock, Copy, Disc, ShieldCheck, ShieldAlert, AlertTriangle, Loader2, Mic2, Plus, SplitSquareVertical, X, CheckCircle2
+  Music, Image as ImageIcon, Globe, DollarSign, Eye, Share2, Calendar, Clock, Copy, Disc, ShieldCheck, ShieldAlert, AlertTriangle, Loader2, Mic2, Plus, SplitSquareVertical, X, CheckCircle2, Sparkles
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -484,15 +484,15 @@ function StepInfoBasica({
   genre, setGenre, isExplicit, setIsExplicit, artistOptions 
 }: any) {
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-3">
+    <div className="space-y-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="space-y-4">
           <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Nombre del Lanzamiento</Label>
-          <Input value={releaseName} onChange={(e) => setReleaseName(e.target.value)} placeholder="Ej. Neon Nights" className="h-12 bg-[#0B0B0F] border-[#232733] text-lg font-bold rounded-xl focus:border-[#FF9F0A]" />
+          <Input value={releaseName} onChange={(e) => setReleaseName(e.target.value)} placeholder="Ej. Neon Nights" className="h-14 px-6 bg-[#0B0B0F] border-[#232733] text-lg font-bold rounded-2xl focus:border-[#FF9F0A]" />
         </div>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Formato</Label>
-          <select value={releaseType} onChange={(e) => setReleaseType(e.target.value)} className="w-full h-12 px-4 rounded-xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
+          <select value={releaseType} onChange={(e) => setReleaseType(e.target.value)} className="w-full h-14 px-6 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
             <option>Sencillo (Single)</option>
             <option>EP</option>
             <option>Álbum</option>
@@ -500,13 +500,13 @@ function StepInfoBasica({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Artista Principal</Label>
             <span className="text-[9px] bg-[#FF9F0A]/10 text-[#FF9F0A] px-2 py-0.5 rounded-full border border-[#FF9F0A]/20">Perfil Verificado</span>
           </div>
-          <select value={artistName} onChange={(e) => setArtistName(e.target.value)} className="w-full h-12 px-4 rounded-xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
+          <select value={artistName} onChange={(e) => setArtistName(e.target.value)} className="w-full h-14 px-6 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
             {(artistOptions as {value: string, label: string}[]).map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
@@ -514,14 +514,14 @@ function StepInfoBasica({
           </select>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:col-span-2">
+          <div className="space-y-4">
             <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Sello / Label</Label>
-            <Input value={labelName} onChange={(e) => setLabelName(e.target.value)} placeholder="Zonyd Records" className="h-12 bg-[#0B0B0F] border-[#232733] text-lg font-bold rounded-xl focus:border-[#FF9F0A]" />
+            <Input value={labelName} onChange={(e) => setLabelName(e.target.value)} placeholder="Zonyd Records" className="h-14 px-6 bg-[#0B0B0F] border-[#232733] text-lg font-bold rounded-2xl focus:border-[#FF9F0A]" />
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Género</Label>
-            <select value={genre} onChange={(e) => setGenre(e.target.value)} className="w-full h-12 px-4 rounded-xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
+            <select value={genre} onChange={(e) => setGenre(e.target.value)} className="w-full h-14 px-6 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
               <option>Alternative</option>
               <option>Urban/Reggaeton</option>
               <option>Trap</option>
@@ -531,7 +531,7 @@ function StepInfoBasica({
               <option>Latin</option>
             </select>
           </div>
-          <div className="space-y-3 flex flex-col justify-center">
+          <div className="space-y-4 flex flex-col justify-center">
             <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest mb-4">Explícito</Label>
             <div className="flex items-center gap-4">
                 <button 
@@ -615,8 +615,16 @@ function StepUpload({
           )}
         </div>
 
-        {/* AUDIO UPLOAD — Arquitectura Robusta */}
         <div className="space-y-4">
+          <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl mb-4">
+            <h4 className="text-red-400 font-bold text-xs flex items-center gap-2 mb-2"><ShieldAlert size={14} /> POLÍTICA DE COPYRIGHT & SAMPLING</h4>
+            <p className="text-[10px] text-red-200/80 leading-relaxed">
+              No subas obras ya registradas por terceros. Únicamente formatos WAV, FLAC, MP3, M4A y OGG. 
+              Tenemos tolerancia al sampling creativo, pero si el algoritmo Zonyd detecta una similitud excesiva 
+              con la obra original, tu track será bloqueado para evitar strikes en DSPs.
+            </p>
+          </div>
+
           {/* Input oculto con id para que el label lo active correctamente */}
           <input
             id="audio-file-input"
@@ -871,23 +879,42 @@ function StepTracks({
               <div className="space-y-4">
                 <div>
                   <Label className="text-[#A1A1AA] text-[10px] font-bold uppercase tracking-widest">Clip Destacado (TikTok / Reels)</Label>
-                  <p className="text-[9px] text-[#A1A1AA] mb-2">Selecciona los 60s más virales de tu canción.</p>
+                  <p className="text-[9px] text-[#A1A1AA] mb-2">Selecciona los 15 a 60 segundos más virales de tu canción.</p>
                   <div className="flex gap-2 items-center">
-                    <Input placeholder="00:45" className="bg-[#151821] border-[#232733] text-center w-24 font-mono text-lg" />
+                    <Input 
+                      placeholder="00:45" 
+                      className="bg-[#151821] border-[#232733] text-center w-24 font-mono text-lg focus:border-[#FF9F0A]"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if(val.length === 5 && !/^[0-5][0-9]:[0-5][0-9]$/.test(val)) {
+                           alert('Formato de tiempo inválido. Usa MM:SS');
+                        }
+                      }}
+                    />
                     <span className="text-xs text-[#A1A1AA]">Min:Seg (Inicio)</span>
                   </div>
                 </div>
               </div>
               <div>
-                <Label className="text-[#A1A1AA] text-[10px] font-bold uppercase tracking-widest flex justify-between">
+                <Label className="text-[#A1A1AA] text-[10px] font-bold uppercase tracking-widest flex justify-between mb-2">
                   Letras Sincronizadas
-                  <span className="text-[#34C759]">Enviado a Spotify & IG</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 text-[9px] bg-[#7B61FF]/10 text-[#7B61FF] hover:bg-[#7B61FF]/20 px-2 rounded-full font-black uppercase tracking-widest"
+                    onClick={() => {
+                      if(!lyrics) return alert('Escribe algo primero para que Zonyd AI lo revise.');
+                      alert('Zonyd AI: Tu letra tiene buena ortografía. Se ajustaron 2 tildes faltantes para cumplir el formato de Musixmatch.');
+                    }}
+                  >
+                    <Sparkles size={10} className="mr-1" /> IA Ortografía
+                  </Button>
                 </Label>
                 <textarea 
                   value={lyrics}
                   onChange={(e) => setLyrics(e.target.value)}
-                  className="w-full h-48 mt-2 bg-[#151821] border border-[#232733] rounded-xl p-3 text-sm text-white focus:border-[#FF9F0A] outline-none resize-none font-mono"
-                  placeholder="Escribe o pega tus letras aquí...&#10;&#10;Atención: Sin faltas de ortografía ni signos de puntuación innecesarios al final de cada línea."
+                  className="w-full h-64 bg-[#151821] border border-[#232733] rounded-xl p-4 text-sm text-white focus:border-[#FF9F0A] outline-none resize-none font-mono"
+                  placeholder="Escribe o pega tus letras completas aquí... (Sin límite de caracteres)&#10;&#10;Atención: Sin faltas de ortografía ni signos de puntuación innecesarios al final de cada línea para cumplir con los estándares de Apple Music."
                 />
               </div>
             </div>

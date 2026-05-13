@@ -163,19 +163,111 @@ export default function AdminDashboard() {
         {activeTab === 'releases' && (
            <Card className="bg-[#151821] border-[#232733] rounded-3xl overflow-hidden">
              <CardContent className="p-8">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="relative w-96">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+                  <div className="relative w-full md:w-96">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A1A1AA]" size={18} />
                     <input type="text" placeholder="Buscar por UPC, Artista o Título..." className="w-full bg-black/40 border border-[#232733] rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:border-[#FF9F0A] outline-none" />
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" className="border-white/5 text-[10px] font-black uppercase"><Filter size={14} className="mr-2" /> Filtrar</Button>
+                    <Button variant="outline" className="border-white/5 text-[10px] font-black uppercase"><Download size={14} className="mr-2" /> Exportar CSV</Button>
                   </div>
                 </div>
-                {/* Tabla de lanzamientos completa aquí */}
-                <div className="text-center py-20 text-[#A1A1AA]">
-                   <Music className="mx-auto mb-4 opacity-20" size={64} />
-                   <p className="text-sm font-bold">Módulo de Auditoría de Lanzamientos Cargado</p>
+
+                {/* Pipeline de Distribución Manual */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+                  {[
+                    { label: 'Borrador', color: '#A1A1AA', status: 'DRAFT' },
+                    { label: 'Pendiente', color: '#FF9F0A', status: 'PENDING_APPROVAL' },
+                    { label: 'Aprobado', color: '#4F8CFF', status: 'APPROVED' },
+                    { label: 'Distribuido', color: '#34C759', status: 'DISTRIBUTED' },
+                    { label: 'Live en DSPs', color: '#1DB954', status: 'LIVE' },
+                  ].map((s) => (
+                    <div key={s.status} className="p-3 rounded-xl border border-white/5 bg-black/20 text-center cursor-pointer hover:border-[#FF9F0A]/30 transition-all">
+                      <div className="w-3 h-3 rounded-full mx-auto mb-2" style={{ backgroundColor: s.color, boxShadow: `0 0 10px ${s.color}40` }} />
+                      <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: s.color }}>{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tabla de releases */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-black/40 border-b border-white/5">
+                      <tr>
+                        <th className="px-6 py-4 text-[9px] font-black text-[#3A3A3C] uppercase tracking-[0.2em]">Release</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-[#3A3A3C] uppercase tracking-[0.2em]">Artista</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-[#3A3A3C] uppercase tracking-[0.2em]">UPC</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-[#3A3A3C] uppercase tracking-[0.2em]">Estado</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-[#3A3A3C] uppercase tracking-[0.2em]">Fecha</th>
+                        <th className="px-6 py-4 text-[9px] font-black text-[#3A3A3C] uppercase tracking-[0.2em] text-right">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {pendingReleases.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-16 text-[#A1A1AA]">
+                            <CheckCircle2 className="mx-auto mb-4 text-[#34C759]/30" size={48} />
+                            <p className="text-sm font-bold">No hay releases pendientes de gestión.</p>
+                            <p className="text-xs text-[#3A3A3C] mt-1">Los nuevos lanzamientos de artistas aparecerán aquí.</p>
+                          </td>
+                        </tr>
+                      ) : (
+                        pendingReleases.map((release: any) => (
+                          <tr key={release.id} className="hover:bg-white/5 transition-colors group">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-black/40 border border-white/10 overflow-hidden shrink-0">
+                                  {release.coverUrl ? (
+                                    <img src={release.coverUrl} className="w-full h-full object-cover" alt="" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center"><Music size={16} className="text-white/20" /></div>
+                                  )}
+                                </div>
+                                <span className="text-xs font-bold text-white truncate max-w-[180px]">{release.title}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-xs text-[#A1A1AA]">{release.artist?.stageName || '—'}</td>
+                            <td className="px-6 py-4 text-[10px] font-mono text-[#A1A1AA]">{release.upc || 'Pendiente'}</td>
+                            <td className="px-6 py-4">
+                              <span className={`text-[9px] font-black px-2 py-1 rounded uppercase tracking-widest ${
+                                release.status === 'LIVE' ? 'bg-[#1DB954]/20 text-[#1DB954]' :
+                                release.status === 'DISTRIBUTED' ? 'bg-[#34C759]/20 text-[#34C759]' :
+                                release.status === 'APPROVED' ? 'bg-[#4F8CFF]/20 text-[#4F8CFF]' :
+                                release.status === 'PENDING_APPROVAL' ? 'bg-[#FF9F0A]/20 text-[#FF9F0A]' :
+                                release.status === 'REJECTED' ? 'bg-[#FF453A]/20 text-[#FF453A]' :
+                                'bg-white/5 text-[#A1A1AA]'
+                              }`}>{release.status}</span>
+                            </td>
+                            <td className="px-6 py-4 text-[10px] text-[#A1A1AA]">{new Date(release.createdAt).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {release.status === 'PENDING_APPROVAL' && (
+                                  <>
+                                    <Button onClick={() => handleApproveRelease(release.id)} size="sm" className="bg-[#34C759] hover:bg-[#34C759]/90 text-white text-[9px] font-black h-8 px-3 uppercase">Aprobar</Button>
+                                    <Button size="sm" variant="outline" className="border-[#FF453A]/30 text-[#FF453A] hover:bg-[#FF453A]/10 text-[9px] font-black h-8 px-3 uppercase">Rechazar</Button>
+                                  </>
+                                )}
+                                {release.status === 'APPROVED' && (
+                                  <Button size="sm" className="bg-[#4F8CFF] hover:bg-[#4F8CFF]/90 text-white text-[9px] font-black h-8 px-3 uppercase">
+                                    Marcar Distribuido
+                                  </Button>
+                                )}
+                                {release.status === 'DISTRIBUTED' && (
+                                  <Button size="sm" className="bg-[#1DB954] hover:bg-[#1DB954]/90 text-white text-[9px] font-black h-8 px-3 uppercase">
+                                    Confirmar Live
+                                  </Button>
+                                )}
+                                <Button size="sm" variant="ghost" className="text-[#A1A1AA] hover:text-white h-8 px-2">
+                                  <Eye size={14} />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
              </CardContent>
            </Card>

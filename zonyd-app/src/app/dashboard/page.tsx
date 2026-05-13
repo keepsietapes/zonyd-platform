@@ -14,15 +14,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const data = [
-  { name: 'Mon', streams: 12000 },
-  { name: 'Tue', streams: 19000 },
-  { name: 'Wed', streams: 15000 },
-  { name: 'Thu', streams: 22000 },
-  { name: 'Fri', streams: 28000 },
-  { name: 'Sat', streams: 35000 },
-  { name: 'Sun', streams: 31000 },
-];
+// Los datos se cargarán dinámicamente del backend
+const data: any[] = [];
 
 import { authFetch } from '@/lib/api';
 
@@ -209,21 +202,12 @@ export default function DashboardPage() {
               <CardHeader className="p-6 pb-2">
                  <CardTitle className="text-xs font-black uppercase tracking-widest text-[#FF9F0A]">Actividad de Fans</CardTitle>
               </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                 <LiveItem 
-                   location="Ciudad de México, MX" 
-                   action="escuchando Neon Nights" 
-                   avatar="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&h=100&fit=crop"
-                   time="Live"
-                 />
-                 <LiveItem 
-                   location="Madrid, ES" 
-                   action="pre-guardó All Eyez" 
-                   avatar="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=100&h=100&fit=crop"
-                   time="2m"
-                   dimmed
-                 />
-              </CardContent>
+               <CardContent className="p-6">
+                 <div className="text-center py-6 text-[#A1A1AA]">
+                   <Globe className="mx-auto mb-2 opacity-20" size={24} />
+                   <p className="text-xs">No hay actividad reciente.</p>
+                 </div>
+               </CardContent>
            </Card>
 
            <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-[#7B61FF] to-[#4F8CFF] text-white shadow-2xl shadow-[#7B61FF]/20 relative overflow-hidden group cursor-pointer" onClick={() => setIsAIOpen(true)}>
@@ -311,9 +295,7 @@ function MetricCard({ title, value, change, trend, icon }: any) {
 }
 
 function AIAssistant({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: boolean) => void }) {
-  const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([
-    { role: 'ai', text: '¡Hola! Soy tu asistente de Zonyd. He analizado tus streams de hoy. El 45% de tu tráfico viene de playlists algorítmicas.' }
-  ]);
+  const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 

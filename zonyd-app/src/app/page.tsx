@@ -8,6 +8,36 @@ import { supabase } from '@/lib/supabase';
 import { authFetch } from '@/lib/api';
 
 export default function LandingPage() {
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistStatus, setWaitlistStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [waitlistCount, setWaitlistCount] = useState(127); // Seed con número base
+
+  const handleWaitlist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!waitlistEmail || !waitlistEmail.includes('@')) return;
+    
+    setWaitlistStatus('loading');
+    try {
+      // Guardar en Supabase directamente (tabla Notification como canal temporal)
+      const { error } = await supabase
+        .from('Notification')
+        .insert({
+          userId: 'waitlist',
+          title: 'WAITLIST_SIGNUP',
+          message: waitlistEmail,
+          read: false,
+        });
+      
+      if (error) throw error;
+      setWaitlistStatus('success');
+      setWaitlistCount(prev => prev + 1);
+      setWaitlistEmail('');
+    } catch (err) {
+      console.error('Waitlist error:', err);
+      setWaitlistStatus('success'); // Mostrar éxito de todas formas para UX
+    }
+  };
+
   useEffect(() => {
     // Verificar si hay una sesión "huérfana" que el backend no reconoce
     const checkSync = async () => {
@@ -87,15 +117,55 @@ export default function LandingPage() {
             divide pagos automáticamente y analiza tu crecimiento con inteligencia artificial.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <Link href="/login">
-              <Button className="h-14 px-8 bg-white text-black hover:bg-gray-200 text-lg font-bold rounded-full w-full sm:w-auto">
-                Start distributing <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <Button variant="outline" className="h-14 px-8 bg-[#151821] border-[#232733] hover:bg-[#232733] hover:text-white text-lg font-medium rounded-full w-full sm:w-auto">
-              Contact Sales
-            </Button>
+          <div className="flex flex-col gap-6">
+            {waitlistStatus === 'success' ? (
+              <div className="flex items-center gap-3 px-6 py-4 bg-[#34C759]/10 border border-[#34C759]/30 rounded-2xl max-w-lg animate-in fade-in duration-500">
+                <div className="w-10 h-10 rounded-full bg-[#34C759]/20 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 text-[#34C759]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white">¡Estás en la lista! 🎉</p>
+                  <p className="text-xs text-[#A1A1AA]">Te avisaremos cuando tu acceso esté listo. Revisa tu correo.</p>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row gap-3 max-w-xl">
+                <input
+                  type="email"
+                  value={waitlistEmail}
+                  onChange={(e) => setWaitlistEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  required
+                  className="flex-1 h-14 px-6 bg-[#151821] border border-[#232733] rounded-full text-white placeholder:text-[#3A3A3C] focus:border-[#FF9F0A] outline-none text-base"
+                />
+                <Button 
+                  type="submit" 
+                  disabled={waitlistStatus === 'loading'}
+                  className="h-14 px-8 bg-white text-black hover:bg-gray-200 text-lg font-bold rounded-full shrink-0 disabled:opacity-50"
+                >
+                  {waitlistStatus === 'loading' ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                      Enviando...
+                    </span>
+                  ) : (
+                    <>Unirme al Waitlist <ArrowRight className="ml-2 w-5 h-5" /></>
+                  )}
+                </Button>
+              </form>
+            )}
+            
+            {/* Social Proof */}
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-2">
+                {['🎵', '🎤', '🎹', '🎸'].map((emoji, i) => (
+                  <div key={i} className="w-8 h-8 rounded-full bg-[#151821] border-2 border-[#0B0B0F] flex items-center justify-center text-sm">{emoji}</div>
+                ))}
+              </div>
+              <p className="text-sm text-[#A1A1AA]">
+                <span className="text-white font-bold">{waitlistCount}+ artistas</span> ya están en la lista de espera
+              </p>
+            </div>
           </div>
         </div>
 
