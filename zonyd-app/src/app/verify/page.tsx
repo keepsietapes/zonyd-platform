@@ -24,12 +24,11 @@ function VerifyContent() {
           headers: {
             'Content-Type': 'application/json',
           },
-          redirect: 'follow'
         });
 
-        if (response.ok) {
+        // 200 o 3xx (redirect al dashboard) = éxito
+        if (response.ok || response.status === 301 || response.status === 302) {
           setStatus('success');
-          // Redirigir al dashboard después de 3 segundos
           setTimeout(() => {
             router.push('/dashboard');
           }, 3000);
