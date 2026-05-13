@@ -35,10 +35,6 @@ async function createOrUpdateArtist(req, res) {
     }
     
     res.json(artist);
-    
-    if (req.user && req.user.email && !id) {
-      sendWelcomeEmail(req.user.email, stageName || 'Artista').catch(err => console.error('Error al enviar correo:', err));
-    }
   } catch (error) {
     console.error('ERROR EN ARTIST CONTROLLER:', error);
     res.status(500).json({ error: error.message });
