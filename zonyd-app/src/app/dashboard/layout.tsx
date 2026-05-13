@@ -56,7 +56,7 @@ const NAV_ITEMS = [
   { icon: LinkIcon,        label: 'Smart Links',   href: '/dashboard/smartlinks',       section: 'marketing' },
   { icon: Users,           label: 'Audiencia',     href: '/dashboard/audience',         section: 'marketing' },
   { icon: Globe,           label: 'Marketplace',   href: '/dashboard/marketplace',      section: 'marketing' },
-  // { icon: Sparkles,        label: 'The Lab (AI)',  href: '/dashboard/lab',              section: 'marketing', highlight: true }, // Oculto temporalmente
+  { icon: Sparkles,        label: 'The Lab (AI)',  href: '/dashboard/lab',              section: 'marketing', highlight: true, requiresPro: true },
   { icon: Megaphone,       label: 'Herramientas',  href: '/dashboard/marketing',        section: 'marketing' },
   { icon: Zap,             label: 'Zonyd AI',      href: '/dashboard/ai',               section: 'marketing', highlight: true },
   // Organización
@@ -308,16 +308,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </SidebarSection>
 
             <SidebarSection title="Marketing" isOpen={isSidebarOpen}>
-              {NAV_ITEMS.filter(i => i.section === 'marketing').map(item => (
-                <SidebarItem 
-                  key={item.href} 
-                  icon={<item.icon size={18} className={(item as any).highlight ? 'text-[#FF9F0A]' : ''} />} 
-                  label={item.label} 
-                  href={item.href} 
-                  active={pathname === item.href} 
-                  isOpen={isSidebarOpen} 
-                />
-              ))}
+              {NAV_ITEMS.filter(i => i.section === 'marketing').map(item => {
+                if ((item as any).requiresPro && userPlan === 'FREE') return null;
+                return (
+                  <SidebarItem 
+                    key={item.href} 
+                    icon={<item.icon size={18} className={(item as any).highlight ? 'text-[#FF9F0A]' : ''} />} 
+                    label={item.label} 
+                    href={item.href} 
+                    active={pathname === item.href} 
+                    isOpen={isSidebarOpen} 
+                  />
+                );
+              })}
             </SidebarSection>
 
             <SidebarSection title="Organización" isOpen={isSidebarOpen}>
