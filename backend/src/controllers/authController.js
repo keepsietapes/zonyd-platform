@@ -38,8 +38,8 @@ const sendVerificationSuccessEmail = async (req, res) => {
   try {
     console.log(`✅ Verificando cuenta y enviando bienvenida a: ${email}`);
     await sendValidationSuccessEmail(email, name || 'Artista');
-    // Redirigir al dashboard después de validar
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+    // Devolver JSON para que el frontend maneje la navegación
+    res.json({ success: true, message: 'Bienvenida enviada. Redirigiendo al dashboard.' });
   } catch (error) {
     console.error('❌ Error al enviar correo de bienvenida:', error.message);
     res.status(500).json({ error: error.message });
