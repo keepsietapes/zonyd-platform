@@ -89,7 +89,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [hasNotifications, setHasNotifications] = useState(true);
+  const [hasNotifications, setHasNotifications] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   const [displayName, setDisplayName] = useState('Artista');
   const [userPlan, setUserPlan] = useState('FREE');
@@ -306,10 +306,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               ))}
               <SidebarItem icon={<Wallet size={18} />} label="Finanzas" href="/dashboard/royalties" active={pathname === '/dashboard/royalties'} isOpen={isSidebarOpen} />
             </SidebarSection>
-
+            
+            {/* Solo mostrar Marketing si no es plan FREE o si son herramientas básicas */}
             <SidebarSection title="Marketing" isOpen={isSidebarOpen}>
               {NAV_ITEMS.filter(i => i.section === 'marketing').map(item => {
-                if ((item as any).requiresPro && userPlan === 'FREE') return null;
+                // Ocultar The Lab si no es PRO o LABEL
+                if (item.label === 'The Lab (AI)' && userPlan === 'FREE') return null;
                 return (
                   <SidebarItem 
                     key={item.href} 
@@ -324,7 +326,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </SidebarSection>
 
             <SidebarSection title="Organización" isOpen={isSidebarOpen}>
-              <SidebarItem icon={<User size={18} />} label="Equipo" href="/dashboard/team" active={pathname === '/dashboard/team'} isOpen={isSidebarOpen} />
+              {/* Ocultar Equipo si no es LABEL */}
+              {userPlan === 'LABEL' && (
+                <SidebarItem icon={<User size={18} />} label="Equipo" href="/dashboard/team" active={pathname === '/dashboard/team'} isOpen={isSidebarOpen} />
+              )}
               <SidebarItem icon={<Settings size={18} />} label="Ajustes" href="/dashboard/settings" active={pathname === '/dashboard/settings'} isOpen={isSidebarOpen} />
             </SidebarSection>
 

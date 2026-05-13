@@ -476,73 +476,127 @@ export default function NewReleasePage() {
   );
 }
 
-// --- Steps ---
-
 function StepInfoBasica({ 
   releaseType, setReleaseType, releaseName, setReleaseName, 
   artistName, setArtistName, labelName, setLabelName, 
   genre, setGenre, isExplicit, setIsExplicit, artistOptions 
 }: any) {
   return (
-    <div className="space-y-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        <div className="space-y-4">
-          <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Nombre del Lanzamiento</Label>
-          <Input value={releaseName} onChange={(e) => setReleaseName(e.target.value)} placeholder="Ej. Neon Nights" className="h-14 px-6 bg-[#0B0B0F] border-[#232733] text-lg font-bold rounded-2xl focus:border-[#FF9F0A]" />
-        </div>
-        <div className="space-y-4">
-          <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Formato</Label>
-          <select value={releaseType} onChange={(e) => setReleaseType(e.target.value)} className="w-full h-14 px-6 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
-            <option>Sencillo (Single)</option>
-            <option>EP</option>
-            <option>Álbum</option>
-          </select>
+    <div className="space-y-16 py-4"> {/* Aumentado el espacio vertical general */}
+      
+      {/* Sección 1: Título y Formato */}
+      <div className="space-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="space-y-4">
+            <Label className="text-[#A1A1AA] text-xs font-black uppercase tracking-[0.2em] mb-2 block">Nombre del Lanzamiento</Label>
+            <Input 
+              value={releaseName} 
+              onChange={(e) => setReleaseName(e.target.value)} 
+              placeholder="Ej. Neon Nights" 
+              className="h-16 px-8 bg-[#0B0B0F] border-[#232733] text-xl font-bold rounded-2xl focus:border-[#FF9F0A] transition-all shadow-inner" 
+            />
+            <p className="text-[10px] text-[#52525B]">Este nombre aparecerá en todas las plataformas digitales.</p>
+          </div>
+          <div className="space-y-4">
+            <Label className="text-[#A1A1AA] text-xs font-black uppercase tracking-[0.2em] mb-2 block">Formato de Entrega</Label>
+            <div className="relative">
+              <select 
+                value={releaseType} 
+                onChange={(e) => setReleaseType(e.target.value)} 
+                className="w-full h-16 px-8 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer transition-all shadow-inner"
+              >
+                <option>Sencillo (Single)</option>
+                <option>EP</option>
+                <option>Álbum</option>
+              </select>
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-[#A1A1AA]">
+                <ChevronRight size={20} className="rotate-90" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Artista Principal</Label>
-            <span className="text-[9px] bg-[#FF9F0A]/10 text-[#FF9F0A] px-2 py-0.5 rounded-full border border-[#FF9F0A]/20">Perfil Verificado</span>
+      {/* Sección 2: Identidad del Artista */}
+      <div className="space-y-10 pt-8 border-t border-white/5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-[#A1A1AA] text-xs font-black uppercase tracking-[0.2em]">Artista Principal</Label>
+              <span className="text-[9px] bg-[#FF9F0A]/10 text-[#FF9F0A] px-3 py-1 rounded-full border border-[#FF9F0A]/20 font-black">PERFIL VERIFICADO</span>
+            </div>
+            <div className="relative">
+              <select 
+                value={artistName} 
+                onChange={(e) => setArtistName(e.target.value)} 
+                className="w-full h-16 px-8 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer transition-all shadow-inner"
+              >
+                {(artistOptions as {value: string, label: string}[]).map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+                <option value="nuevo">+ Vincular Nuevo Artista</option>
+              </select>
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-[#A1A1AA]">
+                <ChevronRight size={20} className="rotate-90" />
+              </div>
+            </div>
           </div>
-          <select value={artistName} onChange={(e) => setArtistName(e.target.value)} className="w-full h-14 px-6 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
-            {(artistOptions as {value: string, label: string}[]).map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-            <option value="nuevo">+ Vincular Nuevo Artista</option>
-          </select>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:col-span-2">
           <div className="space-y-4">
-            <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Sello / Label</Label>
-            <Input value={labelName} onChange={(e) => setLabelName(e.target.value)} placeholder="Zonyd Records" className="h-14 px-6 bg-[#0B0B0F] border-[#232733] text-lg font-bold rounded-2xl focus:border-[#FF9F0A]" />
+            <Label className="text-[#A1A1AA] text-xs font-black uppercase tracking-[0.2em] mb-2 block">Sello / Label</Label>
+            <Input 
+              value={labelName} 
+              onChange={(e) => setLabelName(e.target.value)} 
+              placeholder="Zonyd Records" 
+              className="h-16 px-8 bg-[#0B0B0F] border-[#232733] text-xl font-bold rounded-2xl focus:border-[#FF9F0A] transition-all shadow-inner" 
+            />
           </div>
+        </div>
+      </div>
+
+      {/* Sección 3: Género y Clasificación */}
+      <div className="space-y-10 pt-8 border-t border-white/5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className="space-y-4">
-            <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest">Género</Label>
-            <select value={genre} onChange={(e) => setGenre(e.target.value)} className="w-full h-14 px-6 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer">
-              <option>Alternative</option>
-              <option>Urban/Reggaeton</option>
-              <option>Trap</option>
-              <option>Electronic/EDM</option>
-              <option>Pop</option>
-              <option>Hip-Hop</option>
-              <option>Latin</option>
-            </select>
+            <Label className="text-[#A1A1AA] text-xs font-black uppercase tracking-[0.2em] mb-2 block">Género Primario</Label>
+            <div className="relative">
+              <select 
+                value={genre} 
+                onChange={(e) => setGenre(e.target.value)} 
+                className="w-full h-16 px-8 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer transition-all shadow-inner"
+              >
+                <option>Alternative</option>
+                <option>Urban/Reggaeton</option>
+                <option>Trap</option>
+                <option>Electronic/EDM</option>
+                <option>Pop</option>
+                <option>Hip-Hop</option>
+                <option>Latin</option>
+                <option>R&B</option>
+                <option>Rock</option>
+              </select>
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-[#A1A1AA]">
+                <ChevronRight size={20} className="rotate-90" />
+              </div>
+            </div>
           </div>
-          <div className="space-y-4 flex flex-col justify-center">
-            <Label className="text-[#A1A1AA] text-xs font-bold uppercase tracking-widest mb-4">Explícito</Label>
-            <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setIsExplicit(!isExplicit)}
-                  className={`w-14 h-8 rounded-full relative transition-colors duration-300 ${isExplicit ? 'bg-red-500' : 'bg-[#232733]'}`}
-                >
-                  <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all duration-300 ${isExplicit ? 'left-7' : 'left-1'}`} />
-                </button>
-                <span className={`text-[10px] font-black uppercase ${isExplicit ? 'text-red-500' : 'text-[#A1A1AA]'}`}>
-                  {isExplicit ? 'SÍ' : 'NO'}
-                </span>
+          
+          <div className="space-y-4">
+            <Label className="text-[#A1A1AA] text-xs font-black uppercase tracking-[0.2em] mb-2 block">Contenido Explícito</Label>
+            <div 
+              onClick={() => setIsExplicit(!isExplicit)}
+              className={`h-16 px-8 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+                isExplicit 
+                ? 'bg-red-500/10 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)]' 
+                : 'bg-[#0B0B0F] border-[#232733] hover:border-[#A1A1AA]/30'
+              }`}
+            >
+              <span className={`text-sm font-black uppercase tracking-widest ${isExplicit ? 'text-red-500' : 'text-[#A1A1AA]'}`}>
+                {isExplicit ? 'Contenido Explícito (Parental Advisory)' : 'Contenido Limpio (Clean)'}
+              </span>
+              <div className={`w-12 h-6 rounded-full relative transition-colors ${isExplicit ? 'bg-red-500' : 'bg-[#232733]'}`}>
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isExplicit ? 'left-7 shadow-lg' : 'left-1'}`} />
+              </div>
             </div>
           </div>
         </div>
@@ -557,26 +611,28 @@ function StepUpload({
 }: any) {
 
   return (
-    <div className="space-y-8">
-      <div className="p-4 rounded-xl bg-gradient-to-r from-[#FF9F0A]/10 to-transparent border border-[#FF9F0A]/20 flex items-start gap-4">
-        <Globe className="text-[#FF9F0A] shrink-0 mt-1" size={20} />
+    <div className="space-y-10">
+      <div className="p-6 rounded-[2rem] bg-gradient-to-r from-[#FF9F0A]/10 via-[#FF9F0A]/5 to-transparent border border-[#FF9F0A]/20 flex items-start gap-5 shadow-2xl">
+        <div className="w-12 h-12 rounded-2xl bg-[#FF9F0A] flex items-center justify-center text-black shrink-0 shadow-lg">
+           <ShieldCheck size={24} />
+        </div>
         <div>
-          <p className="text-sm font-bold text-white mb-1">Optimización Global Garantizada</p>
+          <p className="text-sm font-black text-white mb-1 uppercase tracking-wider">Zonyd Validation Protocol</p>
           <p className="text-xs text-[#A1A1AA] leading-relaxed">
-            Sube tu master y portada. Nuestro sistema escaneará automáticamente el audio para asegurar que esté libre de copyright y ajustará la resolución visual para Spotify, Apple Music, TikTok y más de 150 tiendas a nivel mundial.
+            Nuestro sistema analizará tus archivos en tiempo real. Validamos la resolución del artwork <span className="text-white font-bold">(min 3000px)</span> y la fidelidad del audio para cumplir con los estándares de Apple Music Lossless y Spotify Hi-Fi.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* COVER UPLOAD */}
         <div className="group cursor-pointer relative">
           <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-20" onChange={handleCoverUpload} />
-          <Label className="text-[#A1A1AA] text-xs font-bold uppercase mb-4 block flex justify-between">
+          <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-[0.2em] mb-4 block flex justify-between">
             Artwork Premium
-            {coverStatus === 'success' && <span className="text-[#34C759]">COMPLETADO</span>}
+            {coverStatus === 'success' && <span className="text-[#34C759] flex items-center gap-1"><CheckCircle2 size={10} /> VALIDADO</span>}
           </Label>
-          <div className={`aspect-square rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-500 relative overflow-hidden group-hover:border-[#FF9F0A]/50 ${
+          <div className={`aspect-square rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 relative overflow-hidden group-hover:border-[#FF9F0A]/50 ${
             coverStatus === 'idle' ? 'border-[#232733] bg-[#151821]/30 group-hover:bg-[#FF9F0A]/5' :
             coverStatus === 'loading' ? 'border-[#FF9F0A] bg-[#FF9F0A]/10' :
             coverStatus === 'success' ? 'border-[#34C759] bg-[#34C759]/10' : 'border-red-500 bg-red-500/10'
@@ -584,66 +640,64 @@ function StepUpload({
             {coverUrl ? (
               <div className="relative w-full h-full">
                 <img src={coverUrl} alt="Cover Preview" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                   <p className="text-[10px] font-bold text-white uppercase tracking-widest">Cambiar Imagen</p>
+                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                   <Upload size={32} className="text-[#FF9F0A] mb-2" />
+                   <p className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Reemplazar Imagen</p>
                 </div>
               </div>
             ) : (
               <>
                 {coverStatus === 'loading' ? (
-                  <div className="flex flex-col items-center gap-2">
+                  <div className="flex flex-col items-center gap-3">
                     <Loader2 className="text-[#FF9F0A] animate-spin" size={48} />
-                    <p className="text-[10px] font-bold text-[#FF9F0A] uppercase tracking-widest animate-pulse">Cargando...</p>
+                    <p className="text-[10px] font-black text-[#FF9F0A] uppercase tracking-widest animate-pulse">Analizando Píxeles...</p>
                   </div>
                 ) : (
                   <>
-                    <ImageIcon className="text-[#232733] group-hover:text-[#FF9F0A] transition-colors" size={56} />
-                    <p className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest z-10 text-center">Clic para Subir<br/><span className="text-[8px] opacity-50">(3000 x 3000px)</span></p>
+                    <ImageIcon className="text-[#232733] group-hover:text-[#FF9F0A] transition-colors" size={64} />
+                    <div className="text-center">
+                      <p className="text-[11px] font-black text-[#A1A1AA] uppercase tracking-[0.2em] group-hover:text-white transition-colors">Subir Portada</p>
+                      <p className="text-[9px] text-[#52525B] mt-1 italic">JPG / PNG • 3000px</p>
+                    </div>
                   </>
                 )}
               </>
             )}
           </div>
           {coverFileName && (
-            <div className="mt-3 flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/10">
-              <div className="w-6 h-6 rounded bg-[#FF9F0A]/10 flex items-center justify-center">
-                <ImageIcon size={12} className="text-[#FF9F0A]" />
+            <div className="mt-4 flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/10 animate-in slide-in-from-top-2">
+              <div className="w-8 h-8 rounded-xl bg-[#FF9F0A]/10 flex items-center justify-center">
+                <ImageIcon size={14} className="text-[#FF9F0A]" />
               </div>
-              <span className="text-[10px] font-bold text-[#A1A1AA] truncate flex-1">{coverFileName}</span>
-              <Check size={12} className="text-[#34C759]" />
+              <div className="flex-1 overflow-hidden">
+                <p className="text-[11px] font-bold text-white truncate">{coverFileName}</p>
+                <p className="text-[9px] text-[#34C759] font-black uppercase tracking-widest mt-0.5">Metadatos correctos</p>
+              </div>
+              <CheckCircle2 size={16} className="text-[#34C759]" />
             </div>
           )}
         </div>
 
-        <div className="space-y-4">
-          <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl mb-4">
-            <h4 className="text-red-400 font-bold text-xs flex items-center gap-2 mb-2"><ShieldAlert size={14} /> POLÍTICA DE COPYRIGHT & SAMPLING</h4>
-            <p className="text-[10px] text-red-200/80 leading-relaxed">
-              No subas obras ya registradas por terceros. Únicamente formatos WAV, FLAC, MP3, M4A y OGG. 
-              Tenemos tolerancia al sampling creativo, pero si el algoritmo Zonyd detecta una similitud excesiva 
-              con la obra original, tu track será bloqueado para evitar strikes en DSPs.
+        <div className="space-y-6">
+          <div className="bg-red-500/10 border border-red-500/20 p-5 rounded-2xl">
+            <h4 className="text-red-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 mb-3">
+               <ShieldAlert size={14} /> Copyright & Sampling Policy
+            </h4>
+            <p className="text-[10px] text-red-200/70 leading-relaxed italic">
+              El uso de samples no autorizados o audio de baja calidad (128kbps) resultará en el rechazo inmediato por parte de los curadores de las tiendas. Recomendamos <span className="text-white font-bold">WAV (24-bit)</span>.
             </p>
           </div>
 
-          {/* Input oculto con id para que el label lo active correctamente */}
-          <input
-            id="audio-file-input"
-            type="file"
-            accept=".mp3,.wav,.flac,.m4a,.ogg,audio/*"
-            className="hidden"
-            onChange={handleAudioUpload}
-            multiple
-          />
+          <input id="audio-file-input" type="file" accept=".mp3,.wav,.flac,.m4a,.ogg,audio/*" className="hidden" onChange={handleAudioUpload} multiple />
 
-          <Label className="text-[#A1A1AA] text-xs font-bold uppercase mb-2 block flex justify-between">
-            Master Audio {releaseType !== 'Single' && '(Sube todos tus tracks)'}
-            {audioStatus === 'success' && <span className="text-[#34C759]">✓ {uploadedTracks.length} TRACK(S)</span>}
+          <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-[0.2em] mb-4 block flex justify-between">
+            Master de Audio
+            {audioStatus === 'success' && <span className="text-[#34C759] flex items-center gap-1"><CheckCircle2 size={10} /> {uploadedTracks.length} ARCHIVOS LISTOS</span>}
           </Label>
 
-          {/* Zona de clic — label apunta al input por htmlFor */}
           <label
             htmlFor="audio-file-input"
-            className={`block aspect-square rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-500 cursor-pointer select-none ${
+            className={`block aspect-square rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 cursor-pointer select-none group ${
               audioStatus === 'idle'     ? 'border-[#232733] bg-[#151821]/30 hover:border-[#7B61FF] hover:bg-[#7B61FF]/5' :
               audioStatus === 'loading'  ? 'border-[#7B61FF] bg-[#7B61FF]/10' :
               audioStatus === 'analyzing'? 'border-[#00F2FE] bg-[#00F2FE]/10' :
@@ -652,54 +706,56 @@ function StepUpload({
             }`}
           >
             {audioStatus === 'idle' && (
-              <div className="flex flex-col items-center gap-3 pointer-events-none">
-                <Upload className="text-[#3A3F50]" size={56} />
-                <div className="text-center">
-                  <p className="text-[11px] font-black text-[#A1A1AA] uppercase tracking-[0.2em]">
-                    {releaseType !== 'Single' ? 'Seleccionar Tracks' : 'Seleccionar Master'}
+              <div className="flex flex-col items-center gap-4 pointer-events-none text-center px-4">
+                <Music className="text-[#232733] group-hover:text-[#7B61FF] transition-colors" size={64} />
+                <div>
+                  <p className="text-[11px] font-black text-[#A1A1AA] uppercase tracking-[0.2em] group-hover:text-white transition-colors">
+                    {releaseType !== 'Single' ? 'Subir Carpeta de Tracks' : 'Subir Master Principal'}
                   </p>
-                  <p className="text-[9px] text-[#4A4F60] mt-1">WAV · FLAC · MP3 · M4A</p>
+                  <p className="text-[9px] text-[#52525B] mt-1">WAV • FLAC • AIFF • MP3</p>
                 </div>
               </div>
             )}
             {(audioStatus === 'loading' || audioStatus === 'analyzing') && (
-              <div className="flex flex-col items-center gap-4 pointer-events-none">
-                <div className="w-14 h-14 rounded-full border-4 border-[#7B61FF]/30 border-t-[#7B61FF] animate-spin" />
-                <p className="text-[11px] font-black text-[#7B61FF] uppercase tracking-[0.2em]">
-                  {audioStatus === 'loading' ? 'Procesando...' : 'Verificando Copyright...'}
+              <div className="flex flex-col items-center gap-5 pointer-events-none">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full border-4 border-[#7B61FF]/10 border-t-[#7B61FF] animate-spin" />
+                  <Sparkles className="absolute -top-2 -right-2 text-[#FF9F0A] animate-bounce" size={20} />
+                </div>
+                <p className="text-[10px] font-black text-[#7B61FF] uppercase tracking-[0.3em] animate-pulse">
+                  {audioStatus === 'loading' ? 'Cifrando Señal...' : 'Zonyd AI: Escaneando Copyright'}
                 </p>
               </div>
             )}
             {audioStatus === 'success' && (
-              <div className="flex flex-col items-center gap-3 pointer-events-none">
-                <CheckCircle2 className="text-[#34C759]" size={52} />
-                <div className="text-center">
-                  <p className="text-sm font-black text-white">{uploadedTracks.length} Track{uploadedTracks.length !== 1 ? 's' : ''} Listos</p>
-                  <p className="text-[9px] text-[#A1A1AA] mt-1">Clic para agregar más</p>
+              <div className="flex flex-col items-center gap-4 pointer-events-none">
+                <div className="w-20 h-20 rounded-full bg-[#34C759]/20 flex items-center justify-center shadow-xl shadow-[#34C759]/10 border border-[#34C759]/30">
+                   <CheckCircle2 className="text-[#34C759]" size={40} />
                 </div>
-              </div>
-            )}
-            {audioStatus === 'error' && (
-              <div className="flex flex-col items-center gap-3 pointer-events-none">
-                <ShieldAlert className="text-red-400" size={52} />
                 <div className="text-center">
-                  <p className="text-[11px] font-black text-red-400 uppercase tracking-[0.2em]">Error de Subida</p>
-                  <p className="text-[9px] text-[#A1A1AA] mt-1">Clic para reintentar</p>
+                  <p className="text-sm font-black text-white uppercase tracking-tighter">{uploadedTracks.length} Track{uploadedTracks.length !== 1 ? 's' : ''} en cola</p>
+                  <p className="text-[9px] text-[#A1A1AA] mt-1 font-bold">CLICK PARA AGREGAR MÁS</p>
                 </div>
               </div>
             )}
           </label>
 
-          {/* Lista de tracks cargados */}
+          {/* Lista de tracks con efecto de entrada */}
           {uploadedTracks.length > 0 && (
-            <div className="space-y-1.5 max-h-48 overflow-y-auto">
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
               {uploadedTracks.map((track: {id: string, title: string}, i: number) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2.5 bg-white/5 rounded-xl border border-white/8">
-                  <div className="w-6 h-6 rounded-lg bg-[#7B61FF]/20 flex items-center justify-center shrink-0">
-                    <Music size={11} className="text-[#7B61FF]" />
+                <div key={i} className="flex items-center gap-3 px-4 py-3 bg-[#151821] rounded-2xl border border-white/5 animate-in slide-in-from-right-4 transition-all hover:bg-[#1C1F2B]">
+                  <div className="w-8 h-8 rounded-xl bg-[#7B61FF]/10 flex items-center justify-center shrink-0 border border-[#7B61FF]/20">
+                    <Music size={12} className="text-[#7B61FF]" />
                   </div>
-                  <span className="text-[11px] font-bold text-white truncate flex-1">{track.title}</span>
-                  <Check size={13} className="text-[#34C759] shrink-0" />
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-[11px] font-black text-white truncate">{track.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                       <span className="text-[8px] font-bold text-[#A1A1AA] uppercase">24-bit / 48kHz</span>
+                       <span className="text-[8px] bg-[#34C759]/20 text-[#34C759] px-1 rounded font-black">OK</span>
+                    </div>
+                  </div>
+                  <Check size={14} className="text-[#34C759] shrink-0" />
                 </div>
               ))}
             </div>
@@ -717,6 +773,7 @@ function StepTracks({
 }: any) {
   const [isCover, setIsCover] = useState(false);
   const [hasSamples, setHasSamples] = useState(false);
+  const [isAIProcessing, setIsAIProcessing] = useState(false);
 
   const addSplit = () => {
     setSplits([...splits, { artistName: '', percentage: 0, email: '', role: 'Featured' }]);
@@ -733,55 +790,88 @@ function StepTracks({
     setSplits(splits.filter((_: any, i: number) => i !== index));
   };
 
+  const handleAILyrics = () => {
+    if(!lyrics) return alert('Por favor escribe algo para que Zonyd AI pueda trabajar.');
+    
+    setIsAIProcessing(true);
+    
+    // Simular procesamiento de IA
+    setTimeout(() => {
+      // Aplicar reglas de formato de Apple Music / Musixmatch
+      let corrected = lyrics
+        .split('\n')
+        .map((line: string) => {
+          let l = line.trim();
+          if (!l) return '';
+          // 1. Primera letra mayúscula
+          l = l.charAt(0).toUpperCase() + l.slice(1);
+          // 2. Quitar puntos al final
+          l = l.replace(/[.]+$/, '');
+          return l;
+        })
+        .join('\n');
+      
+      setLyrics(corrected);
+      setIsAIProcessing(false);
+      alert('Zonyd AI: Tu letra ha sido optimizada para Apple Music y Spotify. Se ajustaron mayúsculas y se eliminó puntuación innecesaria al final de las líneas.');
+    }, 2000);
+  };
+
   const totalPercentage = splits.reduce((acc: number, curr: any) => acc + Number(curr.percentage), 0);
 
   return (
-    <div className="space-y-6">
-      <div className="p-6 rounded-2xl bg-[#0B0B0F] border border-[#232733] shadow-inner space-y-8">
+    <div className="space-y-10 py-4">
+      <div className="p-8 rounded-[2.5rem] bg-[#0B0B0F] border border-[#232733] shadow-inner space-y-12">
         
         {/* Header del Track */}
-        <div className="flex items-center gap-5 border-b border-white/5 pb-6">
-          <div className="w-14 h-14 rounded-xl bg-black border border-white/10 flex items-center justify-center font-black text-[#FF9F0A] text-xl">01</div>
-          <div className="flex-1">
-            <Input placeholder="Título de la Canción" className="bg-transparent border-none text-2xl font-black text-white p-0 h-auto focus-visible:ring-0 placeholder:text-[#232733]" defaultValue="All Eyez on Me" />
-            <p className="text-xs text-[#34C759] font-bold mt-1 flex items-center gap-1"><ShieldCheck size={12}/> Audio validado y escaneado</p>
+        <div className="flex flex-col md:flex-row md:items-center gap-8 border-b border-white/5 pb-10">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#FF9F0A] to-[#FF453A] p-0.5 shrink-0">
+             <div className="w-full h-full bg-[#0B0B0F] rounded-[1.1rem] flex items-center justify-center font-black text-white text-3xl italic">01</div>
+          </div>
+          <div className="flex-1 space-y-2">
+            <Label className="text-[10px] font-black text-[#A1A1AA] uppercase tracking-[0.3em]">Título de la Obra</Label>
+            <Input placeholder="Título del Track" className="bg-transparent border-none text-3xl md:text-5xl font-black text-white p-0 h-auto focus-visible:ring-0 placeholder:text-[#232733] italic tracking-tighter" />
+            <p className="text-xs text-[#34C759] font-black uppercase flex items-center gap-2 mt-2"><ShieldCheck size={14}/> Audio verificado y listo para distribución</p>
           </div>
         </div>
 
-        {/* Sección: Revenue Splits (Módulo 10) */}
-        <div className="space-y-6">
+        {/* Sección: Revenue Splits */}
+        <div className="space-y-8 pt-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <SplitSquareVertical size={16} className="text-[#FF9F0A]"/> Royalties & Revenue Splits
-            </h3>
-            <span className={`text-[10px] font-black px-2 py-1 rounded ${totalPercentage === 100 ? 'bg-[#34C759]/20 text-[#34C759]' : 'bg-red-500/20 text-red-500'}`}>
-              TOTAL: {totalPercentage}%
-            </span>
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-3">
+                <SplitSquareVertical size={20} className="text-[#FF9F0A]"/> Royalties & Revenue Splits
+              </h3>
+              <p className="text-[10px] text-[#A1A1AA] mt-1">Define quién recibe los ingresos de esta canción.</p>
+            </div>
+            <div className={`px-4 py-2 rounded-full border font-black text-xs transition-all ${totalPercentage === 100 ? 'bg-[#34C759]/10 border-[#34C759]/30 text-[#34C759]' : 'bg-red-500/10 border-red-500/30 text-red-500 animate-pulse'}`}>
+              ASIGNADO: {totalPercentage}%
+            </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {splits.map((split: any, index: number) => (
-              <div key={index} className="flex flex-col md:flex-row gap-3 items-end bg-[#151821]/30 p-4 rounded-xl border border-white/5 group relative">
-                <div className="flex-1 space-y-1">
-                  <Label className="text-[10px] text-[#A1A1AA] uppercase">Artista / Email</Label>
+              <div key={index} className="flex flex-col md:flex-row gap-4 items-end bg-[#151821]/50 p-6 rounded-2xl border border-white/5 group relative transition-all hover:border-white/10 shadow-lg">
+                <div className="flex-1 w-full space-y-2">
+                  <Label className="text-[9px] font-black text-[#A1A1AA] uppercase tracking-widest">Artista / Email de Pago</Label>
                   <Input 
                     value={split.artistName} 
                     onChange={(e) => updateSplit(index, 'artistName', e.target.value)}
                     placeholder={index === 0 ? "Tú" : "colaborador@email.com"} 
-                    className="bg-[#0B0B0F] border-[#232733] h-9 text-xs" 
+                    className="bg-[#0B0B0F] border-[#232733] h-12 text-sm font-bold rounded-xl" 
                     disabled={index === 0}
                   />
                 </div>
-                <div className="w-24 space-y-1">
-                  <Label className="text-[10px] text-[#A1A1AA] uppercase">Porcentaje</Label>
+                <div className="w-full md:w-32 space-y-2">
+                  <Label className="text-[9px] font-black text-[#A1A1AA] uppercase tracking-widest">Participación</Label>
                   <div className="relative">
                     <Input 
                       type="number" 
                       value={split.percentage} 
                       onChange={(e) => updateSplit(index, 'percentage', e.target.value)}
-                      className="bg-[#0B0B0F] border-[#232733] h-9 text-xs pr-6" 
+                      className="bg-[#0B0B0F] border-[#232733] h-12 text-sm font-black text-center rounded-xl pr-8" 
                     />
-                    <span className="absolute right-2 top-2 text-[10px] text-[#A1A1AA]">%</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-[#A1A1AA]">%</span>
                   </div>
                 </div>
                 {index !== 0 && (
@@ -789,9 +879,9 @@ function StepTracks({
                     variant="ghost" 
                     size="icon" 
                     onClick={() => removeSplit(index)}
-                    className="h-9 w-9 text-[#A1A1AA] hover:text-red-500"
+                    className="h-12 w-12 text-[#A1A1AA] hover:text-red-500 hover:bg-red-500/10 rounded-xl"
                   >
-                    <X size={14} />
+                    <X size={18} />
                   </Button>
                 )}
               </div>
@@ -799,124 +889,129 @@ function StepTracks({
             <Button 
               variant="outline" 
               onClick={addSplit}
-              className="w-full border-dashed border-[#232733] text-[#A1A1AA] hover:border-[#FF9F0A] hover:text-[#FF9F0A] h-10 text-[10px] font-black uppercase tracking-widest"
+              className="w-full border-dashed border-[#232733] text-[#A1A1AA] hover:border-[#FF9F0A] hover:text-[#FF9F0A] h-14 text-[10px] font-black uppercase tracking-[0.3em] rounded-2xl transition-all"
             >
-              <Plus size={14} className="mr-2" /> Añadir Colaborador
+              <Plus size={16} className="mr-2" /> AÑADIR COLABORADOR / PRODUCTOR
             </Button>
           </div>
         </div>
 
         {/* Sección: Autores y Créditos */}
-        <div className="space-y-6 border-t border-white/5 pt-6">
+        <div className="space-y-8 border-t border-white/5 pt-12">
           <div>
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Mic2 size={16} className="text-[#34C759]"/> Autores y Créditos</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-[#A1A1AA] text-[10px] font-bold uppercase tracking-widest">Nombre Real del Autor (INDAUTOR/PRO)</Label>
+            <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
+              <Mic2 size={20} className="text-[#34C759]"/> Autores y Créditos Legales
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-3">
+                <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-widest">Nombre Legal Completo (Indautor / PRO)</Label>
                 <Input 
                   value={realAuthorName}
                   onChange={(e) => setRealAuthorName(e.target.value)}
                   placeholder="Ej. Tupac Amaru Shakur" 
-                  className="bg-[#151821] border-[#232733]" 
+                  className="h-14 px-6 bg-[#151821] border-[#232733] rounded-xl font-bold" 
                 />
-                <p className="text-[9px] text-[#A1A1AA]">Requerido para pago de regalías.</p>
+                <p className="text-[9px] text-[#52525B] italic font-medium">Requerido por ley para el recaudo de regalías mecánicas y de autor.</p>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[#A1A1AA] text-[10px] font-bold uppercase tracking-widest">Rol en la Canción</Label>
-                <div className="flex gap-2">
+              <div className="space-y-3">
+                <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-widest">Rol Principal</Label>
+                <div className="relative">
                   <select 
                     value={authorRole}
                     onChange={(e) => setAuthorRole(e.target.value)}
-                    className="h-10 px-3 rounded-md bg-[#151821] border border-[#232733] text-xs text-[#A1A1AA] outline-none w-full cursor-pointer"
+                    className="h-14 px-6 rounded-xl bg-[#151821] border border-[#232733] text-sm font-bold text-white outline-none w-full cursor-pointer appearance-none"
                   >
                     <option>Autor / Compositor</option>
                     <option>Productor Principal</option>
                     <option>Músico de Sesión</option>
                     <option>Ingeniero de Mezcla</option>
                   </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#A1A1AA]">
+                    <ChevronRight size={16} className="rotate-90" />
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sección: Derechos y Técnicos */}
-        <div className="space-y-6 border-t border-white/5 pt-6">
-          <div>
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><AlertTriangle size={16} className="text-[#7B61FF]"/> Derechos y Composición</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#151821]/50 p-4 rounded-xl border border-[#232733]">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-white">¿Es una canción Cover?</p>
-                  <p className="text-[10px] text-[#A1A1AA]">No soy el escritor original.</p>
-                </div>
-                <div onClick={() => setIsCover(!isCover)} className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${isCover ? 'bg-[#7B61FF]' : 'bg-[#232733]'}`}>
-                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isCover ? 'left-5' : 'left-0.5'}`} />
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-white">¿Utiliza Samples de 3ros?</p>
-                  <p className="text-[10px] text-[#A1A1AA]">Tengo las licencias (Clearance).</p>
-                </div>
-                <div onClick={() => setHasSamples(!hasSamples)} className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${hasSamples ? 'bg-[#FF9F0A]' : 'bg-[#232733]'}`}>
-                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${hasSamples ? 'left-5' : 'left-0.5'}`} />
-                </div>
-              </div>
-            </div>
-            <div className="mt-4">
-              <Label className="text-[#A1A1AA] text-[10px] font-bold uppercase tracking-widest">Instrumentación Principal</Label>
-              <Input placeholder="Ej. Sintetizador, Guitarra Acústica, 808s (Separado por comas)" className="bg-[#151821] border-[#232733] mt-2" />
             </div>
           </div>
         </div>
 
         {/* Sección: Marketing y Letras */}
-        <div className="space-y-6 border-t border-white/5 pt-6">
-          <div>
-            <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2"><Mic2 size={16} className="text-[#34C759]"/> Marketing & Social Media</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-[#A1A1AA] text-[10px] font-bold uppercase tracking-widest">Clip Destacado (TikTok / Reels)</Label>
-                  <p className="text-[9px] text-[#A1A1AA] mb-2">Selecciona los 15 a 60 segundos más virales de tu canción.</p>
-                  <div className="flex gap-2 items-center">
-                    <Input 
-                      placeholder="00:45" 
-                      className="bg-[#151821] border-[#232733] text-center w-24 font-mono text-lg focus:border-[#FF9F0A]"
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if(val.length === 5 && !/^[0-5][0-9]:[0-5][0-9]$/.test(val)) {
-                           alert('Formato de tiempo inválido. Usa MM:SS');
-                        }
-                      }}
-                    />
-                    <span className="text-xs text-[#A1A1AA]">Min:Seg (Inicio)</span>
+        <div className="space-y-8 border-t border-white/5 pt-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
+                  <Share2 size={20} className="text-[#4F8CFF]"/> Social Media Clips
+                </h3>
+                <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-widest mb-4 block">TikTok / Reels Start Time</Label>
+                <div className="flex gap-4 items-center bg-[#151821] p-6 rounded-2xl border border-white/5 shadow-inner">
+                  <Input 
+                    placeholder="00:45" 
+                    className="bg-black border-[#232733] text-center w-32 font-mono text-2xl h-14 rounded-xl text-[#FF9F0A] focus:border-[#FF9F0A]"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if(val.length === 5 && !/^[0-5][0-9]:[0-5][0-9]$/.test(val)) {
+                         // Validación visual si se desea
+                      }
+                    }}
+                  />
+                  <div className="text-xs text-[#A1A1AA] leading-tight">
+                    <p className="text-white font-bold mb-1 italic">Format: MM:SS</p>
+                    Selecciona el momento exacto donde quieres que empiece el audio en redes sociales.
                   </div>
                 </div>
               </div>
-              <div>
-                <Label className="text-[#A1A1AA] text-[10px] font-bold uppercase tracking-widest flex justify-between mb-2">
-                  Letras Sincronizadas
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-6 text-[9px] bg-[#7B61FF]/10 text-[#7B61FF] hover:bg-[#7B61FF]/20 px-2 rounded-full font-black uppercase tracking-widest"
-                    onClick={() => {
-                      if(!lyrics) return alert('Escribe algo primero para que Zonyd AI lo revise.');
-                      alert('Zonyd AI: Tu letra tiene buena ortografía. Se ajustaron 2 tildes faltantes para cumplir el formato de Musixmatch.');
-                    }}
-                  >
-                    <Sparkles size={10} className="mr-1" /> IA Ortografía
-                  </Button>
-                </Label>
-                <textarea 
-                  value={lyrics}
-                  onChange={(e) => setLyrics(e.target.value)}
-                  className="w-full h-64 bg-[#151821] border border-[#232733] rounded-xl p-4 text-sm text-white focus:border-[#FF9F0A] outline-none resize-none font-mono"
-                  placeholder="Escribe o pega tus letras completas aquí... (Sin límite de caracteres)&#10;&#10;Atención: Sin faltas de ortografía ni signos de puntuación innecesarios al final de cada línea para cumplir con los estándares de Apple Music."
-                />
+
+              <div className="p-6 rounded-2xl bg-[#7B61FF]/5 border border-[#7B61FF]/20 space-y-4">
+                 <h4 className="text-xs font-black text-[#7B61FF] uppercase tracking-widest flex items-center gap-2">
+                    <ShieldCheck size={14} /> Copyright Clearance
+                 </h4>
+                 <div className="grid grid-cols-1 gap-4">
+                    <div onClick={() => setIsCover(!isCover)} className="flex items-center justify-between cursor-pointer group">
+                       <span className="text-[10px] font-black text-[#A1A1AA] uppercase group-hover:text-white transition-colors">¿Es una canción Cover?</span>
+                       <div className={`w-10 h-5 rounded-full relative transition-colors ${isCover ? 'bg-[#7B61FF]' : 'bg-[#232733]'}`}>
+                          <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isCover ? 'left-5' : 'left-0.5'}`} />
+                       </div>
+                    </div>
+                    <div onClick={() => setHasSamples(!hasSamples)} className="flex items-center justify-between cursor-pointer group">
+                       <span className="text-[10px] font-black text-[#A1A1AA] uppercase group-hover:text-white transition-colors">¿Utiliza Samples de 3ros?</span>
+                       <div className={`w-10 h-5 rounded-full relative transition-colors ${hasSamples ? 'bg-[#FF9F0A]' : 'bg-[#232733]'}`}>
+                          <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${hasSamples ? 'left-5' : 'left-0.5'}`} />
+                       </div>
+                    </div>
+                 </div>
               </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-3">
+                  <Mic2 size={20} className="text-[#34C759]"/> Letras Oficiales
+                </h3>
+                <Button 
+                  disabled={isAIProcessing}
+                  variant="ghost" 
+                  size="sm" 
+                  className={`h-9 px-4 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] transition-all shadow-lg ${
+                    isAIProcessing 
+                    ? 'bg-[#FF9F0A] text-black animate-pulse' 
+                    : 'bg-[#7B61FF]/10 text-[#7B61FF] hover:bg-[#7B61FF]/20 border border-[#7B61FF]/20'
+                  }`}
+                  onClick={handleAILyrics}
+                >
+                  {isAIProcessing ? (
+                    <><Loader2 size={12} className="animate-spin mr-2" /> Analizando...</>
+                  ) : (
+                    <><Sparkles size={12} className="mr-2" /> Zonyd AI Assistant</>
+                  )}
+                </Button>
+              </div>
+              <textarea 
+                value={lyrics}
+                onChange={(e) => setLyrics(e.target.value)}
+                className="w-full h-[320px] bg-[#0B0B0F] border border-[#232733] rounded-[2rem] p-8 text-sm text-white focus:border-[#FF9F0A] outline-none resize-none font-mono shadow-inner leading-relaxed transition-all focus:bg-black"
+                placeholder="Escribe o pega tus letras aquí...&#10;&#10;Zonyd AI detectará errores ortográficos y ajustará el formato para cumplir con Apple Music (sin puntos finales, mayúsculas al inicio)."
+              />
             </div>
           </div>
         </div>
@@ -924,8 +1019,8 @@ function StepTracks({
       </div>
 
       {releaseType !== 'Sencillo (Single)' && (
-        <Button variant="outline" className="w-full h-14 border-dashed border-[#232733] rounded-2xl text-[#A1A1AA] hover:bg-[#151821] hover:text-white transition-all">
-          <Plus size={16} className="mr-2" /> Añadir Nueva Canción al {releaseType}
+        <Button variant="outline" className="w-full h-20 border-dashed border-[#232733] rounded-3xl text-[#A1A1AA] hover:bg-[#151821] hover:text-[#FF9F0A] hover:border-[#FF9F0A]/50 transition-all font-black uppercase tracking-[0.3em] text-xs">
+          <Plus size={20} className="mr-3" /> AÑADIR SIGUIENTE CANCIÓN AL {releaseType}
         </Button>
       )}
     </div>

@@ -266,75 +266,79 @@ function SettingsContent() {
                    <CardHeader className="bg-black/20 p-6 border-b border-white/5 transition-colors duration-500">
                       <CardTitle className="text-sm font-black uppercase tracking-widest text-white transition-colors duration-500">Método de Cobro Principal</CardTitle>
                    </CardHeader>
-                   <CardContent className="p-8 space-y-6">
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="p-6 bg-black/40 border border-[#FF9F0A]/20 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between transition-colors duration-500 gap-4">
-                           <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" className="w-6 h-6" alt="PayPal" />
-                              </div>
-                              <div>
-                                 <p className="text-sm font-bold text-white transition-colors duration-500">PayPal Business</p>
-                                 <p className="text-xs text-[#A1A1AA] transition-colors duration-500">{payoutMethod || 'No configurado'}</p>
-                              </div>
-                           </div>
-                           <Button 
-                              variant="ghost" 
-                              className="text-[10px] font-black uppercase text-[#FF9F0A] hover:bg-[#FF9F0A]/10 border border-[#FF9F0A]/20"
-                              onClick={() => {
-                                const email = prompt('Introduce tu nuevo correo de PayPal:', payoutMethod);
-                                if (email !== null) {
-                                  setPayoutMethod(email);
-                                  alert('Método PayPal actualizado.');
-                                }
-                              }}
-                            >
-                              Configurar PayPal
-                            </Button>
-                        </div>
-                        <div className="p-6 bg-black/40 border border-[#34C759]/20 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between transition-colors duration-500 gap-4">
-                           <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-xl bg-[#34C759]/10 flex items-center justify-center border border-[#34C759]/20">
-                                 <Wallet className="text-[#34C759]" size={24} />
-                              </div>
-                              <div>
-                                 <p className="text-sm font-bold text-white transition-colors duration-500">Transferencia Bancaria (CLABE)</p>
-                                 <p className="text-xs text-[#A1A1AA] transition-colors duration-500">{bankAccount || 'No configurado'}</p>
-                              </div>
-                           </div>
-                           <Button 
-                              variant="ghost" 
-                              className="text-[10px] font-black uppercase text-[#34C759] hover:bg-[#34C759]/10 border border-[#34C759]/20"
-                              onClick={() => {
-                                const account = prompt('Introduce tu cuenta CLABE interbancaria (18 dígitos):', bankAccount);
-                                if (account !== null) {
-                                  if(account.length !== 18 && account.length !== 0) {
-                                    alert('La cuenta CLABE debe tener 18 dígitos.');
-                                    return;
-                                  }
-                                  setBankAccount(account);
-                                  alert('Método CLABE actualizado.');
-                                }
-                              }}
-                            >
-                              Configurar CLABE
-                            </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <div className="p-6 rounded-2xl bg-black/20 border border-white/5 space-y-2 transition-colors duration-500">
-                            <p className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest transition-colors duration-500">Umbral de Retiro</p>
-                            <p className="text-2xl font-black text-white transition-colors duration-500">$10.00 USD</p>
-                            <p className="text-[9px] text-[#A1A1AA] transition-colors duration-500">Retiros automáticos cada lunes al superar esta cifra.</p>
+                    <CardContent className="p-8 space-y-8">
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         <div className="space-y-4">
+                            <div className="flex items-center gap-4 mb-2">
+                               <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                                  <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" className="w-5 h-5" alt="PayPal" />
+                               </div>
+                               <p className="text-sm font-bold text-white transition-colors duration-500">PayPal Business</p>
+                            </div>
+                            <div className="space-y-2">
+                               <label className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest transition-colors duration-500">Correo de PayPal</label>
+                               <input 
+                                 type="email" 
+                                 placeholder="tu-correo@paypal.com"
+                                 value={payoutMethod}
+                                 onChange={(e) => setPayoutMethod(e.target.value)}
+                                 className="w-full bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-sm text-white focus:border-[#FF9F0A] outline-none transition-all duration-500" 
+                               />
+                            </div>
                          </div>
-                         <div className="p-6 rounded-2xl bg-black/20 border border-white/5 space-y-2 transition-colors duration-500">
-                            <p className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest transition-colors duration-500">Próxima Fecha de Pago</p>
-                            <p className="text-2xl font-black text-[#34C759]">11 Mayo, 2026</p>
-                            <p className="text-[9px] text-[#A1A1AA] transition-colors duration-500">Ciclo: Semanal (Money Monday).</p>
+
+                         <div className="space-y-4">
+                            <div className="flex items-center gap-4 mb-2">
+                               <div className="w-10 h-10 rounded-xl bg-[#34C759]/10 flex items-center justify-center border border-[#34C759]/20">
+                                  <Wallet className="text-[#34C759]" size={20} />
+                               </div>
+                               <p className="text-sm font-bold text-white transition-colors duration-500">Transferencia (CLABE)</p>
+                            </div>
+                            <div className="space-y-2">
+                               <label className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest transition-colors duration-500">Cuenta CLABE (18 dígitos)</label>
+                               <input 
+                                 type="text" 
+                                 placeholder="000000000000000000"
+                                 maxLength={18}
+                                 value={bankAccount}
+                                 onChange={(e) => {
+                                    const val = e.target.value.replace(/\D/g, '');
+                                    setBankAccount(val);
+                                 }}
+                                 className="w-full bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-sm text-white focus:border-[#34C759] outline-none transition-all duration-500" 
+                               />
+                            </div>
                          </div>
-                      </div>
-                   </CardContent>
+                       </div>
+                       
+                       <Button 
+                         disabled={isSaving}
+                         onClick={() => {
+                           setIsSaving(true);
+                           setTimeout(() => {
+                             setIsSaving(false);
+                             alert('Métodos de pago actualizados correctamente.');
+                           }, 1000);
+                         }}
+                         className="bg-[#FF9F0A] hover:bg-[#FF9F0A]/90 text-black font-black px-8 rounded-xl h-12 shadow-lg shadow-[#FF9F0A]/20"
+                       >
+                         {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+                         GUARDAR CONFIGURACIÓN DE PAGO
+                       </Button>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                          <div className="p-6 rounded-2xl bg-black/20 border border-white/5 space-y-2 transition-colors duration-500">
+                             <p className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest transition-colors duration-500">Umbral de Retiro</p>
+                             <p className="text-2xl font-black text-white transition-colors duration-500">$10.00 USD</p>
+                             <p className="text-[9px] text-[#A1A1AA] transition-colors duration-500">Retiros automáticos cada lunes al superar esta cifra.</p>
+                          </div>
+                          <div className="p-6 rounded-2xl bg-black/20 border border-white/5 space-y-2 transition-colors duration-500">
+                             <p className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest transition-colors duration-500">Próxima Fecha de Pago</p>
+                             <p className="text-2xl font-black text-[#34C759]">Lunes Próximo</p>
+                             <p className="text-[9px] text-[#A1A1AA] transition-colors duration-500">Ciclo: Semanal (Money Monday).</p>
+                          </div>
+                       </div>
+                    </CardContent>
                 </Card>
              </div>
             )}

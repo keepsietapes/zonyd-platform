@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { 
@@ -14,10 +14,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-// Los datos se cargarán dinámicamente del backend
-const data: any[] = [];
-
 import { authFetch } from '@/lib/api';
+import { OnboardingTutorial } from '@/components/dashboard/OnboardingTutorial';
 
 export default function DashboardPage() {
   const [isAIOpen, setIsAIOpen] = useState(false);
@@ -25,7 +23,8 @@ export default function DashboardPage() {
     revenue: 0,
     streams: 0,
     activeReleases: 0,
-    nextPayout: 0
+    nextPayout: 0,
+    activeSmartLinks: 0
   });
   const [recentReleases, setRecentReleases] = useState<any[]>([]);
 
@@ -45,7 +44,8 @@ export default function DashboardPage() {
           revenue: statsData.revenue || 0,
           streams: statsData.streams || 0,
           activeReleases: statsData.activeReleases || 0,
-          nextPayout: statsData.nextPayout || 0
+          nextPayout: statsData.nextPayout || 0,
+          activeSmartLinks: statsData.activeSmartLinks || 0
         });
       }
 
@@ -61,6 +61,7 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-10 selection:bg-[#4F8CFF] selection:text-white pb-4 md:pb-20 animate-in fade-in duration-700">
+      <OnboardingTutorial />
       
       {/* 🚀 HEADER PREMIUM */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -76,11 +77,11 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* 📊 KPI GRID — 2 cols en mobile, 4 en desktop */}
+      {/* 📊 KPI GRID — Dinámico */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-         <MetricCard title="Ingresos Totales" value={`$${stats.revenue.toLocaleString()}`} change="+14.5%" trend="up" icon={<DollarSign className="text-[#32D74B]" size={18} />} />
-         <MetricCard title="Streams Totales" value="1.2M" change="+22.1%" trend="up" icon={<Activity className="text-[#4F8CFF]" size={18} />} />
-         <MetricCard title="SmartLinks Activos" value="24" change="+3" trend="up" icon={<LinkIcon className="text-[#FF9F0A]" size={18} />} />
+         <MetricCard title="Ingresos Totales" value={`$${stats.revenue.toLocaleString()}`} change="0%" trend="none" icon={<DollarSign className="text-[#32D74B]" size={18} />} />
+         <MetricCard title="Streams Totales" value={stats.streams > 1000000 ? `${(stats.streams / 1000000).toFixed(1)}M` : stats.streams.toLocaleString()} change="0%" trend="none" icon={<Activity className="text-[#4F8CFF]" size={18} />} />
+         <MetricCard title="SmartLinks Activos" value={stats.activeSmartLinks.toString()} change="0" trend="none" icon={<LinkIcon className="text-[#FF9F0A]" size={18} />} />
          <MetricCard title="Próximo Pago" value={`$${stats.nextPayout.toLocaleString()}`} change="Money Monday" trend="none" icon={<Wallet className="text-[#BF5AF2]" size={18} />} />
       </div>
 
@@ -97,23 +98,12 @@ export default function DashboardPage() {
                     <p className="text-[10px] text-[#A1A1AA] mt-1">Streaming Global - Datos en tiempo real</p>
                  </div>
                  <BarChart3 className="text-[#4F8CFF]" size={18} />
-              </CardHeader>
-              <CardContent className="p-8 h-[300px]">
-                 <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                       <defs>
-                          <linearGradient id="colorStreams" x1="0" y1="0" x2="0" y2="1">
-                             <stop offset="5%" stopColor="#4F8CFF" stopOpacity={0.3}/>
-                             <stop offset="95%" stopColor="#4F8CFF" stopOpacity={0}/>
-                          </linearGradient>
-                       </defs>
-                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#3A3A3C', fontWeight: 700}} dy={10} />
-                       <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#3A3A3C', fontWeight: 700}} />
-                       <Tooltip contentStyle={{backgroundColor: '#0B0B0F', border: '1px solid #232733', borderRadius: '12px'}} />
-                       <Area type="monotone" dataKey="streams" stroke="#4F8CFF" strokeWidth={4} fill="url(#colorStreams)" animationDuration={2000} />
-                    </AreaChart>
-                 </ResponsiveContainer>
-              </CardContent>
+              </CardHeader>               <CardContent className="p-8 h-[300px]">
+                  <div className="h-full flex flex-col items-center justify-center text-[#232733] space-y-4">
+                     <BarChart3 size={48} className="opacity-10" />
+                     <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Esperando datos de plataformas...</p>
+                  </div>
+               </CardContent>
            </Card>
 
            {/* Lanzamientos Recientes */}
@@ -165,47 +155,56 @@ export default function DashboardPage() {
            </Card>
         </div>
 
-        {/* 🏁 COLUMNA LATERAL (4/12) - FASE 7 */}
+        {/* 🏁 COLUMNA LATERAL (4/12) */}
         <div className="lg:col-span-4 space-y-8">
            
-           {/* Pipeline de Producción */}
+           {/* Pipeline de Producción — Solo se muestra si hay lanzamientos en curso */}
            <Card className="bg-[#151821] border-[#232733] rounded-[2.5rem] overflow-hidden shadow-2xl border-t-4 border-t-[#4F8CFF]">
               <CardHeader className="bg-black/20 p-6 border-b border-white/5">
                  <div className="flex items-center justify-between">
                     <CardTitle className="text-xs font-black uppercase tracking-widest text-white">Producción en Vivo</CardTitle>
                     <div className="flex items-center gap-2">
-                       <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                       <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Tracking</span>
+                       <span className={`w-2 h-2 rounded-full ${recentReleases.some(r => r.status === 'PROCESSING') ? 'bg-blue-500 animate-pulse' : 'bg-[#232733]'}`} />
+                       <span className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest">Tracking</span>
                     </div>
                  </div>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                 <PipelineStep label="Validación de Audio" status="complete" icon={<Music size={14} />} />
-                 <PipelineStep label="Auditoría Copyright" status="complete" icon={<ShieldCheck size={14} />} />
-                 <PipelineStep label="Empaquetado DDEX" status="loading" icon={<Zap size={14} />} />
-                 <PipelineStep label="Carga a Tiendas" status="pending" icon={<Globe size={14} />} />
+                 {recentReleases.some(r => r.status === 'PROCESSING') ? (
+                    <>
+                       <PipelineStep label="Validación de Audio" status="complete" icon={<Music size={14} />} />
+                       <PipelineStep label="Auditoría Copyright" status="complete" icon={<ShieldCheck size={14} />} />
+                       <PipelineStep label="Empaquetado DDEX" status="loading" icon={<Zap size={14} />} />
+                       <PipelineStep label="Carga a Tiendas" status="pending" icon={<Globe size={14} />} />
+                    </>
+                 ) : (
+                    <div className="py-10 text-center space-y-3">
+                       <Zap size={24} className="text-[#232733] mx-auto opacity-20" />
+                       <p className="text-[9px] font-black uppercase tracking-widest text-[#232733]">No hay motores activos</p>
+                    </div>
+                 )}
                  
                  <div className="pt-4 border-t border-white/5">
                     <div className="flex justify-between text-[10px] font-black uppercase text-[#A1A1AA] mb-2">
-                       <span>Progreso Total</span>
-                       <span>65%</span>
+                       <span>Salud del Catálogo</span>
+                       <span>{recentReleases.length > 0 ? '100%' : '0%'}</span>
                     </div>
                     <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden">
-                       <div className="h-full bg-gradient-to-r from-blue-500 to-[#7B61FF] w-[65%] rounded-full shadow-[0_0_10px_rgba(79,140,255,0.4)]" />
+                       <div className={`h-full bg-gradient-to-r from-blue-500 to-[#7B61FF] rounded-full shadow-[0_0_10px_rgba(79,140,255,0.4)] transition-all duration-1000 ${recentReleases.length > 0 ? 'w-full' : 'w-0'}`} />
                     </div>
                  </div>
               </CardContent>
            </Card>
 
-           {/* Live Activity Widget */}
+           {/* Live Activity Widget — Limpio */}
            <Card className="bg-gradient-to-br from-[#0B0B0F] to-[#151821] border-[#232733] rounded-[2.5rem] overflow-hidden relative group border-r-4 border-r-[#FF9F0A]">
               <CardHeader className="p-6 pb-2">
                  <CardTitle className="text-xs font-black uppercase tracking-widest text-[#FF9F0A]">Actividad de Fans</CardTitle>
               </CardHeader>
                <CardContent className="p-6">
                  <div className="text-center py-6 text-[#A1A1AA]">
-                   <Globe className="mx-auto mb-2 opacity-20" size={24} />
-                   <p className="text-xs">No hay actividad reciente.</p>
+                    <Globe className="mx-auto mb-2 opacity-20" size={24} />
+                    <p className="text-xs">Esperando primera interacción...</p>
                  </div>
                </CardContent>
            </Card>
@@ -216,8 +215,12 @@ export default function DashboardPage() {
               </div>
               <div className="relative z-10">
                  <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-4">AI Recommendation</p>
-                 <h3 className="text-xl font-black italic leading-tight">"Tu audiencia en TikTok crece un 15% más rápido."</h3>
-                 <div className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase">VER ESTRATEGIA <ChevronRight size={14} /></div>
+                 <h3 className="text-xl font-black italic leading-tight">
+                    {recentReleases.length === 0 
+                       ? "Sube tu primer track para recibir una estrategia personalizada." 
+                       : "Analizando tendencias de tu último lanzamiento..."}
+                 </h3>
+                 <div className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase">HABLAR CON IA <ChevronRight size={14} /></div>
               </div>
            </div>
         </div>
