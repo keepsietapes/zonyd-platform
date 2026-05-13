@@ -1,14 +1,11 @@
 const { supabase } = require('../utils/supabase');
 
 const authMiddleware = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'TOKEN_REQUERIDO' });
+  const token = req.headers.authorization?.split(' ')[1] || req.query.token;
+    
+  if (!token) {
+    return res.status(401).json({ error: 'Acceso denegado. No se proporcionó un token.' });
   }
-
-  const token = authHeader.split(' ')[1];
-
 
   try {
 

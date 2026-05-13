@@ -233,16 +233,19 @@ function SettingsContent() {
                       <CardTitle className="text-sm font-black uppercase tracking-widest text-white transition-colors duration-500">Redes Sociales Vinculadas</CardTitle>
                    </CardHeader>
                     <CardContent className="p-0">
-                       <a 
-                        href="https://api.zonyd.com/api/spotify/login"
-                        className="block no-underline"
+                       <div 
+                         onClick={() => {
+                            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.zonyd.com';
+                            window.location.href = `${API_BASE}/api/spotify/login?token=${localStorage.getItem('zonyd_token')}`;
+                         }}
+                         className="block cursor-pointer no-underline"
                        >
                          <SocialRow 
                           icon={<CheckCircle2 className="text-[#1DB954]" size={16} />} 
                           label="Spotify for Artists" 
-                          status={artistProfiles[0]?.spotifyUrl ? `Conectado como ${artistName}` : "No vinculado"} 
+                          status={artistProfiles[0]?.spotifyConnected ? `Conectado` : "No vinculado"} 
                          />
-                       </a>
+                       </div>
                        <SocialRow 
                         icon={<CheckCircle2 className={`text-[${artistProfiles[0]?.instagramUrl ? '#E4405F' : '#A1A1AA'}]`} size={16} />} 
                         label="Instagram Music" 
