@@ -19,8 +19,13 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           command_timeout: 60m
           script: |
+            set -e # Abortar si cualquier comando falla
+            
             # Asegurar certificados de seguridad actualizados
             sudo apt-get update && sudo apt-get install -y ca-certificates git
+            
+            # Limpiar espacio en disco antes de intentar construir
+            sudo docker system prune -af || true
             
             # Crear carpeta del proyecto si no existe
             mkdir -p ~/zonyd-platform
