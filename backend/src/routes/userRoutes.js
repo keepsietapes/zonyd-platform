@@ -8,7 +8,7 @@ router.get('/me', authMiddleware, async (req, res) => {
     // req.user viene del middleware de auth (si está configurado)
     // Para simplificar ahora y que funcione el Dashboard:
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+      where: { email: req.user.email },
       include: { artistProfiles: true }
     });
     res.json(user);

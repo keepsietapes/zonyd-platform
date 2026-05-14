@@ -4,8 +4,8 @@ const { sendWelcomeEmail, sendValidationSuccessEmail } = require('../services/em
 async function createOrUpdateArtist(req, res) {
   const { id, stageName, spotifyUrl, appleMusicUrl, bio, genres, country, instagramUrl, tiktokUrl } = req.body;
   try {
-    // Garantizar que el usuario exista en la BD pública
-    await prisma.user.upsert({
+    // Garantizar que el usuario exista en la BD pública, buscando por email para evitar conflictos si el UUID cambió
+    const dbUser = await prisma.user.upsert({
       where: { email: req.user.email },
       update: {},
       create: {
@@ -34,7 +34,7 @@ async function createOrUpdateArtist(req, res) {
     } else {
       // Buscar si ya existe un perfil para este usuario
       const existing = await prisma.artist.findFirst({
-        where: { userId: req.user.id }
+        where: { userId: dbUser.id }
       });
 
       if (existing) {
@@ -55,7 +55,7 @@ async function createOrUpdateArtist(req, res) {
         // Crear nuevo perfil
         artist = await prisma.artist.create({
           data: {
-            userId: req.user.id,
+            userId: dbUser.id,
             stageName: stageName || 'Artista',
             bio,
             genres,
@@ -80,9 +80,9 @@ async function createOrUpdateArtist(req, res) {
 async function getArtistProfile(req, res) {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+      where: { email: req.user.email },
       include: {
-        artists: true
+        artistProfiles: true
       }
     });
 
@@ -90,7 +90,7 @@ async function getArtistProfile(req, res) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const artist = user.artists[0] || null;
+    const artist = user.artistProfiles[0] || null;
 
     // Devolver estado real de conexiones OAuth
     // spotifyConnected es true solo si existe un token OAuth almacenado en la BD
@@ -102,9 +102,9 @@ async function getArtistProfile(req, res) {
     res.json({
       id: user.id,
       email: user.email,
-      displayName: user.displayName || artist?.stageName || '',
+      displayName: user.firstName || artist?.stageName || '',
       plan: user.plan || 'FREE',
-      artists: user.artists,
+      artistProfiles: user.artistProfiles,
       // Estado real de conexiones para el AI Command Center
       spotifyConnected,
       instagramConnected,
