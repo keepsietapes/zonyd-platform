@@ -103,7 +103,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         const res = await authFetch('/api/user/me');
         
         if (res) {
-          const profile = res.artists?.[0];
+          const profile = res.artistProfiles?.[0];
           
           // Si no tiene perfil de artista y no es un admin, obligar al onboarding
           if (!profile && res.role !== 'ADMIN' && res.role !== 'SUPERADMIN') {
