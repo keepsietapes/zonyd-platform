@@ -24,8 +24,16 @@ jobs:
             # Asegurar certificados de seguridad actualizados
             sudo apt-get update && sudo apt-get install -y ca-certificates git
             
-            # Limpiar espacio en disco antes de intentar construir
-            sudo docker system prune -af || true
+            # ── Limpieza agresiva de disco ──────────────────────────
+            # Detener contenedores activos antes de limpiar
+            sudo docker-compose -f docker-compose.prod.yml down --remove-orphans || true
+            # Eliminar todos los contenedores, imágenes, volúmenes y cachés de build
+            sudo docker system prune -af --volumes || true
+            # Limpiar caché de npm acumulada en el host
+            sudo rm -rf /root/.npm/_cacache || true
+            sudo rm -rf /tmp/npm-* || true
+            # Mostrar espacio disponible para verificar en los logs
+            df -h /
             
             # Crear carpeta del proyecto si no existe
             mkdir -p ~/zonyd-platform
