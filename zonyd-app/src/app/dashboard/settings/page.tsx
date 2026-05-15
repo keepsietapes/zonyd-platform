@@ -236,45 +236,126 @@ function SettingsContent() {
                 </Card>
 
                 <Card className="bg-[#151821] border-[#232733] rounded-3xl overflow-hidden transition-colors duration-500">
-                   <CardHeader className="bg-black/20 p-6 border-b border-white/5 transition-colors duration-500">
-                      <CardTitle className="text-sm font-black uppercase tracking-widest text-white transition-colors duration-500">Redes Sociales Vinculadas</CardTitle>
-                   </CardHeader>
-                    <CardContent className="p-0">
-                       <div 
-                         onClick={async () => {
-                            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.zonyd.com';
-                            const { supabase } = await import('@/lib/supabase');
-                            const { data: { session } } = await supabase.auth.getSession();
-                            const token = session?.access_token;
-                            
-                            if (!token) {
-                              alert('Sesión no encontrada. Por favor cierra sesión e inicia de nuevo.');
-                              return;
-                            }
-                            window.open(`${API_BASE}/api/spotify/login?token=${encodeURIComponent(token)}`, '_blank', 'width=500,height=700,scrollbars=yes');
-                         }}
-                         className="block cursor-pointer no-underline"
-                       >
-                         <SocialRow 
-                          icon={<CheckCircle2 className={artistProfiles[0]?.spotifyConnected ? 'text-[#1DB954]' : 'text-[#A1A1AA]'} size={16} />} 
-                          label="Spotify for Artists" 
-                          status={artistProfiles[0]?.spotifyConnected ? `✅ Conectado` : "No vinculado — Clic para conectar"} 
-                         />
-                       </div>
-                       <SocialRow 
-                        icon={<CheckCircle2 className={`text-[${artistProfiles[0]?.instagramUrl ? '#E4405F' : '#A1A1AA'}]`} size={16} />} 
-                        label="Instagram Music" 
-                        status={artistProfiles[0]?.instagramUrl ? "Conectado" : "No vinculado"} 
-                        onClick={() => alert('Configuración de Instagram en desarrollo.')}
-                       />
-                       <SocialRow 
-                        icon={<Plus className="text-[#A1A1AA]" size={16} />} 
-                        label="TikTok Music" 
-                        status="No vinculado" 
-                        onClick={() => alert('Integración con TikTok en proceso de validación.')}
-                       />
-                    </CardContent>
-                </Card>
+                    <CardHeader className="bg-black/20 p-6 border-b border-white/5 transition-colors duration-500">
+                       <CardTitle className="text-sm font-black uppercase tracking-widest text-white transition-colors duration-500">Redes Sociales Vinculadas</CardTitle>
+                    </CardHeader>
+                     <CardContent className="p-6 space-y-6">
+                        {/* Spotify */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-[#A1A1AA]">Spotify for Artists</label>
+                          <div className="flex gap-3">
+                            <input
+                              type="url"
+                              placeholder="https://open.spotify.com/artist/..."
+                              defaultValue={artistProfiles[0]?.spotifyUrl || ''}
+                              id="spotify-url-input"
+                              className="flex-1 bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-sm text-white focus:border-[#1DB954] outline-none transition-all"
+                            />
+                            <Button
+                              disabled={isSaving}
+                              onClick={async () => {
+                                const val = (document.getElementById('spotify-url-input') as HTMLInputElement)?.value || '';
+                                if (val && !/^https:\/\/(open\.spotify\.com\/artist\/|artists\.spotify\.com)/.test(val)) {
+                                  alert('URL de Spotify inválida. Debe ser open.spotify.com/artist/... o artists.spotify.com');
+                                  return;
+                                }
+                                setIsSaving(true);
+                                try {
+                                  const payload: any = { spotifyUrl: val };
+                                  const artistId = artistProfiles[0]?.id;
+                                  if (artistId) payload.id = artistId;
+                                  const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
+                                  if (saved && !saved.error) {
+                                    setArtistProfiles((prev: any[]) => prev.map((p: any) => p.id === saved.id ? { ...p, ...saved } : p));
+                                    alert('✅ Spotify vinculado correctamente.');
+                                  }
+                                } catch (err: any) {
+                                  alert(`❌ ${err.message || 'Error al guardar.'}`);
+                                } finally { setIsSaving(false); }
+                              }}
+                              className="bg-[#1DB954] hover:bg-[#1DB954]/80 text-black font-black px-5 rounded-xl h-12 shrink-0"
+                            >Guardar</Button>
+                          </div>
+                          {artistProfiles[0]?.spotifyUrl && (
+                            <p className="text-[10px] text-[#1DB954] flex items-center gap-1"><CheckCircle2 size={12} /> Vinculado</p>
+                          )}
+                        </div>
+
+                        {/* Instagram */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-[#A1A1AA]">Instagram Music</label>
+                          <div className="flex gap-3">
+                            <input
+                              type="url"
+                              placeholder="https://www.instagram.com/..."
+                              defaultValue={artistProfiles[0]?.instagramUrl || ''}
+                              id="instagram-url-input"
+                              className="flex-1 bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-sm text-white focus:border-[#E4405F] outline-none transition-all"
+                            />
+                            <Button
+                              disabled={isSaving}
+                              onClick={async () => {
+                                const val = (document.getElementById('instagram-url-input') as HTMLInputElement)?.value || '';
+                                setIsSaving(true);
+                                try {
+                                  const payload: any = { instagramUrl: val };
+                                  const artistId = artistProfiles[0]?.id;
+                                  if (artistId) payload.id = artistId;
+                                  const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
+                                  if (saved && !saved.error) {
+                                    setArtistProfiles((prev: any[]) => prev.map((p: any) => p.id === saved.id ? { ...p, ...saved } : p));
+                                    alert('✅ Instagram vinculado correctamente.');
+                                  }
+                                } catch (err: any) {
+                                  alert(`❌ ${err.message || 'Error al guardar.'}`);
+                                } finally { setIsSaving(false); }
+                              }}
+                              className="bg-[#E4405F] hover:bg-[#E4405F]/80 text-white font-black px-5 rounded-xl h-12 shrink-0"
+                            >Guardar</Button>
+                          </div>
+                          {artistProfiles[0]?.instagramUrl && (
+                            <p className="text-[10px] text-[#E4405F] flex items-center gap-1"><CheckCircle2 size={12} /> Vinculado</p>
+                          )}
+                        </div>
+
+                        {/* TikTok */}
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-[#A1A1AA]">TikTok Music</label>
+                          <div className="flex gap-3">
+                            <input
+                              type="url"
+                              placeholder="https://www.tiktok.com/@..."
+                              defaultValue={artistProfiles[0]?.tiktokUrl || ''}
+                              id="tiktok-url-input"
+                              className="flex-1 bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-sm text-white focus:border-white outline-none transition-all"
+                            />
+                            <Button
+                              disabled={isSaving}
+                              onClick={async () => {
+                                const val = (document.getElementById('tiktok-url-input') as HTMLInputElement)?.value || '';
+                                setIsSaving(true);
+                                try {
+                                  const payload: any = { tiktokUrl: val };
+                                  const artistId = artistProfiles[0]?.id;
+                                  if (artistId) payload.id = artistId;
+                                  const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
+                                  if (saved && !saved.error) {
+                                    setArtistProfiles((prev: any[]) => prev.map((p: any) => p.id === saved.id ? { ...p, ...saved } : p));
+                                    alert('✅ TikTok vinculado correctamente.');
+                                  }
+                                } catch (err: any) {
+                                  alert(`❌ ${err.message || 'Error al guardar.'}`);
+                                } finally { setIsSaving(false); }
+                              }}
+                              className="bg-white hover:bg-gray-100 text-black font-black px-5 rounded-xl h-12 shrink-0"
+                            >Guardar</Button>
+                          </div>
+                          {artistProfiles[0]?.tiktokUrl && (
+                            <p className="text-[10px] text-white flex items-center gap-1"><CheckCircle2 size={12} /> Vinculado</p>
+                          )}
+                        </div>
+                     </CardContent>
+                 </Card>
              </div>
            )}
 

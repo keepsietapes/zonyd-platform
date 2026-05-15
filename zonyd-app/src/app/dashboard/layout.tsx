@@ -98,42 +98,45 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // ── Cargar datos del usuario ──────────────────────────────
   useEffect(() => {
     const getUserData = async () => {
+      // Si ya estamos en /onboarding, no redirigir (evita el bucle)
+      if (pathname === '/onboarding') return;
+
       try {
         const { authFetch } = await import('@/lib/api');
         const res = await authFetch('/api/user/me');
-        
-        if (res) {
-          const profile = res.artistProfiles?.[0];
-          
-          // Si no tiene perfil de artista y no es un admin, obligar al onboarding
-          if (!profile && res.role !== 'ADMIN' && res.role !== 'SUPERADMIN') {
-            router.push('/onboarding');
-            return;
-          }
 
-          if (profile?.stageName) {
-            setDisplayName(profile.stageName);
-          } else if (res.email) {
-            const namePart = res.email.split('@')[0];
-            setDisplayName(namePart.charAt(0).toUpperCase() + namePart.slice(1));
-          }
-          
-          if (profile?.plan) {
-            setUserPlan(profile.plan);
-          }
-          
-          setUserEmail(res.email || '');
+        if (!res) return; // 401 o fallo de red — no redirigir
 
-          if (res.role === 'ADMIN' || res.role === 'SUPERADMIN' || res.role === 'LABEL') {
-            setIsAdmin(true);
-          }
+        const profile = res.artistProfiles?.[0];
+
+        // Si no tiene perfil de artista y no es admin, enviar al onboarding UNA SOLA VEZ
+        if (!profile && res.role !== 'ADMIN' && res.role !== 'SUPERADMIN') {
+          router.push('/onboarding');
+          return;
+        }
+
+        if (profile?.stageName) {
+          setDisplayName(profile.stageName);
+        } else if (res.email) {
+          const namePart = res.email.split('@')[0];
+          setDisplayName(namePart.charAt(0).toUpperCase() + namePart.slice(1));
+        }
+
+        if (profile?.plan) {
+          setUserPlan(profile.plan);
+        }
+
+        setUserEmail(res.email || '');
+
+        if (res.role === 'ADMIN' || res.role === 'SUPERADMIN' || res.role === 'LABEL') {
+          setIsAdmin(true);
         }
       } catch (err) {
         console.error('Error cargando layout data:', err);
       }
     };
     getUserData();
-  }, []);
+  }, [pathname]);
 
   // ── Tema persistente ──────────────────────────────────────
   useEffect(() => {
