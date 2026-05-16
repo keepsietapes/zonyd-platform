@@ -1,15 +1,19 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { OpenAI } = require('openai');
+const Anthropic = require('@anthropic-ai/sdk');
 const logger = require('./logger');
 
-// Inicializar Gemini
+// Inicializar Gemini (Principal Gratuito/Balanceado)
 const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
 
-// Inicializar LMStudio / OpenAI Compatible
+// Inicializar Claude (Premium A&R)
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) : null;
+
+// Inicializar LMStudio (Fallback Local Zero-Cost)
 const useLocalModel = process.env.USE_LOCAL_AI === 'true';
 const localAI = new OpenAI({
   baseURL: process.env.LM_STUDIO_URL || 'http://localhost:1234/v1',
-  apiKey: 'lm-studio', // La API key de LM Studio suele ser ignorada, pero requerida por el SDK
+  apiKey: 'lm-studio',
 });
 
 /**
@@ -22,7 +26,16 @@ const localAI = new OpenAI({
  * @returns {Promise<string>} La respuesta generada
  */
 async function generateAIContent(systemPrompt, message, history = []) {
-  // Intentar usar Gemini (Cloud) PRIMERO para ahorrar recursos de la PC local
+  // 1. Intentar usar CLAUDE (Premium) si está configurado
+  if (anthropic) {
+    try {
+      return await generateClaudeContent(systemPrompt, message, history);
+    } catch (err) {
+      logger.warn(`[aiClient] Error en Claude: ${err.message}. Intentando fallback a Gemini...`);
+    }
+  }
+
+  // 2. Intentar usar Gemini (Cloud Balanceado)
   if (genAI) {
     try {
       return await generateGeminiContent(systemPrompt, message, history);
@@ -31,14 +44,53 @@ async function generateAIContent(systemPrompt, message, history = []) {
       if (useLocalModel) {
         return await generateLocalContent(systemPrompt, message, history);
       }
-      throw new Error('Gemini falló y la IA Local no está configurada.');
+      throw new Error('Claude y Gemini fallaron, y la IA Local no está configurada.');
     }
   } else if (useLocalModel) {
-    // Si Gemini no está configurado, intentar directo con Local
+    // 3. Si no hay nube, intentar directo con Local
     return await generateLocalContent(systemPrompt, message, history);
   } else {
-    throw new Error('No hay ningún motor de IA configurado (Ni Gemini ni Local).');
+    throw new Error('No hay ningún motor de IA configurado.');
   }
+}
+
+async function generateClaudeContent(systemPrompt, message, history) {
+  logger.info('[aiClient] Utilizando Anthropic Claude 3.5 Sonnet API');
+  
+  // Mapear historial al formato de Anthropic
+  const messages = [
+    ...history.map(msg => ({ role: msg.role === 'ai' ? 'assistant' : 'user', content: msg.text })),
+    { role: 'user', content: message }
+  ];
+
+  const response = await anthropic.messages.create({
+    model: 'claude-3-5-sonnet-20241022',
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: messages,
+  });
+
+  const outputText = response.content[0].text;
+
+  try {
+    const prisma = require('./prisma');
+    await prisma.auditLog.create({
+      data: {
+        userId: 'SYSTEM',
+        action: 'AI_FEEDBACK_LOOP',
+        details: JSON.stringify({
+          model: 'CLAUDE_3_5_SONNET',
+          inputLength: message.length,
+          outputSnippet: outputText.substring(0, 100),
+          timestamp: new Date().toISOString()
+        })
+      }
+    });
+  } catch (logErr) {
+    logger.warn(`[aiClient] Error en telemetría Claude: ${logErr.message}`);
+  }
+
+  return outputText;
 }
 
 async function generateLocalContent(systemPrompt, message, history) {
