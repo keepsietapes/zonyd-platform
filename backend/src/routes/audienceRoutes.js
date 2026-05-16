@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 // GET /api/audience — Datos de audiencia del artista
 router.get('/', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findUnique({
+    const artist = await prisma.artist.findFirst({
       where: { userId: req.user.id },
       include: {
         fans: {

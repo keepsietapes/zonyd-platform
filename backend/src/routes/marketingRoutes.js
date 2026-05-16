@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 // GET /api/marketing/assets — Activos de marketing del artista
 router.get('/assets', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findUnique({
+    const artist = await prisma.artist.findFirst({
       where: { userId: req.user.id },
       include: {
         releases: {

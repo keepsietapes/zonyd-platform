@@ -230,7 +230,8 @@ export default function NewReleasePage() {
   };
 
   if (showSuccess) {
-    const coverUrl = "https://upload.wikimedia.org/wikipedia/en/1/16/Alleyezonme.jpg";
+    const displayCoverUrl = coverUrl || "https://upload.wikimedia.org/wikipedia/en/1/16/Alleyezonme.jpg";
+    const displayReleaseName = releaseName || "Sin Título";
     
     const banners = [
       // 0: Minimal Premium
@@ -240,11 +241,11 @@ export default function NewReleasePage() {
           <img src="/logo.png" alt="Zonyd" className="w-14 h-14 object-contain mb-2 drop-shadow-lg" />
           
           <div className="w-48 h-48 bg-[#0B0B0F] rounded-xl shadow-2xl border border-white/10 flex items-center justify-center overflow-hidden">
-            <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+            <img src={displayCoverUrl} alt="Cover" className="w-full h-full object-cover" />
           </div>
           
           <div>
-            <h2 className="text-3xl font-black text-white">{releaseName || 'All Eyez on Me'}</h2>
+            <h2 className="text-3xl font-black text-white">{displayReleaseName}</h2>
             <p className="text-sm text-[#A1A1AA] font-bold tracking-widest uppercase mt-1">{artistName}</p>
           </div>
           
@@ -267,11 +268,11 @@ export default function NewReleasePage() {
           </div>
 
           <div className="w-48 h-48 bg-[#232733] rounded-sm shadow-[15px_15px_0_#FF9F0A] flex items-center justify-center mt-2 border border-white/10 overflow-hidden">
-             <img src={coverUrl} alt="Cover" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500" />
+             <img src={displayCoverUrl} alt="Cover" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500" />
           </div>
 
           <div className="mt-6 w-full pb-4">
-            <h2 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-[#FF9F0A] italic tracking-tighter uppercase">{releaseName || 'All Eyez on Me'}</h2>
+            <h2 className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-[#FF9F0A] italic tracking-tighter uppercase">{displayReleaseName}</h2>
             <p className="text-lg text-[#FF9F0A] font-bold mt-1 tracking-widest uppercase">{artistName}</p>
           </div>
         </div>
@@ -290,19 +291,19 @@ export default function NewReleasePage() {
                <div className="absolute w-32 h-32 rounded-full border border-white/5" />
                <div className="absolute w-24 h-24 rounded-full border border-white/5" />
                <div className="w-16 h-16 rounded-full border border-white/20 overflow-hidden">
-                  <img src={coverUrl} alt="Center" className="w-full h-full object-cover opacity-80" />
+                  <img src={displayCoverUrl} alt="Center" className="w-full h-full object-cover opacity-80" />
                </div>
                <div className="absolute w-3 h-3 bg-[#0B0B0F] rounded-full border border-white/30" />
             </div>
             
             <div className="w-48 h-48 bg-[#151821] rounded-sm shadow-2xl border border-[#232733] flex items-center justify-center relative z-10 overflow-hidden group-hover:-translate-x-12 transition-transform duration-700">
-              <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+              <img src={displayCoverUrl} alt="Cover" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
 
         <div className="relative z-10 text-center mt-12">
-          <h2 className="text-3xl font-black text-white font-serif tracking-tight">{releaseName || 'All Eyez on Me'}</h2>
+          <h2 className="text-3xl font-black text-white font-serif tracking-tight">{displayReleaseName}</h2>
           <p className="text-sm text-[#A1A1AA] italic mt-1 font-serif">by {artistName}</p>
           <div className="mt-5 flex items-center justify-center gap-2 text-[10px] text-[#7B61FF] font-bold tracking-widest border border-[#7B61FF]/30 px-4 py-1.5 rounded-full">
             <Disc size={14} /> DISTRIBUIDO POR ZONYD

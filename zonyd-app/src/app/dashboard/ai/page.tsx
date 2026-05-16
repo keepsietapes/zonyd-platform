@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import { authFetch } from '@/lib/api';
 
 export default function ZonydAIPage() {
-  const [userPlan, setUserPlan] = useState<'FREE' | 'PRO' | 'LABEL'>('FREE');
+  const [userPlan, setUserPlan] = useState<'FREE' | 'INDIE' | 'PRO' | 'LABEL'>('FREE');
   const [query, setQuery] = useState('');
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   const [isTyping, setIsTyping] = useState(false);
