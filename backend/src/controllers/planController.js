@@ -3,7 +3,7 @@ const prisma = require('../utils/prisma');
 async function upgradePlan(req, res) {
   const { plan } = req.body;
   const planUpper = plan.toUpperCase();
-  if (!['FREE', 'PRO', 'LABEL'].includes(planUpper)) {
+  if (!['FREE', 'INDIE', 'PRO', 'LABEL'].includes(planUpper)) {
     return res.status(400).json({ error: 'Plan inválido' });
   }
 

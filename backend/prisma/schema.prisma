@@ -86,6 +86,7 @@ model Artist {
 
 enum PlanType {
   FREE
+  INDIE
   PRO
   LABEL
 }

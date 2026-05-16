@@ -104,7 +104,9 @@ function SettingsContent() {
         method: 'POST',
         body: JSON.stringify({ plan })
       });
+      setCurrentPlan(plan);
       alert(`¡Felicidades! Has actualizado al plan ${plan}.`);
+      window.location.reload();
     } catch (err: any) {
       console.error(err);
       alert(err.message || 'Error al actualizar el plan.');
@@ -443,7 +445,7 @@ function SettingsContent() {
             )}
 
             {activeTab === 'plan' && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                  <PlanCard 
                    title="Free" 
                    price="0" 
@@ -451,6 +453,14 @@ function SettingsContent() {
                    highlighted={currentPlan === 'FREE'}
                    features={['85% Royalties', 'Distribución a tiendas básicas', 'Dashboard estándar', 'Soporte vía Email']} 
                    onUpgrade={() => handleUpgradePlan('FREE')}
+                 />
+                 <PlanCard 
+                   title="Indie" 
+                   price="4.99" 
+                   active={currentPlan === 'INDIE'}
+                   highlighted={currentPlan === 'INDIE'}
+                   features={['95% Royalties', 'Distribución rápida', 'Soporte Prioritario', 'Sin límites de artistas']} 
+                   onUpgrade={() => handleUpgradePlan('INDIE')}
                  />
                  <PlanCard 
                    title="Pro" 
@@ -465,7 +475,7 @@ function SettingsContent() {
                    price="29.99" 
                    active={currentPlan === 'LABEL'}
                    highlighted={currentPlan === 'LABEL'}
-                   features={['100% Royalties', 'Artistas Ilimitados', 'Contratos Personalizados', 'Manager Dedicado', 'Analíticas en tiempo real (Fase 6)']} 
+                   features={['100% Royalties', 'Artistas Ilimitados', 'Contratos Personalizados', 'Manager Dedicado', 'Analíticas en tiempo real']} 
                    onUpgrade={() => handleUpgradePlan('LABEL')}
                  />
               </div>

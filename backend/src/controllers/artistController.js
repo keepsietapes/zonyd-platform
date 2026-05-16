@@ -103,7 +103,7 @@ async function getArtistProfile(req, res) {
       id: user.id,
       email: user.email,
       displayName: user.firstName || artist?.stageName || '',
-      plan: user.plan || 'FREE',
+      plan: artist?.plan || 'FREE',
       artistProfiles: user.artistProfiles,
       // Estado real de conexiones para el AI Command Center
       spotifyConnected,

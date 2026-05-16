@@ -96,8 +96,8 @@ export default function ZonydAIPage() {
     }
   };
 
-  // Paywall para usuarios FREE
-  if (!isLoading && userPlan === 'FREE') {
+  // Paywall para usuarios FREE e INDIE
+  if (!isLoading && (userPlan === 'FREE' || userPlan === 'INDIE')) {
     return (
       <div className="p-8 h-full flex items-center justify-center relative">
         <div className="absolute inset-0 bg-[#0B0B0F]/40 backdrop-blur-md z-10" />
