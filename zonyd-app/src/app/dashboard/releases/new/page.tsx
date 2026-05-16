@@ -791,6 +791,7 @@ function StepTracks({
   const [progress, setProgress] = useState(0);
   const [startTimeStr, setStartTimeStr] = useState('00:00');
   const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const addSplit = () => { setSplits([...splits, { artistName: '', percentage: 0, email: '', role: 'Collaborator' }]); };
 

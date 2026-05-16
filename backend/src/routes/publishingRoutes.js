@@ -49,8 +49,10 @@ router.get('/', authMiddleware, async (req, res, next) => {
 // POST /api/publishing/works — Registrar nueva obra
 router.post('/works', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
-    if (!artist) return res.status(404).json({ error: 'Perfil de artista requerido.' });
+    let artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
+    if (!artist) {
+      artist = await prisma.artist.create({ data: { userId: req.user.id, stageName: 'Artista', plan: 'FREE' } });
+    }
 
     const { title, coAuthors = [], pro, lyrics } = req.body;
     if (!title) return res.status(400).json({ error: 'El título de la obra es requerido.' });
@@ -81,8 +83,10 @@ router.post('/works', authMiddleware, async (req, res, next) => {
 // PATCH /api/publishing/society — Vincular/desvincular sociedad PRO
 router.patch('/society', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
-    if (!artist) return res.status(404).json({ error: 'Perfil de artista requerido.' });
+    let artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
+    if (!artist) {
+      artist = await prisma.artist.create({ data: { userId: req.user.id, stageName: 'Artista', plan: 'FREE' } });
+    }
 
     const { society } = req.body;
     const validSocieties = ['SACM', 'ASCAP', 'BMI', 'SGAE', 'SESAC', 'SOCAN', 'PRS'];

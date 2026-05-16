@@ -24,8 +24,10 @@ router.get('/', authMiddleware, async (req, res, next) => {
 // POST /api/smartlinks — Crear SmartLink
 router.post('/', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
-    if (!artist) return res.status(404).json({ error: 'Perfil de artista no encontrado.' });
+    let artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
+    if (!artist) {
+      artist = await prisma.artist.create({ data: { userId: req.user.id, stageName: 'Artista', plan: 'FREE' } });
+    }
 
     const { title = 'Nuevo SmartLink', coverUrl, stores } = req.body;
     const link = await prisma.smartLink.create({
