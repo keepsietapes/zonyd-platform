@@ -461,10 +461,6 @@ function SettingsContent() {
                        <Button
                          disabled={isSaving}
                          onClick={async () => {
-                           setIsSaving(true);
-                           try {
-                          disabled={isSaving}
-                          onClick={async () => {
                             if (payoutMethod && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payoutMethod)) {
                               alert('❌ El correo de PayPal no tiene un formato válido.');
                               return;

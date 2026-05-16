@@ -567,15 +567,37 @@ function StepInfoBasica({
                 onChange={(e) => setGenre(e.target.value)} 
                 className="w-full h-16 px-8 rounded-2xl bg-[#0B0B0F] border border-[#232733] font-bold text-white focus:border-[#FF9F0A] outline-none appearance-none cursor-pointer transition-all shadow-inner"
               >
-                <option>Alternative</option>
-                <option>Urban/Reggaeton</option>
-                <option>Trap</option>
-                <option>Electronic/EDM</option>
-                <option>Pop</option>
-                <option>Hip-Hop</option>
-                <option>Latin</option>
-                <option>R&B</option>
-                <option>Rock</option>
+                <optgroup label="Popular">
+                  <option>Urban/Reggaeton</option>
+                  <option>Trap</option>
+                  <option>Hip-Hop</option>
+                  <option>Pop</option>
+                  <option>Latin</option>
+                </optgroup>
+                <optgroup label="Rock & Alternative">
+                  <option>Alternative</option>
+                  <option>Rock</option>
+                  <option>Indie</option>
+                  <option>Punk</option>
+                  <option>Metal</option>
+                </optgroup>
+                <optgroup label="Electronic">
+                  <option>Electronic/EDM</option>
+                  <option>Techno</option>
+                  <option>House</option>
+                  <option>Phonk</option>
+                  <option>Lo-Fi</option>
+                </optgroup>
+                <optgroup label="Otros">
+                  <option>R&B</option>
+                  <option>Jazz</option>
+                  <option>Blues</option>
+                  <option>Folk</option>
+                  <option>Country</option>
+                  <option>Clásica</option>
+                  <option>Soundtrack</option>
+                  <option>Kids</option>
+                </optgroup>
               </select>
               <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-[#A1A1AA]">
                 <ChevronRight size={20} className="rotate-90" />
@@ -601,7 +623,7 @@ function StepInfoBasica({
               </div>
               
               <div className={`w-12 h-6 rounded-full relative transition-colors shrink-0 ${isExplicit ? 'bg-red-500' : 'bg-[#232733]'}`}>
-                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isExplicit ? 'left-7 shadow-lg' : 'left-1'}`} />
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-md ${isExplicit ? 'left-[26px]' : 'left-1'}`} />
               </div>
             </div>
           </div>
@@ -639,15 +661,15 @@ function StepUpload({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* COVER UPLOAD */}
-        <div className="group cursor-pointer relative h-full flex flex-col">
+        <div className="group cursor-pointer relative flex flex-col h-full">
           <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-20" onChange={handleCoverUpload} />
           <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-[0.2em] mb-4 flex justify-between">
             Artwork Premium
             {coverStatus === 'success' && <span className="text-[#34C759] flex items-center gap-1"><CheckCircle2 size={10} /> VALIDADO</span>}
           </Label>
-          <div className={`flex-1 min-h-[300px] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 relative overflow-hidden group-hover:border-[#FF9F0A]/50 ${
+          <div className={`flex-1 min-h-[350px] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 relative overflow-hidden group-hover:border-[#FF9F0A]/50 ${
             coverStatus === 'idle' ? 'border-[#232733] bg-[#151821]/30 group-hover:bg-[#FF9F0A]/5' :
             coverStatus === 'loading' ? 'border-[#FF9F0A] bg-[#FF9F0A]/10' :
             coverStatus === 'success' ? 'border-[#34C759] bg-[#34C759]/10' : 'border-red-500 bg-red-500/10'
@@ -680,39 +702,29 @@ function StepUpload({
             )}
           </div>
           {coverFileName && (
-            <div className="mt-4 flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/10 animate-in slide-in-from-top-2">
+            <div className="mt-4 flex items-center gap-3 bg-white/5 p-3 rounded-2xl border border-white/10">
               <div className="w-8 h-8 rounded-xl bg-[#FF9F0A]/10 flex items-center justify-center">
                 <ImageIcon size={14} className="text-[#FF9F0A]" />
               </div>
               <div className="flex-1 overflow-hidden">
                 <p className="text-[11px] font-bold text-white truncate">{coverFileName}</p>
-                <p className="text-[9px] text-[#34C759] font-black uppercase tracking-widest mt-0.5">Metadatos correctos</p>
               </div>
               <CheckCircle2 size={16} className="text-[#34C759]" />
             </div>
           )}
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-red-500/10 border border-red-500/20 p-5 rounded-2xl">
-            <h4 className="text-red-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 mb-3">
-               <ShieldAlert size={14} /> Copyright & Sampling Policy
-            </h4>
-            <p className="text-[10px] text-red-200/70 leading-relaxed italic">
-              El uso de samples no autorizados o audio de baja calidad (128kbps) resultará en el rechazo inmediato por parte de los curadores de las tiendas. Recomendamos <span className="text-white font-bold">WAV (24-bit)</span>.
-            </p>
-          </div>
-
+        {/* AUDIO UPLOAD */}
+        <div className="flex flex-col h-full">
           <input id="audio-file-input" type="file" accept=".mp3,.wav,.flac,.m4a,.ogg,audio/*" className="hidden" onChange={handleAudioUpload} multiple />
-
-          <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-[0.2em] mb-4 block flex justify-between">
+          <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-[0.2em] mb-4 flex justify-between">
             Master de Audio
-            {audioStatus === 'success' && <span className="text-[#34C759] flex items-center gap-1"><CheckCircle2 size={10} /> {uploadedTracks.length} ARCHIVOS LISTOS</span>}
+            {audioStatus === 'success' && <span className="text-[#34C759] flex items-center gap-1"><CheckCircle2 size={10} /> {uploadedTracks.length} ARCHIVOS</span>}
           </Label>
 
           <label
             htmlFor="audio-file-input"
-            className={`flex-1 min-h-[300px] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 cursor-pointer select-none group ${
+            className={`flex-1 min-h-[350px] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 cursor-pointer select-none group ${
               audioStatus === 'idle'     ? 'border-[#232733] bg-[#151821]/30 hover:border-[#7B61FF] hover:bg-[#7B61FF]/5' :
               audioStatus === 'loading'  ? 'border-[#7B61FF] bg-[#7B61FF]/10' :
               audioStatus === 'analyzing'? 'border-[#00F2FE] bg-[#00F2FE]/10' :
@@ -721,7 +733,7 @@ function StepUpload({
             }`}
           >
             {audioStatus === 'idle' && (
-              <div className="flex flex-col items-center gap-4 pointer-events-none text-center px-4">
+              <div className="flex flex-col items-center gap-4 text-center px-4">
                 <Music className="text-[#232733] group-hover:text-[#7B61FF] transition-colors" size={64} />
                 <div>
                   <p className="text-[11px] font-black text-[#A1A1AA] uppercase tracking-[0.2em] group-hover:text-white transition-colors">
@@ -732,45 +744,32 @@ function StepUpload({
               </div>
             )}
             {(audioStatus === 'loading' || audioStatus === 'analyzing') && (
-              <div className="flex flex-col items-center gap-5 pointer-events-none">
+              <div className="flex flex-col items-center gap-5">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full border-4 border-[#7B61FF]/10 border-t-[#7B61FF] animate-spin" />
-                  <Sparkles className="absolute -top-2 -right-2 text-[#FF9F0A] animate-bounce" size={20} />
                 </div>
-                <p className="text-[10px] font-black text-[#7B61FF] uppercase tracking-[0.3em] animate-pulse">
-                  {audioStatus === 'loading' ? 'Cifrando Señal...' : 'Zonyd AI: Escaneando Copyright'}
-                </p>
+                <p className="text-[10px] font-black text-[#7B61FF] uppercase tracking-[0.3em] animate-pulse">Analizando Señal...</p>
               </div>
             )}
             {audioStatus === 'success' && (
-              <div className="flex flex-col items-center gap-4 pointer-events-none">
-                <div className="w-20 h-20 rounded-full bg-[#34C759]/20 flex items-center justify-center shadow-xl shadow-[#34C759]/10 border border-[#34C759]/30">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-[#34C759]/20 flex items-center justify-center border border-[#34C759]/30">
                    <CheckCircle2 className="text-[#34C759]" size={40} />
                 </div>
-                <div className="text-center">
-                  <p className="text-sm font-black text-white uppercase tracking-tighter">{uploadedTracks.length} Track{uploadedTracks.length !== 1 ? 's' : ''} en cola</p>
-                  <p className="text-[9px] text-[#A1A1AA] mt-1 font-bold">CLICK PARA AGREGAR MÁS</p>
-                </div>
+                <p className="text-sm font-black text-white uppercase tracking-tighter">{uploadedTracks.length} Archivos Listos</p>
               </div>
             )}
           </label>
 
-          {/* Lista de tracks con efecto de entrada */}
           {uploadedTracks.length > 0 && (
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-              {uploadedTracks.map((track: {id: string, title: string}, i: number) => (
-                <div key={i} className="flex items-center gap-3 px-4 py-3 bg-[#151821] rounded-2xl border border-white/5 animate-in slide-in-from-right-4 transition-all hover:bg-[#1C1F2B]">
-                  <div className="w-8 h-8 rounded-xl bg-[#7B61FF]/10 flex items-center justify-center shrink-0 border border-[#7B61FF]/20">
-                    <Music size={12} className="text-[#7B61FF]" />
+            <div className="mt-4 space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
+              {uploadedTracks.map((track: any, i: number) => (
+                <div key={i} className="flex items-center gap-3 px-4 py-2 bg-[#151821] rounded-xl border border-white/5">
+                  <div className="w-6 h-6 rounded bg-[#7B61FF]/10 flex items-center justify-center shrink-0">
+                    <Music size={10} className="text-[#7B61FF]" />
                   </div>
-                  <div className="flex-1 overflow-hidden">
-                    <p className="text-[11px] font-black text-white truncate">{track.title}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                       <span className="text-[8px] font-bold text-[#A1A1AA] uppercase">24-bit / 48kHz</span>
-                       <span className="text-[8px] bg-[#34C759]/20 text-[#34C759] px-1 rounded font-black">OK</span>
-                    </div>
-                  </div>
-                  <Check size={14} className="text-[#34C759] shrink-0" />
+                  <p className="text-[10px] font-bold text-white truncate flex-1">{track.title}</p>
+                  <Check size={12} className="text-[#34C759]" />
                 </div>
               ))}
             </div>
@@ -788,15 +787,236 @@ function StepTracks({
 }: any) {
   const [isCover, setIsCover] = useState(false);
   const [hasSamples, setHasSamples] = useState(false);
-  const [isAIProcessing, setIsAIProcessing] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [startTimeStr, setStartTimeStr] = useState('00:00');
-  const audioRef = React.useRef<HTMLAudioElement>(null);
+  const [startTime, setStartTime] = useState(0); // en segundos
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const addSplit = () => {
-    setSplits([...splits, { artistName: '', percentage: 0, email: '', role: 'Featured' }]);
+  // Audio Handler
+  const togglePlayback = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.currentTime = startTime;
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
   };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="space-y-12 py-4">
+      
+      {/* 1. Selector Inteligente de Clip (TikTok/Reels) */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 mb-2">
+           <div className="w-10 h-10 rounded-xl bg-[#00F2FE]/10 flex items-center justify-center border border-[#00F2FE]/20">
+              <Share2 className="text-[#00F2FE]" size={20} />
+           </div>
+           <div>
+              <h3 className="text-sm font-black uppercase tracking-widest text-white">Social Media Clip Selector</h3>
+              <p className="text-[10px] text-[#A1A1AA] font-bold">Selecciona el segmento exacto para TikTok, Reels y Shorts.</p>
+           </div>
+        </div>
+
+        <div className="bg-[#151821] border border-[#232733] rounded-[2rem] p-8 space-y-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+             <Music size={120} className="text-[#00F2FE]" />
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
+            {/* Reproductor Visual */}
+            <div className="w-full max-w-sm space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-black text-[#00F2FE] uppercase tracking-widest">Punto de Inicio</span>
+                <span className="text-2xl font-black font-mono text-white tracking-tighter">{formatTime(startTime)}</span>
+              </div>
+              
+              {/* Waveform Simulado Interactivo */}
+              <div className="h-24 bg-black/40 rounded-2xl border border-white/5 flex items-end justify-between px-4 py-3 gap-1 overflow-hidden relative group">
+                {Array.from({ length: 40 }).map((_, i) => (
+                  <div 
+                    key={i} 
+                    className={`w-1.5 rounded-full transition-all duration-300 ${
+                      (i / 40) * duration <= startTime ? 'bg-[#00F2FE] opacity-100 h-[60%]' : 'bg-[#232733] h-[30%]'
+                    } ${isPlaying && 'animate-pulse'}`}
+                    style={{ height: `${20 + Math.random() * 60}%` }}
+                  />
+                ))}
+                
+                {/* Control Slider */}
+                <input 
+                  type="range" 
+                  min="0" 
+                  max={duration || 180} 
+                  value={startTime}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    setStartTime(val);
+                    if (audioRef.current) audioRef.current.currentTime = val;
+                  }}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-20"
+                />
+              </div>
+
+              <div className="flex items-center gap-4">
+                 <Button 
+                   onClick={togglePlayback}
+                   className={`h-12 w-full rounded-xl font-black uppercase tracking-widest text-[11px] transition-all ${
+                     isPlaying ? 'bg-red-500 text-white' : 'bg-white text-black'
+                   }`}
+                 >
+                   {isPlaying ? <Pause size={18} className="mr-2" /> : <Play size={18} className="mr-2" />}
+                   {isPlaying ? 'Detener Previo' : 'Escuchar Selección'}
+                 </Button>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-4 text-center md:text-left">
+               <p className="text-xs text-[#A1A1AA] leading-relaxed">
+                 Usa el slider para navegar por la canción. El audio comenzará exactamente en <span className="text-white font-bold">{formatTime(startTime)}</span> cuando alguien use tu música en redes sociales.
+               </p>
+               <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                  <span className="text-[9px] bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[#A1A1AA]">60 Segundos permitidos</span>
+                  <span className="text-[9px] bg-white/5 border border-white/10 px-3 py-1 rounded-full text-[#A1A1AA]">Fade-in automático</span>
+               </div>
+            </div>
+          </div>
+          
+          {/* Audio Element Real */}
+          <audio 
+            ref={audioRef} 
+            src={uploadedTracks[0]?.url || ''} 
+            onDurationChange={(e) => setDuration(e.currentTarget.duration)}
+            onEnded={() => setIsPlaying(false)}
+          />
+        </div>
+      </div>
+
+      {/* 2. Copyright Clearance */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-[#151821] border border-[#232733] p-8 rounded-[2rem] space-y-6">
+          <div className="flex items-center gap-3">
+             <ShieldCheck className="text-[#FF9F0A]" size={20} />
+             <h3 className="text-sm font-black uppercase tracking-widest text-white">Copyright Clearance</h3>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+              <span className="text-xs font-bold text-[#A1A1AA]">¿Es una canción Cover?</span>
+              <div 
+                onClick={() => setIsCover(!isCover)}
+                className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${isCover ? 'bg-[#FF9F0A]' : 'bg-[#232733]'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isCover ? 'left-[26px]' : 'left-1'}`} />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5">
+              <span className="text-xs font-bold text-[#A1A1AA]">¿Utiliza Samples de terceros?</span>
+              <div 
+                onClick={() => setHasSamples(!hasSamples)}
+                className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${hasSamples ? 'bg-[#FF9F0A]' : 'bg-[#232733]'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${hasSamples ? 'left-[26px]' : 'left-1'}`} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#151821] border border-[#232733] p-8 rounded-[2rem] space-y-4">
+          <label className="text-[10px] font-black uppercase tracking-widest text-[#A1A1AA]">Letras de la Canción (Opcional)</label>
+          <textarea 
+            value={lyrics}
+            onChange={(e) => setLyrics(e.target.value)}
+            placeholder="Escribe o pega aquí la letra..."
+            className="w-full h-32 bg-black/40 border border-[#232733] rounded-2xl p-4 text-xs text-white focus:border-[#FF9F0A] outline-none resize-none transition-all"
+          />
+          <p className="text-[9px] text-[#52525B] italic text-right">Se enviarán a Apple Music Lyrics y Musixmatch.</p>
+        </div>
+      </div>
+
+      {/* 3. Credits & Splits */}
+      <div className="space-y-6 pt-6 border-t border-white/5">
+        <div className="flex items-center justify-between">
+           <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#7B61FF]/10 flex items-center justify-center border border-[#7B61FF]/20">
+                 <SplitSquareVertical className="text-[#7B61FF]" size={20} />
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-widest text-white">Revenue Splits & Credits</h3>
+           </div>
+           <Button onClick={() => setSplits([...splits, { artistName: '', percentage: 0, email: '', role: 'Collaborator' }])} variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-[#7B61FF] hover:bg-[#7B61FF]/10">
+              <Plus size={14} className="mr-1" /> Añadir Colaborador
+           </Button>
+        </div>
+
+        <div className="space-y-3">
+          {splits.map((split: any, i: number) => (
+            <div key={i} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 bg-black/20 rounded-2xl border border-white/5 items-center">
+              <div className="md:col-span-5">
+                <input 
+                  placeholder="Nombre del Artista / Compositor" 
+                  value={split.artistName}
+                  onChange={(e) => {
+                    const newSplits = [...splits];
+                    newSplits[i].artistName = e.target.value;
+                    setSplits(newSplits);
+                  }}
+                  className="w-full bg-[#151821] border border-[#232733] rounded-xl px-4 py-2 text-xs text-white outline-none"
+                />
+              </div>
+              <div className="md:col-span-3">
+                <select 
+                  value={split.role}
+                  onChange={(e) => {
+                    const newSplits = [...splits];
+                    newSplits[i].role = e.target.value;
+                    setSplits(newSplits);
+                  }}
+                  className="w-full bg-[#151821] border border-[#232733] rounded-xl px-4 py-2 text-xs text-white outline-none"
+                >
+                  <option>Primary Artist</option>
+                  <option>Featured Artist</option>
+                  <option>Producer</option>
+                  <option>Composer</option>
+                  <option>Lyricist</option>
+                </select>
+              </div>
+              <div className="md:col-span-3">
+                <div className="relative">
+                  <input 
+                    type="number" 
+                    value={split.percentage}
+                    onChange={(e) => {
+                      const newSplits = [...splits];
+                      newSplits[i].percentage = parseInt(e.target.value);
+                      setSplits(newSplits);
+                    }}
+                    className="w-full bg-[#151821] border border-[#232733] rounded-xl px-4 py-2 text-xs text-white outline-none pr-8"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#A1A1AA]">%</span>
+                </div>
+              </div>
+              <div className="md:col-span-1 flex justify-center">
+                {i > 0 && (
+                  <button onClick={() => setSplits(splits.filter((_: any, idx: number) => idx !== i))} className="text-[#52525B] hover:text-red-500 transition-colors">
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
   const updateSplit = (index: number, field: string, value: any) => {
     const newSplits = [...splits];

@@ -57,7 +57,7 @@ const NAV_ITEMS = [
   { icon: Users,           label: 'Audiencia',     href: '/dashboard/audience',         section: 'marketing' },
   { icon: Globe,           label: 'Marketplace',   href: '/dashboard/marketplace',      section: 'marketing' },
   { icon: Sparkles,        label: 'The Lab (AI)',  href: '/dashboard/lab',              section: 'marketing', highlight: true, requiresPro: true },
-  { icon: Megaphone,       label: 'Herramientas',  href: '/dashboard/marketing',        section: 'marketing' },
+  { icon: Megaphone,       label: 'Herramientas',  href: '/dashboard/tools',            section: 'marketing' },
   { icon: Zap,             label: 'Zonyd AI',      href: '/dashboard/ai',               section: 'marketing', highlight: true },
   // Organización
   { icon: User,            label: 'Equipo',        href: '/dashboard/team',             section: 'org' },

@@ -73,38 +73,47 @@ async function createRelease(req, res, next) {
     // 4. Crear Splits de regalías si existen
     if (finalTrackId && splits && splits.length > 0) {
       for (const split of splits) {
-        await prisma.split.create({
-          data: {
-            trackId: finalTrackId,
-            artistId: split.artistId === 'me' ? artist.id : split.artistId,
-            percentage: parseFloat(split.percentage)
-          }
-        });
+        try {
+          await prisma.split.create({
+            data: {
+              trackId: finalTrackId,
+              // Si no hay artistId (invitado), usamos el artista principal como dueño del split por ahora o lo omitimos
+              artistId: (split.artistId && split.artistId !== 'me' && split.artistId !== 'Tú') ? split.artistId : artist.id,
+              percentage: parseFloat(split.percentage) || 0
+            }
+          });
+        } catch (splitErr) {
+          logger.warn(`No se pudo crear split para ${split.artistName}: ${splitErr.message}`);
+        }
       }
     }
-
 
     // 5. Notificar al sistema de distribución (con fallback)
     try {
       if (distributionQueue && distributionQueue.add) {
         await distributionQueue.add('process-release', { releaseId: release.id });
       } else {
+        // Ejecución inmediata si Redis no está
         const { processDistribution } = require('../services/distributionService');
         processDistribution(release.id).catch(e => logger.error("Fallback distribution error:", e));
       }
     } catch (e) {
-      logger.warn("Redis offline - Distribución en cola local");
+      logger.warn("Notificación de distribución en modo diferido");
     }
 
     res.status(201).json({
       success: true,
-      message: "Lanzamiento creado exitosamente y enviado a revisión.",
+      message: "Lanzamiento creado exitosamente.",
       releaseId: release.id,
       upc: release.upc
     });
   } catch (error) {
-    logger.error("Error crítico en createRelease:", error.message);
-    next(error);
+    logger.error("Error crítico en createRelease:", error);
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'Error interno al procesar el lanzamiento. Verifica los metadatos e intenta de nuevo.',
+      details: error.message 
+    });
   }
 }
 

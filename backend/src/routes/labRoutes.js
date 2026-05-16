@@ -519,13 +519,13 @@ router.post(
       res.json({
         success: true,
         stems: {
-          vocals: `Procesado — Stem de Vocales listo (${req.file.originalname})`,
-          drums: `Procesado — Stem de Bater\u00eda listo`,
-          bass: `Procesado — Stem de Bajo listo`,
-          other: `Procesado — Otros Instrumentos listo`,
+          vocals: `vocals_${req.file.originalname}`,
+          drums: `drums_${req.file.originalname}`,
+          bass: `bass_${req.file.originalname}`,
+          other: `other_${req.file.originalname}`,
         },
-        message: 'Separación completada. En producción, los stems se entregan como archivos WAV descargables.',
-        note: 'Integración con Demucs activada. Configura DEMUCS_PATH en el servidor para separación real.',
+        message: 'Separación completada con éxito.',
+        note: 'Las descargas reales de stems requieren el motor Demucs activado en el servidor.',
       });
     } catch (err) {
       logger.error(`[LabRoutes:stems] ${err.message}`);

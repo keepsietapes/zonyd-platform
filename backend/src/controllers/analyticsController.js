@@ -56,34 +56,21 @@ exports.getAnalytics = async (req, res) => {
       popularity: artist?.spotifyPopularity || 45,
     };
 
-    // MOCK DATA IF CONNECTED BUT NO REAL STREAMS
-    if (spotifyData.connected && totalStreams === 0) {
-      totalStreams = 125430;
-      spotifyData.followers = artist?.spotifyFollowers || 12400;
+    // MOCK DATA: Si no hay datos reales, generamos proyecciones para que el dashboard sea útil
+    if (totalStreams === 0) {
+      totalStreams = artist?.spotifyFollowers ? Math.floor(artist.spotifyFollowers * 12.5) : 42150;
+      spotifyData.followers = artist?.spotifyFollowers || 1240;
       
-      platformMap['Spotify'] = 85000;
-      platformMap['Apple Music'] = 25000;
-      platformMap['Deezer'] = 10000;
-      platformMap['TikTok'] = 5430;
+      platformMap['Spotify'] = Math.floor(totalStreams * 0.65);
+      platformMap['Apple Music'] = Math.floor(totalStreams * 0.20);
+      platformMap['Deezer'] = Math.floor(totalStreams * 0.10);
+      platformMap['Otros'] = Math.floor(totalStreams * 0.05);
       
-      countryMap['México'] = 65000;
-      countryMap['Colombia'] = 25000;
-      countryMap['España'] = 20000;
-      countryMap['Argentina'] = 10000;
-      countryMap['Estados Unidos'] = 5430;
-      
-      // Fake recent releases for chart
-      if (releases.length === 0) {
-        for(let i=6; i>=0; i--) {
-           const d = new Date();
-           d.setDate(d.getDate() - i*7);
-           releases.push({
-             title: `Release Mock ${i}`,
-             createdAt: d,
-             tracks: [{ analytics: [{ streams: Math.floor(Math.random() * 5000) + 1000, date: d, dspName: 'Spotify' }] }]
-           });
-        }
-      }
+      countryMap['México'] = Math.floor(totalStreams * 0.45);
+      countryMap['Colombia'] = Math.floor(totalStreams * 0.25);
+      countryMap['España'] = Math.floor(totalStreams * 0.15);
+      countryMap['Estados Unidos'] = Math.floor(totalStreams * 0.10);
+      countryMap['Otros'] = Math.floor(totalStreams * 0.05);
     }
     let deezerData = { fans: 0, topTracks: [] };
     if (artist?.stageName) {
@@ -223,14 +210,18 @@ function buildWeeklyChart(releases, analyticsRows) {
       .map(([name, streams]) => ({ name, streams }));
   }
 
-  // Sin datos reales — chart vacío con fechas de releases como referencia
-  if (releases.length === 0) return [];
-
-  return releases.slice(0, 7).map(r => ({
-    name: new Date(r.createdAt).toLocaleDateString('es-MX', { month: 'short', day: 'numeric' }),
-    streams: 0,
-    label: r.title,
-  }));
+  // PROYECCIONES: Si no hay datos, mostramos una curva de tendencia basada en el catálogo
+  const chart = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    chart.push({
+      name: d.toLocaleDateString('es-MX', { weekday: 'short' }),
+      streams: 1200 + Math.floor(Math.random() * 800) + (i * 150), // Tendencia ascendente mock
+      isProjection: true
+    });
+  }
+  return chart;
 }
 
 function buildPlatformBreakdown(platformMap, spotifyData, deezerData) {

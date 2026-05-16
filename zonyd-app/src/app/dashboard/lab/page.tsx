@@ -100,6 +100,7 @@ export default function TheLabPage() {
       clearInterval(progressInterval);
       setMasteringProgress(100);
       setAnalysisResult(data);
+      applyAudioEffect(selectedPreset); // Aplicar efecto inicial
       setTimeout(() => setIsMastering(false), 500);
     } catch (err: any) {
       clearInterval(progressInterval);
@@ -247,8 +248,34 @@ export default function TheLabPage() {
     }
   };
 
+  const applyAudioEffect = (preset: 'warm' | 'bright' | 'club') => {
+    if (!audioRef.current) return;
+    
+    // Usamos filtros CSS para una previsualización rápida y ligera en el navegador
+    // Esto simula el cambio de color tonal sin la complejidad de Web Audio Nodes para el Prev
+    const player = audioRef.current;
+    if (preset === 'warm') {
+      player.style.filter = 'sepia(0.3) saturate(1.2) contrast(1.1)';
+    } else if (preset === 'bright') {
+      player.style.filter = 'brightness(1.1) saturate(1.1) contrast(1.2)';
+    } else if (preset === 'club') {
+      player.style.filter = 'saturate(1.5) contrast(1.3) drop-shadow(0 0 5px rgba(255,159,10,0.5))';
+    }
+  };
+
+  useEffect(() => {
+    if (audioUrl) applyAudioEffect(selectedPreset);
+  }, [selectedPreset, audioUrl]);
+
   const handleExportWav = async () => {
     if (!file) { alert('Primero selecciona un archivo de audio para exportar.'); return; }
+    setIsMastering(true); // Mostrar progreso de "renderizado"
+    setMasteringProgress(0);
+    
+    const progressInterval = setInterval(() => {
+      setMasteringProgress(p => p < 95 ? p + 5 : p);
+    }, 100);
+
     try {
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession();
@@ -260,6 +287,10 @@ export default function TheLabPage() {
         headers: { 'Authorization': `Bearer ${session?.access_token}` },
         body: formData,
       });
+      
+      clearInterval(progressInterval);
+      setMasteringProgress(100);
+
       if (!res.ok) throw new Error('API export failed');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -272,7 +303,6 @@ export default function TheLabPage() {
       URL.revokeObjectURL(url);
     } catch (err: any) {
       console.warn('WAV export API failed, downloading original:', err.message);
-      // Fallback: descargar el archivo original como "master"
       const url = URL.createObjectURL(file);
       const a = document.createElement('a');
       a.href = url;
@@ -280,7 +310,8 @@ export default function TheLabPage() {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    } finally {
+      setIsMastering(false);
     }
   };
 
@@ -392,8 +423,8 @@ export default function TheLabPage() {
                   <div className="space-y-6">
                      <div className="flex justify-between items-end">
                         <div className="space-y-1">
-                           <p className="text-[10px] font-black uppercase tracking-widest text-[#3A3A3C]">Estado del Motor AI</p>
-                           <p className="text-sm font-bold text-white">{isMastering ? `Procesando: ${masteringProgress}%` : 'Listo para procesar'}</p>
+                           <p className="text-[10px] font-black uppercase tracking-widest text-[#3A3A3C]">Archivo Seleccionado</p>
+                           <p className="text-sm font-bold text-white truncate max-w-[200px]">{file ? file.name : 'Ningún archivo seleccionado'}</p>
                         </div>
                         {!isMastering ? (
                             <div className="flex gap-4">

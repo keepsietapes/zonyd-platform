@@ -66,17 +66,17 @@ export default function EliasMasteringConsole() {
           <div className="h-48 mt-6 bg-[#050505] rounded-xl border border-[#111] relative overflow-hidden flex items-end px-2">
             {/* Grid Lines */}
             <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 opacity-10">
-               {Array.from({length: 24}).map((_, i) => <div key={i} className="border-r border-t border-white" />)}
+               {Array.from({length: 12}).map((_, i) => <div key={i} className="border-r border-t border-white" />)}
             </div>
             
-            {/* Waveform Simulation */}
-            <div className="flex items-end gap-[2px] w-full h-full pb-0 relative z-10">
-              {Array.from({ length: 120 }).map((_, i) => {
-                const height = isPlaying ? Math.random() * 80 + 20 : 10;
+            {/* Optimized Waveform Simulation */}
+            <div className="flex items-end gap-[4px] w-full h-full pb-0 relative z-10">
+              {Array.from({ length: 40 }).map((_, i) => {
+                const height = isPlaying ? (20 + (i % 5) * 15 + Math.random() * 10) : 15;
                 return (
                   <div 
                     key={i} 
-                    className="flex-1 bg-gradient-to-t from-[#0088FF]/50 to-[#00FFCC] rounded-t-sm transition-all duration-75"
+                    className="flex-1 bg-gradient-to-t from-[#0088FF]/50 to-[#00FFCC] rounded-t-sm transition-all duration-300"
                     style={{ height: `${height}%`, opacity: isBypassed ? 0.3 : 1 }}
                   />
                 );
