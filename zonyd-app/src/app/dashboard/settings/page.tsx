@@ -82,6 +82,31 @@ function SettingsContent() {
       }
     };
     fetchUserData();
+
+    // Check for Stripe session completion
+    const sessionId = searchParams.get('session_id');
+    const pendingPlan = searchParams.get('plan');
+    if (sessionId && pendingPlan) {
+      const verifyPayment = async () => {
+        try {
+          const res = await authFetch('/api/billing/confirm-payment', {
+            method: 'POST',
+            body: JSON.stringify({ session_id: sessionId, plan: pendingPlan })
+          });
+          if (res && res.success) {
+            alert(`¡Pago completado con éxito! Bienvenido al plan ${res.plan}.`);
+            // Clean up URL to avoid re-triggering
+            window.history.replaceState({}, document.title, window.location.pathname + "?tab=plan");
+            setCurrentPlan(res.plan);
+            window.location.reload();
+          }
+        } catch (err) {
+          console.error('Error al verificar pago:', err);
+          alert('Hubo un problema verificando tu pago. Por favor contacta a soporte.');
+        }
+      };
+      verifyPayment();
+    }
   }, [searchParams]);
 
   const changeTheme = (theme: 'midnight' | 'graphite' | 'royal') => {
@@ -100,16 +125,20 @@ function SettingsContent() {
 
   const handleUpgradePlan = async (plan: string) => {
     try {
-      await authFetch('/api/billing/upgrade', {
+      const res = await authFetch('/api/billing/upgrade', {
         method: 'POST',
         body: JSON.stringify({ plan })
       });
-      setCurrentPlan(plan);
-      alert(`¡Felicidades! Has actualizado al plan ${plan}.`);
-      window.location.reload();
+      if (res.checkoutUrl) {
+        window.location.href = res.checkoutUrl;
+      } else {
+        setCurrentPlan(plan);
+        alert(`¡Felicidades! Has actualizado al plan ${plan}.`);
+        window.location.reload();
+      }
     } catch (err: any) {
       console.error(err);
-      alert(err.message || 'Error al actualizar el plan.');
+      alert(err.message || 'Error al procesar la solicitud.');
     }
   };
 
