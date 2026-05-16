@@ -110,19 +110,26 @@ model OrganizationMember {
 // 3. LANZAMIENTOS (RELEASES) Y TRACKS
 // ------------------------------------------------------
 model Release {
-  id              String   @id @default(uuid())
+  id              String      @id @default(uuid())
   title           String
   primaryArtistId String
-  artist          Artist   @relation(fields: [primaryArtistId], references: [id])
-  upc             String?  @unique
+  artist          Artist      @relation(fields: [primaryArtistId], references: [id])
+  upc             String?     @unique
   releaseDate     DateTime?
   coverUrl        String?
   genre           String?
   status          ReleaseStatus @default(DRAFT)
   preSaveUrl      String?
   distributedAt   DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Campos requeridos por DDEX ERN 4.3 y DSPs
+  type            ReleaseType @default(SINGLE)
+  territories     String      @default("worldwide")
+  labelName       String?
+  language        String      @default("es")
+  explicit        Boolean     @default(false)
 
   tracks          Track[]
   deliveries      DspDelivery[]
@@ -137,6 +144,15 @@ enum ReleaseStatus {
   LIVE
   REJECTED
   FAILED
+}
+
+enum ReleaseType {
+  SINGLE
+  EP
+  ALBUM
+  COMPILATION
+  MIXTAPE
+  LIVE_ALBUM
 }
 
 model Track {
@@ -223,12 +239,19 @@ enum PayoutStatus {
 // 5. DISTRIBUCIÓN DSP, ANALYTICS Y SISTEMA
 // ------------------------------------------------------
 model DspDelivery {
-  id        String   @id @default(uuid())
-  releaseId String
-  release   Release  @relation(fields: [releaseId], references: [id])
-  dspName   String   // Spotify, Apple...
-  status    String   // DELIVERED, TAKEDOWN
-  deliveredAt DateTime @default(now())
+  id                 String   @id @default(uuid())
+  releaseId          String
+  release            Release  @relation(fields: [releaseId], references: [id])
+  dspName            String   // Spotify, Apple Music, Deezer, etc.
+  status             String   @default("PENDING") // PENDING, DELIVERED, LIVE, TAKEDOWN, FAILED
+  deliveredAt        DateTime @default(now())
+
+  // Campos de trazabilidad del Distribution Layer
+  partnerDeliveryId  String?  // ID asignado por el partner (Revelator, LabelGrid, etc.)
+  ddexPackageUrl     String?  // URL al manifest DDEX en Supabase Storage
+  retryCount         Int      @default(0)
+  lastError          String?
+  metadata           Json?    // Respuesta raw del provider (para debugging)
 }
 
 model Analytics {

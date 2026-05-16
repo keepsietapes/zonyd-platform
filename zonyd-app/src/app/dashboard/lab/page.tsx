@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function TheLabPage() {
   const [mounted, setMounted] = useState(false);
@@ -32,6 +33,8 @@ export default function TheLabPage() {
   const [selectedPreset, setSelectedPreset] = useState<'warm' | 'bright' | 'club'>('warm');
   const [isPlaying, setIsPlaying] = useState(false);
   const [waveformHeights, setWaveformHeights] = useState<number[]>([]);
+  const [file, setFile] = useState<File | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -42,25 +45,57 @@ export default function TheLabPage() {
 
   if (!mounted) return null; // Evitar renderizado en servidor para componentes con random/browser-only logic
 
-  const startMastering = () => {
-    setIsMastering(true);
-    setMasteringProgress(0);
-    
-    // Instanciar Web Worker
-    const worker = new Worker('/audioWorker.js');
-    
-    worker.onmessage = (e) => {
-      if (e.data.type === 'MASTERING_PROGRESS') {
-        setMasteringProgress(e.data.payload.progress);
-      } else if (e.data.type === 'MASTERING_COMPLETE') {
-        setMasteringProgress(100);
-        setIsMastering(false);
-        alert(`¡Masterización finalizada! Tu track ahora tiene la energía necesaria para Spotify y Apple Music. (LUFS: ${e.data.payload.lufs})`);
-        worker.terminate();
-      }
-    };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      startMastering(selectedFile);
+    }
+  };
 
-    worker.postMessage({ type: 'START_MASTERING' });
+  const startMastering = async (audioFile: File) => {
+    setIsMastering(true);
+    setMasteringProgress(10);
+    setAnalysisResult(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('audio', audioFile);
+      formData.append('genre', 'pop');
+
+      // Simulate progress while uploading
+      const progressInterval = setInterval(() => {
+        setMasteringProgress(p => p < 90 ? p + 5 : p);
+      }, 500);
+
+      // Call the real backend API (SpectralEngine)
+      const token = localStorage.getItem('sb-token') || ''; // Adjust depending on Supabase auth setup
+      const res = await fetch('http://localhost:4000/api/lab/spectral/analyze', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData,
+      });
+
+      clearInterval(progressInterval);
+      setMasteringProgress(100);
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Error en análisis espectral');
+      }
+
+      setAnalysisResult(data);
+      setTimeout(() => setIsMastering(false), 500);
+
+    } catch (err: any) {
+      console.error(err);
+      alert(`Error: ${err.message}`);
+      setIsMastering(false);
+      setMasteringProgress(0);
+    }
   };
 
   return (
@@ -144,12 +179,29 @@ export default function TheLabPage() {
                            <p className="text-sm font-bold text-white">{isMastering ? `Procesando: ${masteringProgress}%` : 'Listo para procesar'}</p>
                         </div>
                         {!isMastering ? (
-                           <Button 
-                             onClick={startMastering}
-                             className="bg-white text-black font-black px-8 h-12 rounded-xl hover:scale-105 transition-all"
-                           >
-                              <Zap size={16} className="mr-2" /> MASTERIZAR AHORA
-                           </Button>
+                            <div className="flex gap-4">
+                               <Link href="/dashboard/lab/console">
+                                 <Button 
+                                   variant="outline"
+                                   className="border-[#FF9F0A] text-[#FF9F0A] font-black px-6 h-12 rounded-xl hover:bg-[#FF9F0A]/10 transition-all"
+                                 >
+                                   <Maximize2 size={16} className="mr-2" /> FULL CONSOLE
+                                 </Button>
+                               </Link>
+                               <input 
+                                 type="file" 
+                                 id="audioUpload" 
+                                 className="hidden" 
+                                 accept="audio/*" 
+                                 onChange={handleFileChange} 
+                               />
+                               <Button 
+                                 onClick={() => document.getElementById('audioUpload')?.click()}
+                                 className="bg-white text-black font-black px-8 h-12 rounded-xl hover:scale-105 transition-all"
+                               >
+                                 <Zap size={16} className="mr-2" /> SELECCIONAR AUDIO
+                               </Button>
+                            </div>
                         ) : (
                            <div className="w-48 h-2 bg-white/5 rounded-full overflow-hidden">
                               <div className="h-full bg-[#FF9F0A] transition-all duration-100" style={{ width: `${masteringProgress}%` }} />
@@ -204,25 +256,36 @@ export default function TheLabPage() {
                   <div className="space-y-4">
                      <div className="flex justify-between items-end">
                         <span className="text-[10px] font-black uppercase text-[#A1A1AA]">Spotify / Apple</span>
-                        <span className="text-xs font-black text-white">-14.2 LUFS</span>
+                        <span className="text-xs font-black text-white">{analysisResult?.metrics?.integrated_lufs ? `${analysisResult.metrics.integrated_lufs.toFixed(1)} LUFS` : '-14.2 LUFS'}</span>
                      </div>
                      <div className="h-4 bg-[#151821] rounded-full overflow-hidden p-1">
-                        <div className="h-full bg-[#32D74B] rounded-full" style={{ width: '85%' }} />
+                        <div className={`h-full rounded-full ${analysisResult?.compliance?.spotify ? 'bg-[#32D74B]' : 'bg-[#FF453A]'}`} style={{ width: analysisResult ? '100%' : '85%' }} />
                      </div>
-                     <p className="text-[9px] text-[#32D74B] font-bold uppercase text-center">✓ Rango Óptimo</p>
+                     <p className={`text-[9px] font-bold uppercase text-center ${analysisResult?.compliance?.spotify ? 'text-[#32D74B]' : 'text-[#FF453A]'}`}>
+                        {analysisResult?.compliance?.spotify ? '✓ Rango Óptimo' : '⚠ Requiere Ajuste'}
+                     </p>
                   </div>
 
                   <div className="space-y-4">
                      <div className="flex justify-between items-end">
                         <span className="text-[10px] font-black uppercase text-[#A1A1AA]">True Peak</span>
-                        <span className="text-xs font-black text-white">-1.0 dB</span>
+                        <span className="text-xs font-black text-white">{analysisResult?.metrics?.true_peak_db ? `${analysisResult.metrics.true_peak_db.toFixed(1)} dB` : '-1.0 dB'}</span>
                      </div>
                      <div className="h-4 bg-[#151821] rounded-full overflow-hidden p-1">
-                        <div className="h-full bg-[#FF453A] rounded-full" style={{ width: '95%' }} />
+                        <div className={`h-full rounded-full ${analysisResult?.metrics?.true_peak_db > -1.0 ? 'bg-[#FF453A]' : 'bg-[#32D74B]'}`} style={{ width: analysisResult ? '100%' : '95%' }} />
                      </div>
-                     <p className="text-[9px] text-[#FF453A] font-bold uppercase text-center">⚠ Posible Clipping Inter-sample</p>
+                     <p className={`text-[9px] font-bold uppercase text-center ${analysisResult?.metrics?.true_peak_db > -1.0 ? 'text-[#FF453A]' : 'text-[#32D74B]'}`}>
+                        {analysisResult?.metrics?.true_peak_db > -1.0 ? '⚠ Posible Clipping Inter-sample' : '✓ Sin Clipping'}
+                     </p>
                   </div>
                </div>
+
+               {analysisResult?.recommendations && (
+                 <div className="mt-6 p-4 rounded-xl bg-white/5 border border-white/10">
+                   <p className="text-xs text-white italic">Recomendación IA:</p>
+                   <p className="text-[11px] text-[#A1A1AA] mt-2 whitespace-pre-line">{analysisResult.recommendations}</p>
+                 </div>
+               )}
 
                <Button className="w-full mt-10 bg-white/5 text-white font-black h-12 rounded-xl text-[10px] uppercase tracking-widest hover:bg-white/10">
                   GENERAR REPORTE TÉCNICO

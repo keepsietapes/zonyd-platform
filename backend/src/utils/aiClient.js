@@ -1,0 +1,105 @@
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { OpenAI } = require('openai');
+const logger = require('./logger');
+
+// Inicializar Gemini
+const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
+
+// Inicializar LMStudio / OpenAI Compatible
+const useLocalModel = process.env.USE_LOCAL_AI === 'true';
+const localAI = new OpenAI({
+  baseURL: process.env.LM_STUDIO_URL || 'http://localhost:1234/v1',
+  apiKey: 'lm-studio', // La API key de LM Studio suele ser ignorada, pero requerida por el SDK
+});
+
+/**
+ * Cliente de IA unificado.
+ * Prioriza LM Studio si USE_LOCAL_AI=true en .env, de lo contrario usa Gemini.
+ *
+ * @param {string} prompt - El system prompt o instrucción
+ * @param {string} message - El mensaje del usuario
+ * @param {Array} history - Historial de chat (opcional)
+ * @returns {Promise<string>} La respuesta generada
+ */
+async function generateAIContent(systemPrompt, message, history = []) {
+  if (useLocalModel) {
+    try {
+      logger.info('[aiClient] Utilizando LM Studio (modelo local)');
+      
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        ...history.map(msg => ({ role: msg.role === 'ai' ? 'assistant' : 'user', content: msg.text })),
+        { role: 'user', content: message }
+      ];
+
+      const response = await localAI.chat.completions.create({
+        model: process.env.LOCAL_MODEL_NAME || 'local-model', // LM studio usa el cargado en memoria
+        messages,
+        temperature: 0.7,
+      });
+
+      return response.choices[0].message.content;
+    } catch (err) {
+      logger.warn(`[aiClient] LM Studio falló, intentando fallback a Gemini. Error: ${err.message}`);
+      if (!genAI) throw new Error('Ambos modelos, Local y Gemini, fallaron o no están configurados.');
+      return await generateGeminiContent(systemPrompt, message, history);
+    }
+  } else {
+    if (!genAI) throw new Error('Gemini API key no configurada.');
+    return await generateGeminiContent(systemPrompt, message, history);
+  }
+}
+
+async function generateGeminiContent(systemPrompt, message, history) {
+  logger.info('[aiClient] Utilizando Gemini API pública');
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-1.5-flash',
+    systemInstruction: systemPrompt,
+  });
+
+  const geminiHistory = history.map(msg => ({
+    role: msg.role === 'ai' ? 'model' : 'user',
+    parts: [{ text: msg.text }],
+  }));
+
+  const chat = model.startChat({ history: geminiHistory });
+  const result = await chat.sendMessage(message);
+  return result.response.text();
+}
+
+/**
+ * Genera contenido de un solo tiro sin historial de chat.
+ */
+async function generateSingleContent(prompt) {
+  if (useLocalModel) {
+    try {
+      logger.info('[aiClient] Utilizando LM Studio (single content)');
+      const response = await localAI.chat.completions.create({
+        model: process.env.LOCAL_MODEL_NAME || 'local-model',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+      });
+      return response.choices[0].message.content;
+    } catch (err) {
+      logger.warn(`[aiClient] LM Studio falló en single content, intentando fallback. Error: ${err.message}`);
+      if (!genAI) throw new Error('Ambos modelos fallaron.');
+      return await generateSingleGeminiContent(prompt);
+    }
+  } else {
+    if (!genAI) throw new Error('Gemini API key no configurada.');
+    return await generateSingleGeminiContent(prompt);
+  }
+}
+
+async function generateSingleGeminiContent(prompt) {
+  logger.info('[aiClient] Utilizando Gemini API (single content)');
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const result = await model.generateContent(prompt);
+  return result.response.text();
+}
+
+module.exports = {
+  generateAIContent,
+  generateSingleContent,
+  useLocalModel,
+};

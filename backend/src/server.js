@@ -30,7 +30,11 @@ const app = express();
 // Confiar en el proxy de Cloudflare para obtener la IP real
 app.set('trust proxy', true);
 
-app.use(helmet());
+// Configuración estricta de seguridad en cabeceras
+app.use(helmet({
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false,
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(compression());
 app.use(pino);
 
@@ -61,18 +65,32 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Prevención de DoS: Reducir el tamaño masivo de 50mb a 2mb para JSON regular.
+// Las subidas de audio/archivos se manejan vía Multer, no vía body parser.
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ limit: '2mb', extended: true }));
+
+// Límite de peticiones global (Prevención de DDoS)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Límite de 100 peticiones por ventana
-  message: { error: "Demasiadas peticiones. Por favor, reintenta en 15 minutos." },
+  max: 300, // Límite incrementado un poco para navegación general
+  message: { error: "Demasiadas peticiones detectadas. Por favor, reintenta en 15 minutos." },
   standardHeaders: true,
   legacyHeaders: false,
 });
-
 app.use(limiter);
+
+// Límite ESTRICTO específico para Inteligencia Artificial y pagos
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 30, // Solo 30 peticiones cada 15 min para evitar robo de cómputo (LLMs)
+  message: { error: "Límite de seguridad de IA excedido para evitar abuso. Pausa unos minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/ai', aiLimiter);
+app.use('/api/lab', aiLimiter);
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'Music Distribution API' });
@@ -103,10 +121,14 @@ app.use('/api/user', require('./routes/userRoutes'));
 app.use('/api/spotify', require('./routes/spotifyRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/legal', require('./routes/legalRoutes'));
+app.use('/api/lab',   require('./routes/labRoutes'));    // ZONYD LAB AI — Phase 1
+
 
 // Inicializar Workers de procesamiento (Zonyd Engine)
-// require('./jobs/audioWorker');
-// require('./jobs/distributionWorker');
+require('./jobs/audioWorker');
+require('./jobs/distributionWorker');
+
 
 // In Sentry 8+, use setupExpressErrorHandler instead of the old errorHandler middleware
 Sentry.setupExpressErrorHandler(app);
@@ -118,7 +140,9 @@ const PORT = process.env.PORT || 4000;
 const server = app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
 
 // Colas de Trabajo (BullMQ)
+const { Queue } = require('bullmq');
 let distributionQueue = null;
+
 
 if (process.env.REDIS_URL) {
   try {

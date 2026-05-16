@@ -86,7 +86,7 @@ export default function ZonydAIPage() {
     try {
       const data = await authFetch('/api/ai/chat', {
         method: 'POST',
-        body: JSON.stringify({ message: userMsg }),
+        body: JSON.stringify({ message: userMsg, history: messages }),
       });
       setMessages(prev => [...prev, { role: 'ai', text: data.response || 'Sin respuesta del servidor.' }]);
     } catch (err) {
