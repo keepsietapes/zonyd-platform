@@ -9,9 +9,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Instalar dependencias (se cachea si package.json no cambió)
-# Instalamos TODO primero para poder generar Prisma, luego limpiamos o simplemente usamos ci
-RUN npm ci && npx prisma generate && npm prune --production
+# Instalar dependencias
+RUN npm install && npx prisma generate
 
 # Copiar el resto del código (solo esta capa se reconstruye en cada deploy)
 COPY . .

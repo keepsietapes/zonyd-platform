@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Music, TrendingUp, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Music, TrendingUp, ShieldCheck, Check, ChevronDown, Facebook, Twitter, Instagram, Youtube } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { authFetch } from '@/lib/api';
 
 export default function LandingPage() {
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistStatus, setWaitlistStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [waitlistCount, setWaitlistCount] = useState(127); // Seed con número base
+  const [waitlistCount, setWaitlistCount] = useState(127);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const handleWaitlist = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +19,6 @@ export default function LandingPage() {
     
     setWaitlistStatus('loading');
     try {
-      // Guardar en Supabase directamente (tabla Notification como canal temporal)
       const { error } = await supabase
         .from('Notification')
         .insert({
@@ -34,178 +34,276 @@ export default function LandingPage() {
       setWaitlistEmail('');
     } catch (err) {
       console.error('Waitlist error:', err);
-      setWaitlistStatus('success'); // Mostrar éxito de todas formas para UX
+      setWaitlistStatus('success');
     }
   };
 
   useEffect(() => {
-    // Redirección automática para el subdominio de la aplicación
     if (window.location.hostname === 'app.zonyd.com') {
       window.location.href = '/login';
       return;
     }
-
-    // Verificar si hay una sesión "huérfana" que el backend no reconoce
-    const checkSync = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        try {
-          // Si el ping falla, es que el secreto JWT no coincide
-          const res = await authFetch('/api/stats');
-          // authFetch ahora devuelve null en caso de 401
-          if (res === null) {
-            console.warn('Sesión no sincronizada con el backend. Limpiando...');
-            await supabase.auth.signOut();
-            localStorage.clear();
-            window.location.reload(); // Forzamos recarga para limpiar el estado
-          }
-        } catch (err: any) {
-          if (err?.message?.includes('401') || err?.message?.includes('AUTH_FAILED')) {
-            console.warn('Sesión no sincronizada con el backend. Limpiando...');
-            await supabase.auth.signOut();
-            localStorage.clear();
-            window.location.reload();
-          }
-        }
-      }
-    };
-    checkSync();
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0B0B0F] text-white selection:bg-[#FF9F0A] selection:text-black">
-      {/* Background Gradients */}
+    <div className="min-h-screen bg-[#0B0B0F] text-white selection:bg-[#FF9F0A] selection:text-black font-sans">
+      {/* Gradients */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#FF9F0A]/10 blur-[150px]" />
-        <div className="absolute top-[40%] right-[-10%] w-[30%] h-[50%] rounded-full bg-[#7B61FF]/10 blur-[150px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[50%] rounded-full bg-[#7B61FF]/10 blur-[150px]" />
       </div>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-[#232733] bg-[#0B0B0F]/80 backdrop-blur-md">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#232733] bg-[#0B0B0F]/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <img src="/logo.png" alt="Zonyd Logo" className="w-10 h-10 object-contain" />
-            <span className="text-xl font-bold tracking-tight">Zonyd</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-[#A1A1AA]">
-            <Link href="#features" className="hover:text-white transition-colors">Features</Link>
-            <Link href="#pricing" className="hover:text-white transition-colors">Pricing</Link>
-            <Link href="#support" className="hover:text-white transition-colors">Support</Link>
+            <span className="text-xl font-black tracking-tighter uppercase italic">Zonyd</span>
+          </Link>
+          <nav className="hidden md:flex items-center gap-8 text-[11px] font-black uppercase tracking-widest text-[#A1A1AA]">
+            <Link href="#features" className="hover:text-white transition-colors">Características</Link>
+            <Link href="#pricing" className="hover:text-white transition-colors">Planes</Link>
+            <Link href="#faq" className="hover:text-white transition-colors">FAQ</Link>
           </nav>
           <div className="flex items-center gap-4">
             <Link href="/login">
-              <Button variant="ghost" className="text-[#A1A1AA] hover:text-white hover:bg-[#151821]">Log in</Button>
+              <Button variant="ghost" className="text-[11px] font-black uppercase tracking-widest text-[#A1A1AA] hover:text-white hover:bg-[#151821]">Entrar</Button>
             </Link>
             <Link href="/login">
-              <Button className="bg-[#FF9F0A] text-[#0B0B0F] hover:bg-[#FF9F0A]/90 font-bold px-6 rounded-full">
-                Start for free
+              <Button className="bg-[#FF9F0A] text-[#0B0B0F] hover:bg-[#FF9F0A]/90 font-black text-[11px] uppercase tracking-widest px-6 rounded-xl h-11">
+                Empezar Gratis
               </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-32 pb-20">
+      {/* Hero */}
+      <section className="relative z-10 max-w-7xl mx-auto px-6 pt-48 pb-32">
         <div className="max-w-4xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#151821] border border-[#232733] mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#151821] border border-[#232733] mb-10">
             <span className="flex h-2 w-2 rounded-full bg-[#34C759]"></span>
-            <span className="text-xs font-medium text-[#A1A1AA]">Zonyd is now live</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#A1A1AA]">Zonyd is now live</span>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[1.1] mb-8">
-            The infrastructure for <br />
-            <span className="text-gradient">modern music.</span>
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-10 uppercase italic">
+            Infraestructura para <br />
+            <span className="text-[#FF9F0A]">música moderna.</span>
           </h1>
           
-          <p className="text-xl text-[#A1A1AA] max-w-2xl leading-relaxed mb-10">
+          <p className="text-xl text-[#A1A1AA] max-w-2xl leading-relaxed mb-12 font-medium">
             Distribuye a Spotify, Apple Music y TikTok en segundos. Gestiona tus regalías, 
-            divide pagos automáticamente y analiza tu crecimiento con inteligencia artificial.
+            divide pagos automáticamente y analiza tu crecimiento con IA.
           </p>
           
           <div className="flex flex-col gap-6">
             {waitlistStatus === 'success' ? (
-              <div className="flex items-center gap-3 px-6 py-4 bg-[#34C759]/10 border border-[#34C759]/30 rounded-2xl max-w-lg animate-in fade-in duration-500">
-                <div className="w-10 h-10 rounded-full bg-[#34C759]/20 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5 text-[#34C759]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              <div className="flex items-center gap-4 px-8 py-6 bg-[#34C759]/10 border border-[#34C759]/30 rounded-[2rem] max-w-lg">
+                <div className="w-12 h-12 rounded-full bg-[#34C759]/20 flex items-center justify-center shrink-0">
+                  <Check className="text-[#34C759]" size={24} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-white">¡Estás en la lista! 🎉</p>
-                  <p className="text-xs text-[#A1A1AA]">Te avisaremos cuando tu acceso esté listo. Revisa tu correo.</p>
+                  <p className="text-lg font-black text-white uppercase italic tracking-tighter">¡Estás dentro! 🎉</p>
+                  <p className="text-xs text-[#A1A1AA] font-bold">Te avisaremos cuando tu acceso esté listo.</p>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row gap-3 max-w-xl">
+              <form onSubmit={handleWaitlist} className="flex flex-col sm:flex-row gap-4 max-w-xl">
                 <input
                   type="email"
                   value={waitlistEmail}
                   onChange={(e) => setWaitlistEmail(e.target.value)}
                   placeholder="tu@email.com"
                   required
-                  className="flex-1 h-14 px-6 bg-[#151821] border border-[#232733] rounded-full text-white placeholder:text-[#3A3A3C] focus:border-[#FF9F0A] outline-none text-base"
+                  className="flex-1 h-16 px-8 bg-[#151821] border border-[#232733] rounded-2xl text-white placeholder:text-[#3A3A3C] focus:border-[#FF9F0A] outline-none text-base font-bold transition-all"
                 />
                 <Button 
                   type="submit" 
                   disabled={waitlistStatus === 'loading'}
-                  className="h-14 px-8 bg-white text-black hover:bg-gray-200 text-lg font-bold rounded-full shrink-0 disabled:opacity-50"
+                  className="h-16 px-10 bg-white text-black hover:bg-gray-200 text-[13px] font-black uppercase tracking-widest rounded-2xl shrink-0 disabled:opacity-50"
                 >
-                  {waitlistStatus === 'loading' ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                      Enviando...
-                    </span>
-                  ) : (
-                    <>Unirme al Waitlist <ArrowRight className="ml-2 w-5 h-5" /></>
-                  )}
+                  {waitlistStatus === 'loading' ? 'Enviando...' : 'Unirme al Waitlist'}
                 </Button>
               </form>
             )}
             
-            {/* Social Proof */}
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-2">
+            <div className="flex items-center gap-4 mt-4">
+              <div className="flex -space-x-3">
                 {['🎵', '🎤', '🎹', '🎸'].map((emoji, i) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-[#151821] border-2 border-[#0B0B0F] flex items-center justify-center text-sm">{emoji}</div>
+                  <div key={i} className="w-10 h-10 rounded-full bg-[#151821] border-4 border-[#0B0B0F] flex items-center justify-center text-sm shadow-xl">{emoji}</div>
                 ))}
               </div>
-              <p className="text-sm text-[#A1A1AA]">
-                <span className="text-white font-bold">{waitlistCount}+ artistas</span> ya están en la lista de espera
+              <p className="text-[11px] font-black uppercase tracking-widest text-[#A1A1AA]">
+                <span className="text-white">{waitlistCount}+ artistas</span> en lista de espera
               </p>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-32">
+      {/* Features Grid */}
+      <section id="features" className="relative z-10 max-w-7xl mx-auto px-6 py-32 border-t border-[#232733]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <FeatureCard 
-            icon={<Music className="text-[#FF9F0A]" size={24} />}
-            title="Global Distribution"
-            desc="Llega a más de 150 tiendas digitales en todo el mundo con un solo clic. Calidad sin pérdida garantizada."
+            icon={<Music className="text-[#FF9F0A]" size={28} />}
+            title="Distribución Global"
+            desc="Llega a más de 150 tiendas digitales con un solo clic. Calidad sin pérdida (WAV/FLAC) garantizada."
           />
           <FeatureCard 
-            icon={<TrendingUp className="text-[#34C759]" size={24} />}
-            title="Automated Royalties"
-            desc="Splits automáticos, gestión de impuestos y pagos rápidos directos a tu cuenta bancaria."
+            icon={<TrendingUp className="text-[#34C759]" size={28} />}
+            title="Regalías Automatizadas"
+            desc="Splits automáticos entre colaboradores. Gestionamos los pagos para que tú solo te encargues de crear."
           />
           <FeatureCard 
-            icon={<ShieldCheck className="text-[#4F8CFF]" size={24} />}
-            title="AI-Powered Analytics"
-            desc="Entiende a tu audiencia con datos en tiempo real procesados por nuestro asistente inteligente."
+            icon={<ShieldCheck className="text-[#4F8CFF]" size={28} />}
+            title="Zonyd AI Dashboard"
+            desc="Entiende tus métricas reales y recibe estrategias de marketing personalizadas por nuestra IA."
           />
         </div>
-      </main>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="relative z-10 max-w-7xl mx-auto px-6 py-32 border-t border-[#232733]">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase italic mb-6">Planes para <span className="text-[#FF9F0A]">cada etapa.</span></h2>
+          <p className="text-[#A1A1AA] max-w-xl mx-auto font-bold uppercase text-[10px] tracking-[0.2em]">Sin cargos ocultos. Transparencia total.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <PriceCard 
+            title="Free" price="0" 
+            features={['85% Royalties', 'Distribución Estándar', 'Dashboard Básico']} 
+            cta="Empezar Ahora" 
+          />
+          <PriceCard 
+            title="Indie" price="4.99" highlighted 
+            features={['95% Royalties', 'Distribución Rápida', 'Artistas Ilimitados', 'Soporte Prioritario']} 
+            cta="Suscribirse" 
+          />
+          <PriceCard 
+            title="Pro" price="9.99" 
+            features={['100% Royalties', 'Zonyd AI Co-Manager', 'SmartLinks Premium', 'Content ID Management']} 
+            cta="Suscribirse" 
+          />
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="relative z-10 max-w-3xl mx-auto px-6 py-32 border-t border-[#232733]">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-black uppercase italic tracking-tighter">Preguntas Frecuentes</h2>
+        </div>
+        <div className="space-y-4">
+          {[
+            { q: "¿Cuánto tarda en publicarse mi música?", a: "Spotify y Apple Music suelen procesar los lanzamientos en 24-48 horas. Recomendamos subir tu música 14 días antes para asegurar la inclusión en playlists editoriales." },
+            { q: "¿Cómo recibo mis pagos?", a: "Pagamos mensualmente vía PayPal o transferencia bancaria directa (CLABE en México). El umbral mínimo de retiro es de $10 USD." },
+            { q: "¿Soy dueño de mi música?", a: "Sí, el 100% de la propiedad intelectual de tus masters y letras te pertenece. Zonyd solo actúa como tu distribuidor y administrador." },
+            { q: "¿Qué hace Zonyd AI?", a: "Nuestra IA analiza tus streams, demografía y tendencias de mercado para darte consejos específicos de cuándo lanzar, qué presupuesto invertir en marketing y cómo optimizar tus perfiles." }
+          ].map((item, i) => (
+            <div key={i} className="bg-[#151821] border border-[#232733] rounded-2xl overflow-hidden">
+              <button 
+                onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                className="w-full p-6 text-left flex items-center justify-between hover:bg-white/5 transition-colors"
+              >
+                <span className="font-bold text-sm">{item.q}</span>
+                <ChevronDown className={`text-[#FF9F0A] transition-transform ${openFaq === i ? 'rotate-180' : ''}`} size={20} />
+              </button>
+              {openFaq === i && (
+                <div className="px-6 pb-6 text-sm text-[#A1A1AA] leading-relaxed animate-in slide-in-from-top-2 duration-300">
+                  {item.a}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-[#232733] bg-[#0B0B0F] pt-20 pb-10">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
+            <div className="col-span-1 md:col-span-2">
+              <div className="flex items-center gap-3 mb-6">
+                <img src="/logo.png" alt="Zonyd" className="w-8 h-8" />
+                <span className="text-lg font-black uppercase italic tracking-tighter">Zonyd</span>
+              </div>
+              <p className="text-[#A1A1AA] text-sm max-w-xs leading-relaxed mb-8">
+                Empoderando a la próxima generación de artistas independientes con tecnología de punta y transparencia total.
+              </p>
+              <div className="flex items-center gap-4 text-[#3A3A3C]">
+                <Facebook className="hover:text-white cursor-pointer transition-colors" size={20} />
+                <Twitter className="hover:text-white cursor-pointer transition-colors" size={20} />
+                <Instagram className="hover:text-white cursor-pointer transition-colors" size={20} />
+                <Youtube className="hover:text-white cursor-pointer transition-colors" size={20} />
+              </div>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white mb-6">Plataforma</h4>
+              <ul className="space-y-4 text-xs font-bold text-[#A1A1AA]">
+                <li><Link href="/login" className="hover:text-white">Dashboard</Link></li>
+                <li><Link href="/login" className="hover:text-white">Distribución</Link></li>
+                <li><Link href="/login" className="hover:text-white">Marketplace</Link></li>
+                <li><Link href="/login" className="hover:text-white">SmartLinks</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white mb-6">Legal</h4>
+              <ul className="space-y-4 text-xs font-bold text-[#A1A1AA]">
+                <li><Link href="/legal/terms" className="hover:text-white">Términos de Servicio</Link></li>
+                <li><Link href="/legal/privacy" className="hover:text-white">Privacidad</Link></li>
+                <li><Link href="/legal/distribution-agreement" className="hover:text-white">Acuerdo de Distribución</Link></li>
+                <li><Link href="/legal/copyright" className="hover:text-white">Copyright</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="pt-10 border-t border-[#232733] flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-[10px] font-bold text-[#3A3A3C]">© 2026 Zonyd Platform. Todos los derechos reservados.</p>
+            <p className="text-[10px] font-bold text-[#3A3A3C]">Hecho con ❤️ para la comunidad musical global.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
 
 function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
   return (
-    <div className="glass-panel p-8 rounded-3xl group hover:border-[#FF9F0A]/30 transition-colors">
-      <div className="w-12 h-12 rounded-2xl bg-[#0B0B0F] border border-[#232733] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+    <div className="bg-[#151821] border border-[#232733] p-8 rounded-[2.5rem] group hover:border-[#FF9F0A]/40 transition-all hover:-translate-y-2 duration-500 shadow-2xl">
+      <div className="w-14 h-14 rounded-2xl bg-black border border-white/5 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-inner">
         {icon}
       </div>
-      <h3 className="text-xl font-bold mb-3">{title}</h3>
-      <p className="text-[#A1A1AA] leading-relaxed">{desc}</p>
+      <h3 className="text-xl font-black uppercase italic tracking-tighter mb-4">{title}</h3>
+      <p className="text-sm text-[#A1A1AA] leading-relaxed font-medium">{desc}</p>
+    </div>
+  );
+}
+
+function PriceCard({ title, price, features, cta, highlighted = false }: { title: string, price: string, features: string[], cta: string, highlighted?: boolean }) {
+  return (
+    <div className={`p-8 rounded-[2.5rem] border transition-all duration-500 relative flex flex-col ${highlighted ? 'bg-white text-black border-white scale-105 z-10 shadow-[0_0_50px_rgba(255,255,255,0.1)]' : 'bg-[#151821] text-white border-[#232733] hover:border-white/20'}`}>
+      {highlighted && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#FF9F0A] text-black text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">Más Popular</div>
+      )}
+      <div className="mb-8">
+        <h4 className="text-[11px] font-black uppercase tracking-[0.3em] mb-4 opacity-60">{title}</h4>
+        <div className="flex items-baseline gap-1">
+          <span className="text-4xl font-black tracking-tighter italic">${price}</span>
+          <span className="text-[10px] font-bold opacity-60 uppercase">/ mes</span>
+        </div>
+      </div>
+      <ul className="space-y-4 mb-10 flex-1">
+        {features.map((f, i) => (
+          <li key={i} className="flex items-center gap-3 text-xs font-bold">
+            <Check size={14} className={highlighted ? 'text-black' : 'text-[#FF9F0A]'} />
+            <span className="opacity-80">{f}</span>
+          </li>
+        ))}
+      </ul>
+      <Link href="/login">
+        <Button className={`w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${highlighted ? 'bg-black text-white hover:bg-black/90' : 'bg-white text-black hover:bg-gray-200'}`}>
+          {cta}
+        </Button>
+      </Link>
     </div>
   );
 }

@@ -18,7 +18,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
       - name: Install dependencies
-        run: cd backend && npm ci --prefer-offline
+        run: cd backend && npm install
       - name: Generate Prisma
         run: cd backend && npx prisma generate
       - name: Run Tests
@@ -35,7 +35,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: zonyd-app/package-lock.json
       - name: Install dependencies
-        run: cd zonyd-app && npm ci --prefer-offline
+        run: cd zonyd-app && npm install
       - name: Build Next.js
         run: cd zonyd-app && npm run build
         env:
