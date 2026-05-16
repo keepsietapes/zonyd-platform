@@ -53,6 +53,11 @@ jobs:
             ${{ secrets.ENV_FILE }}
             EOF
             
+            # Limpiar el .env de retornos de carro de Windows (\r), líneas vacías y comentarios que rompen Docker Compose
+            sed -i 's/\r$//' backend/.env
+            sed -i '/^[[:space:]]*$/d' backend/.env
+            sed -i '/^[[:space:]]*#/d' backend/.env
+            
             # Quitar comillas dobles o simples de los valores (docker-compose no las quita y rompe las URLs)
             sed -i 's/="\(.*\)"$/=\1/' backend/.env
             sed -i "s/='\(.*\)'$/=\1/" backend/.env
