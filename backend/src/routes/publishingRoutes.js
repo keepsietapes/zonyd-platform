@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 // GET /api/publishing — Dashboard de Publishing del artista
 router.get('/', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findUnique({
+    const artist = await prisma.artist.findFirst({
       where: { userId: req.user.id },
       include: {
         releases: {
@@ -49,7 +49,7 @@ router.get('/', authMiddleware, async (req, res, next) => {
 // POST /api/publishing/works — Registrar nueva obra
 router.post('/works', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findUnique({ where: { userId: req.user.id } });
+    const artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
     if (!artist) return res.status(404).json({ error: 'Perfil de artista requerido.' });
 
     const { title, coAuthors = [], pro, lyrics } = req.body;
@@ -69,11 +69,35 @@ router.post('/works', authMiddleware, async (req, res, next) => {
 
     await prisma.auditLog.create({
       data: { userId: req.user.id, action: 'PUBLISHING_WORK_REGISTERED', details: JSON.stringify({ workId: work.id, title }) },
-    });
+    }).catch(e => logger.warn(`[Publishing] AuditLog: ${e.message}`));
 
     res.json({ success: true, work });
   } catch (err) {
     logger.error(`[Publishing:POST/works] ${err.message}`);
+    next(err);
+  }
+});
+
+// PATCH /api/publishing/society — Vincular/desvincular sociedad PRO
+router.patch('/society', authMiddleware, async (req, res, next) => {
+  try {
+    const artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
+    if (!artist) return res.status(404).json({ error: 'Perfil de artista requerido.' });
+
+    const { society } = req.body;
+    const validSocieties = ['SACM', 'ASCAP', 'BMI', 'SGAE', 'SESAC', 'SOCAN', 'PRS'];
+    if (!validSocieties.includes(society)) {
+      return res.status(400).json({ error: `Sociedad no válida. Opciones: ${validSocieties.join(', ')}` });
+    }
+
+    const updated = await prisma.artist.update({
+      where: { id: artist.id },
+      data: { proSociety: society }
+    });
+
+    res.json({ success: true, proSociety: updated.proSociety });
+  } catch (err) {
+    logger.error(`[Publishing:PATCH/society] ${err.message}`);
     next(err);
   }
 });

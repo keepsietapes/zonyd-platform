@@ -48,6 +48,10 @@ function SettingsContent() {
   const [currentPlan, setCurrentPlan] = useState<string>('FREE');
   const [isSaving, setIsSaving] = useState(false);
   const [artistProfiles, setArtistProfiles] = useState<any[]>([]);
+  const [spotifyUrl, setSpotifyUrl] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
+  const [paypalVerified, setPaypalVerified] = useState(false);
   
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -72,8 +76,11 @@ function SettingsContent() {
             if (primary.plan) setCurrentPlan(primary.plan);
             if (primary.stageName) setArtistName(primary.stageName);
             if (primary.bio) setBio(primary.bio);
-            if (primary.paypalEmail) setPayoutMethod(primary.paypalEmail);
+            if (primary.paypalEmail) { setPayoutMethod(primary.paypalEmail); setPaypalVerified(true); }
             if (primary.clabe) setBankAccount(primary.clabe);
+            if (primary.spotifyUrl) setSpotifyUrl(primary.spotifyUrl);
+            if (primary.instagramUrl) setInstagramUrl(primary.instagramUrl);
+            if (primary.tiktokUrl) setTiktokUrl(primary.tiktokUrl);
             if (res.email) setContactEmail(res.email);
           } else {
             console.warn('⚠️ No se encontraron perfiles de artista.');
@@ -282,14 +289,15 @@ function SettingsContent() {
                             <input
                               type="url"
                               placeholder="https://open.spotify.com/artist/..."
-                              defaultValue={artistProfiles[0]?.spotifyUrl || ''}
+                              value={spotifyUrl}
+                              onChange={e => setSpotifyUrl(e.target.value)}
                               id="spotify-url-input"
                               className="flex-1 bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-sm text-white focus:border-[#1DB954] outline-none transition-all"
                             />
                             <Button
                               disabled={isSaving}
                               onClick={async () => {
-                                const val = (document.getElementById('spotify-url-input') as HTMLInputElement)?.value || '';
+                                const val = spotifyUrl;
                                 if (val && !/^https:\/\/(open\.spotify\.com\/artist\/|artists\.spotify\.com)/.test(val)) {
                                   alert('URL de Spotify inválida. Debe ser open.spotify.com/artist/... o artists.spotify.com');
                                   return;
@@ -302,6 +310,7 @@ function SettingsContent() {
                                   const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
                                   if (saved && !saved.error) {
                                     setArtistProfiles((prev: any[]) => prev.map((p: any) => p.id === saved.id ? { ...p, ...saved } : p));
+                                    setSpotifyUrl(val);
                                     alert('✅ Spotify vinculado correctamente.');
                                   }
                                 } catch (err: any) {
@@ -312,7 +321,7 @@ function SettingsContent() {
                             >Guardar</Button>
                           </div>
                           {artistProfiles[0]?.spotifyUrl && (
-                            <p className="text-[10px] text-[#1DB954] flex items-center gap-1"><CheckCircle2 size={12} /> Vinculado</p>
+                            <p className="text-[10px] text-[#34C759] flex items-center gap-1"><CheckCircle2 size={12} /> Conectado correctamente</p>
                           )}
                         </div>
 
@@ -323,14 +332,15 @@ function SettingsContent() {
                             <input
                               type="url"
                               placeholder="https://www.instagram.com/..."
-                              defaultValue={artistProfiles[0]?.instagramUrl || ''}
+                              value={instagramUrl}
+                              onChange={e => setInstagramUrl(e.target.value)}
                               id="instagram-url-input"
                               className="flex-1 bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-sm text-white focus:border-[#E4405F] outline-none transition-all"
                             />
                             <Button
                               disabled={isSaving}
                               onClick={async () => {
-                                const val = (document.getElementById('instagram-url-input') as HTMLInputElement)?.value || '';
+                                const val = instagramUrl;
                                 setIsSaving(true);
                                 try {
                                   const payload: any = { instagramUrl: val };
@@ -339,6 +349,7 @@ function SettingsContent() {
                                   const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
                                   if (saved && !saved.error) {
                                     setArtistProfiles((prev: any[]) => prev.map((p: any) => p.id === saved.id ? { ...p, ...saved } : p));
+                                    setInstagramUrl(val);
                                     alert('✅ Instagram vinculado correctamente.');
                                   }
                                 } catch (err: any) {
@@ -349,7 +360,7 @@ function SettingsContent() {
                             >Guardar</Button>
                           </div>
                           {artistProfiles[0]?.instagramUrl && (
-                            <p className="text-[10px] text-[#E4405F] flex items-center gap-1"><CheckCircle2 size={12} /> Vinculado</p>
+                            <p className="text-[10px] text-[#34C759] flex items-center gap-1"><CheckCircle2 size={12} /> Conectado correctamente</p>
                           )}
                         </div>
 
@@ -360,14 +371,15 @@ function SettingsContent() {
                             <input
                               type="url"
                               placeholder="https://www.tiktok.com/@..."
-                              defaultValue={artistProfiles[0]?.tiktokUrl || ''}
+                              value={tiktokUrl}
+                              onChange={e => setTiktokUrl(e.target.value)}
                               id="tiktok-url-input"
                               className="flex-1 bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-sm text-white focus:border-white outline-none transition-all"
                             />
                             <Button
                               disabled={isSaving}
                               onClick={async () => {
-                                const val = (document.getElementById('tiktok-url-input') as HTMLInputElement)?.value || '';
+                                const val = tiktokUrl;
                                 setIsSaving(true);
                                 try {
                                   const payload: any = { tiktokUrl: val };
@@ -376,6 +388,7 @@ function SettingsContent() {
                                   const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
                                   if (saved && !saved.error) {
                                     setArtistProfiles((prev: any[]) => prev.map((p: any) => p.id === saved.id ? { ...p, ...saved } : p));
+                                    setTiktokUrl(val);
                                     alert('✅ TikTok vinculado correctamente.');
                                   }
                                 } catch (err: any) {
@@ -386,7 +399,7 @@ function SettingsContent() {
                             >Guardar</Button>
                           </div>
                           {artistProfiles[0]?.tiktokUrl && (
-                            <p className="text-[10px] text-white flex items-center gap-1"><CheckCircle2 size={12} /> Vinculado</p>
+                            <p className="text-[10px] text-[#34C759] flex items-center gap-1"><CheckCircle2 size={12} /> Conectado correctamente</p>
                           )}
                         </div>
                      </CardContent>
@@ -450,25 +463,59 @@ function SettingsContent() {
                          onClick={async () => {
                            setIsSaving(true);
                            try {
-                             const payload: any = { paypalEmail: payoutMethod, clabe: bankAccount };
-                             const artistId = artistProfiles[0]?.id;
-                             if (artistId) payload.id = artistId;
-                             
-                             const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
-                             if (saved && !saved.error) {
-                               alert('✅ Métodos de pago actualizados correctamente.');
-                             }
-                           } catch (err: any) {
-                             alert(`❌ ${err.message || 'Error al guardar.'}`);
-                           } finally {
-                             setIsSaving(false);
-                           }
-                         }}
-                         className="bg-[#FF9F0A] hover:bg-[#FF9F0A]/90 text-black font-black px-8 rounded-xl h-12 shadow-lg shadow-[#FF9F0A]/20"
-                       >
-                         {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-                         GUARDAR CONFIGURACIÓN DE PAGO
-                       </Button>
+                          disabled={isSaving}
+                          onClick={async () => {
+                            if (payoutMethod && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payoutMethod)) {
+                              alert('❌ El correo de PayPal no tiene un formato válido.');
+                              return;
+                            }
+                            if (bankAccount && bankAccount.length !== 18) {
+                              alert('❌ La CLABE debe tener exactamente 18 dígitos.');
+                              return;
+                            }
+                            setIsSaving(true);
+                            try {
+                              const payload: any = { paypalEmail: payoutMethod, clabe: bankAccount };
+                              const artistId = artistProfiles[0]?.id;
+                              if (artistId) payload.id = artistId;
+                              
+                              const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
+                              if (saved && !saved.error) {
+                                if (payoutMethod) setPaypalVerified(true);
+                                alert('✅ Métodos de pago actualizados correctamente.');
+                              }
+                            } catch (err: any) {
+                              alert(`❌ ${err.message || 'Error al guardar.'}`);
+                            } finally {
+                              setIsSaving(false);
+                            }
+                          }}
+                          className="bg-[#FF9F0A] hover:bg-[#FF9F0A]/90 text-black font-black px-8 rounded-xl h-12 shadow-lg shadow-[#FF9F0A]/20"
+                        >
+                          {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+                          GUARDAR CONFIGURACIÓN DE PAGO
+                        </Button>
+
+                        {/* Verificación inteligente de PayPal */}
+                        {payoutMethod && (
+                          <div className="flex items-center justify-between p-4 rounded-xl bg-blue-500/5 border border-blue-500/20">
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-[#A1A1AA]">Verificación de cuenta PayPal</p>
+                              <p className="text-xs text-white mt-1">{payoutMethod}</p>
+                              {paypalVerified && (
+                                <p className="text-[10px] text-[#34C759] flex items-center gap-1 mt-1"><CheckCircle2 size={10} /> Guardado correctamente</p>
+                              )}
+                            </div>
+                            <a
+                              href={`https://www.paypal.com/myaccount/transfer/homepage/external/profile?flowloaded=true`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-[10px] font-black text-blue-400 hover:text-blue-300 transition-colors border border-blue-400/30 px-4 py-2 rounded-xl hover:bg-blue-400/10"
+                            >
+                              <ExternalLink size={12} /> VERIFICAR EN PAYPAL
+                            </a>
+                          </div>
+                        )}
 
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                           <div className="p-6 rounded-2xl bg-black/20 border border-white/5 space-y-2 transition-colors duration-500">

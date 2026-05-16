@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  ChevronLeft, ChevronRight, Check, Upload, 
+  ChevronLeft, ChevronRight, Check, Upload, Play, Pause, 
   Music, Image as ImageIcon, Globe, DollarSign, Eye, Share2, Calendar, Clock, Copy, Disc, ShieldCheck, ShieldAlert, AlertTriangle, Loader2, Mic2, Plus, SplitSquareVertical, X, CheckCircle2, Sparkles
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -133,7 +133,8 @@ export default function NewReleasePage() {
     // ✅ PASO 1: Registrar localmente de inmediato (sin esperar el backend)
     const localTracks = validFiles.map(file => ({
       id: `local-${Date.now()}-${Math.random()}`,
-      title: file.name
+      title: file.name,
+      url: URL.createObjectURL(file)
     }));
     setUploadedTracks(prev => [...prev, ...localTracks]);
 
@@ -435,6 +436,7 @@ export default function NewReleasePage() {
                 setRealAuthorName={setRealAuthorName}
                 authorRole={authorRole}
                 setAuthorRole={setAuthorRole}
+                uploadedTracks={uploadedTracks}
               />
             )}
             {currentStep === 4 && (
@@ -585,16 +587,20 @@ function StepInfoBasica({
             <Label className="text-[#A1A1AA] text-xs font-black uppercase tracking-[0.2em] mb-2 block">Contenido Explícito</Label>
             <div 
               onClick={() => setIsExplicit(!isExplicit)}
-              className={`h-16 px-8 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+              className={`h-16 px-6 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
                 isExplicit 
                 ? 'bg-red-500/10 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)]' 
                 : 'bg-[#0B0B0F] border-[#232733] hover:border-[#A1A1AA]/30'
               }`}
             >
-              <span className={`text-sm font-black uppercase tracking-widest ${isExplicit ? 'text-red-500' : 'text-[#A1A1AA]'}`}>
-                {isExplicit ? 'Contenido Explícito (Parental Advisory)' : 'Contenido Limpio (Clean)'}
-              </span>
-              <div className={`w-12 h-6 rounded-full relative transition-colors ${isExplicit ? 'bg-red-500' : 'bg-[#232733]'}`}>
+              <div className="flex flex-col">
+                 <span className={`text-xs font-black uppercase tracking-widest ${isExplicit ? 'text-red-500' : 'text-white'}`}>
+                   {isExplicit ? 'Contenido Explícito' : 'Contenido Limpio'}
+                 </span>
+                 <span className="text-[9px] text-[#A1A1AA] mt-1">{isExplicit ? 'Parental Advisory' : 'Apto para todo público'}</span>
+              </div>
+              
+              <div className={`w-12 h-6 rounded-full relative transition-colors shrink-0 ${isExplicit ? 'bg-red-500' : 'bg-[#232733]'}`}>
                 <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${isExplicit ? 'left-7 shadow-lg' : 'left-1'}`} />
               </div>
             </div>
@@ -624,15 +630,24 @@ function StepUpload({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+      <div className="bg-red-500/10 border border-red-500/20 p-5 rounded-2xl">
+        <h4 className="text-red-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 mb-3">
+           <ShieldAlert size={14} /> Copyright & Sampling Policy
+        </h4>
+        <p className="text-[10px] text-red-200/70 leading-relaxed italic">
+          El uso de samples no autorizados o audio de baja calidad (128kbps) resultará en el rechazo inmediato por parte de los curadores de las tiendas. Recomendamos <span className="text-white font-bold">WAV (24-bit)</span>.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
         {/* COVER UPLOAD */}
-        <div className="group cursor-pointer relative">
+        <div className="group cursor-pointer relative h-full flex flex-col">
           <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-20" onChange={handleCoverUpload} />
-          <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-[0.2em] mb-4 block flex justify-between">
+          <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-[0.2em] mb-4 flex justify-between">
             Artwork Premium
             {coverStatus === 'success' && <span className="text-[#34C759] flex items-center gap-1"><CheckCircle2 size={10} /> VALIDADO</span>}
           </Label>
-          <div className={`aspect-square rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 relative overflow-hidden group-hover:border-[#FF9F0A]/50 ${
+          <div className={`flex-1 min-h-[300px] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 relative overflow-hidden group-hover:border-[#FF9F0A]/50 ${
             coverStatus === 'idle' ? 'border-[#232733] bg-[#151821]/30 group-hover:bg-[#FF9F0A]/5' :
             coverStatus === 'loading' ? 'border-[#FF9F0A] bg-[#FF9F0A]/10' :
             coverStatus === 'success' ? 'border-[#34C759] bg-[#34C759]/10' : 'border-red-500 bg-red-500/10'
@@ -697,7 +712,7 @@ function StepUpload({
 
           <label
             htmlFor="audio-file-input"
-            className={`block aspect-square rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 cursor-pointer select-none group ${
+            className={`flex-1 min-h-[300px] rounded-[2.5rem] border-2 border-dashed flex flex-col items-center justify-center gap-4 transition-all duration-700 cursor-pointer select-none group ${
               audioStatus === 'idle'     ? 'border-[#232733] bg-[#151821]/30 hover:border-[#7B61FF] hover:bg-[#7B61FF]/5' :
               audioStatus === 'loading'  ? 'border-[#7B61FF] bg-[#7B61FF]/10' :
               audioStatus === 'analyzing'? 'border-[#00F2FE] bg-[#00F2FE]/10' :
@@ -769,11 +784,15 @@ function StepUpload({
 function StepTracks({ 
   releaseType, splits, setSplits, 
   lyrics, setLyrics, realAuthorName, setRealAuthorName, 
-  authorRole, setAuthorRole 
+  authorRole, setAuthorRole, uploadedTracks 
 }: any) {
   const [isCover, setIsCover] = useState(false);
   const [hasSamples, setHasSamples] = useState(false);
   const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [startTimeStr, setStartTimeStr] = useState('00:00');
+  const audioRef = React.useRef<HTMLAudioElement>(null);
 
   const addSplit = () => {
     setSplits([...splits, { artistName: '', percentage: 0, email: '', role: 'Featured' }]);
@@ -944,21 +963,64 @@ function StepTracks({
                   <Share2 size={20} className="text-[#4F8CFF]"/> Social Media Clips
                 </h3>
                 <Label className="text-[#A1A1AA] text-[10px] font-black uppercase tracking-widest mb-4 block">TikTok / Reels Start Time</Label>
-                <div className="flex gap-4 items-center bg-[#151821] p-6 rounded-2xl border border-white/5 shadow-inner">
-                  <Input 
-                    placeholder="00:45" 
-                    className="bg-black border-[#232733] text-center w-32 font-mono text-2xl h-14 rounded-xl text-[#FF9F0A] focus:border-[#FF9F0A]"
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if(val.length === 5 && !/^[0-5][0-9]:[0-5][0-9]$/.test(val)) {
-                         // Validación visual si se desea
-                      }
-                    }}
-                  />
-                  <div className="text-xs text-[#A1A1AA] leading-tight">
-                    <p className="text-white font-bold mb-1 italic">Format: MM:SS</p>
-                    Selecciona el momento exacto donde quieres que empiece el audio en redes sociales.
-                  </div>
+                <div className="bg-[#151821] rounded-2xl border border-white/5 shadow-inner p-6 space-y-4">
+                   {uploadedTracks?.length > 0 && uploadedTracks[0].url ? (
+                     <div className="space-y-4">
+                        <audio 
+                          ref={audioRef} 
+                          src={uploadedTracks[0].url} 
+                          onTimeUpdate={(e) => {
+                            const current = e.currentTarget.currentTime;
+                            const total = e.currentTarget.duration || 1;
+                            setProgress((current / total) * 100);
+                            const m = Math.floor(current / 60).toString().padStart(2, '0');
+                            const s = Math.floor(current % 60).toString().padStart(2, '0');
+                            setStartTimeStr(`${m}:${s}`);
+                          }}
+                          onEnded={() => setIsPlaying(false)}
+                        />
+                        <div className="flex items-center gap-4">
+                           <button 
+                             onClick={() => {
+                               if(audioRef.current) {
+                                 if(isPlaying) audioRef.current.pause();
+                                 else audioRef.current.play();
+                                 setIsPlaying(!isPlaying);
+                               }
+                             }}
+                             className="w-12 h-12 rounded-full bg-[#FF9F0A] flex items-center justify-center text-black shrink-0 hover:scale-105 transition-transform"
+                           >
+                              {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-1" />}
+                           </button>
+                           <div className="flex-1">
+                              <input 
+                                type="range" 
+                                min="0" max="100" 
+                                value={progress || 0}
+                                onChange={(e) => {
+                                  const val = Number(e.target.value);
+                                  setProgress(val);
+                                  if(audioRef.current) {
+                                    audioRef.current.currentTime = (val / 100) * audioRef.current.duration;
+                                  }
+                                }}
+                                className="w-full accent-[#FF9F0A] h-2 bg-black rounded-lg cursor-pointer appearance-none" 
+                              />
+                           </div>
+                           <Input 
+                              value={startTimeStr}
+                              readOnly
+                              className="bg-black border-[#232733] text-center w-20 font-mono text-sm h-10 rounded-xl text-[#FF9F0A] focus:border-[#FF9F0A]"
+                           />
+                        </div>
+                        <p className="text-[10px] text-[#A1A1AA] italic">Arrastra el deslizador o reproduce el master original para marcar el segundo exacto donde comenzará en TikTok y Reels.</p>
+                     </div>
+                   ) : (
+                     <div className="text-center py-6 opacity-50">
+                        <Music size={24} className="mx-auto mb-2 text-[#A1A1AA]" />
+                        <p className="text-xs text-[#A1A1AA]">Sube el master de audio en el paso 2 para usar esta función.</p>
+                     </div>
+                   )}
                 </div>
               </div>
 

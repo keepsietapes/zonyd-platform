@@ -1,87 +1,70 @@
 const prisma = require('../utils/prisma');
 const logger = require('../utils/logger');
+const { orchestrate } = require('../agents/ZonydCore');
 
 async function chatWithAssistant(req, res, next) {
-  const { message } = req.body;
+  const { message, history = [] } = req.body;
   const userId = req.user.id;
 
-  try {
-    logger.info(`Consulta recibida para Zonyd AI de usuario ${userId}`);
+  if (!message?.trim()) {
+    return res.status(400).json({ error: 'El mensaje no puede estar vacío.' });
+  }
 
-    // 1. Obtener Contexto Real del Artista
-    const artist = await prisma.artist.findUnique({
+  try {
+    logger.info(`[ZonydAI] Consulta de usuario ${userId}: "${message.substring(0, 80)}"`);
+
+    // Obtener contexto del artista
+    const artist = await prisma.artist.findFirst({
       where: { userId },
-      include: {
-        releases: { take: 5, orderBy: { createdAt: 'desc' } },
-        wallets: true
-      }
+      select: { plan: true, stageName: true, id: true }
     });
 
+    const artistPlan = artist?.plan || 'FREE';
     const artistName = artist?.stageName || 'Artista';
-    const balance = artist?.wallets?.balance || 0;
-    const releaseCount = artist?.releases?.length || 0;
 
-    // 2. Zonyd Master AI - Base de Conocimiento y Motor de Respuestas
-    const manualZonyd = `
-    Eres Zonyd AI, el asistente legal, técnico y estratégico oficial de la plataforma Zonyd (Distribución Musical).
-    
-    TÉRMINOS Y CONDICIONES Y PRIVACIDAD (Resumen para soporte):
-    - Zonyd retiene el 0% de las regalías en cuentas PRO, y porcentajes variables en cuentas FREE.
-    - Los usuarios mantienen el 100% de la propiedad intelectual de sus masters.
-    - Los retiros se realizan vía PayPal con un mínimo de $10 USD. Los reportes de regalías llegan 45 días después del cierre de mes por parte de Spotify/Apple.
-    - Política de Privacidad: Zonyd no vende datos de fans a terceros. Solo usamos métricas para el dashboard del artista.
+    // Llamar al agente real ZonydCore (Gemini 2.0)
+    let result;
+    try {
+      result = await orchestrate(userId, artistPlan, message, history);
+    } catch (agentErr) {
+      logger.warn(`[ZonydAI] ZonydCore falló, usando fallback contextual: ${agentErr.message}`);
 
-    RESOLUCIÓN DE ERRORES FRECUENTES:
-    1. Error "Active premium subscription required": El artista intentó vincular Spotify for Artists, pero la cuenta que creó la App en Spotify Developer no es Premium. Solución: Usar una cuenta Premium o crear la App con un amigo Premium.
-    2. Fallo de ISRC/UPC: Zonyd los genera automáticamente. Si falla, verificar que todos los campos obligatorios del release estén completos.
-    3. Rechazo de Portada: La imagen debe ser exactamente 3000x3000px, RGB, JPG/PNG, sin logos de tiendas.
+      // Obtener balance real para respuestas sobre pagos
+      const wallet = await prisma.wallet.findUnique({ where: { userId } }).catch(() => null);
+      const balance = (wallet?.balance || 0).toFixed(2);
 
-    PREGUNTAS FRECUENTES (FAQ):
-    - ¿Cuánto tarda en subir mi música? 24 a 48 horas tras la aprobación.
-    - ¿Puedo hacer splits de ganancias? Sí, en el paso 3 del formulario de lanzamiento.
+      const lowerMsg = message.toLowerCase();
+      let response;
 
-    ESTADO DEL USUARIO ACTUAL:
-    - Artista: ${artistName}
-    - Lanzamientos: ${releaseCount}
-    - Balance: $${balance} USD
+      if (lowerMsg.includes('hola') || lowerMsg.includes('ayuda') || lowerMsg.includes('qué puedes') || lowerMsg.includes('que puedes')) {
+        response = `¡Hola ${artistName}! Soy Zonyd AI, tu Co-Manager musical impulsado por Gemini 2.0.\n\nPuedo ayudarte con:\n• 🚀 Estrategias de lanzamiento y marketing\n• 📊 Análisis de audiencia y métricas\n• ⚖️ Protección de derechos y publishing\n• 🎛️ Optimización técnica de audio\n• 💰 Distribución y gestión de regalías\n\n¿En qué aspecto de tu carrera quieres trabajar hoy?`;
+      } else if (lowerMsg.includes('balance') || lowerMsg.includes('dinero') || lowerMsg.includes('retiro') || lowerMsg.includes('regalía') || lowerMsg.includes('pago')) {
+        response = `Tu balance actual es **$${balance} USD**.\n\nLos retiros se procesan automáticamente cada lunes (Money Monday) al superar el umbral de $10 USD vía PayPal. Los reportes de regalías llegan 45 días después del cierre de mes en Spotify/Apple Music.\n\nSi aún no has configurado tu PayPal, ve a Configuración > Pagos y Retiros.`;
+      } else if (lowerMsg.includes('spotify') || lowerMsg.includes('conectar') || lowerMsg.includes('vincula')) {
+        response = `Para conectar Spotify for Artists:\n\n1. Ve a **Configuración > Redes Sociales**\n2. Pega tu URL de perfil (open.spotify.com/artist/...)\n3. Haz clic en "Guardar"\n\nSi ves el error "Active premium subscription required", la cuenta de Spotify Developer debe ser Premium. Una vez vinculado, Zonyd AI accederá a tus métricas en tiempo real.`;
+      } else if (lowerMsg.includes('lanzar') || lowerMsg.includes('lanzamiento') || lowerMsg.includes('single') || lowerMsg.includes('álbum') || lowerMsg.includes('album')) {
+        response = `Plan de lanzamiento óptimo para ${artistName}:\n\n**4 semanas antes:**\n• Registra la obra en Publishing\n• Sube el master al Lab AI para análisis técnico\n\n**2 semanas antes:**\n• Crea el SmartLink de pre-save\n• Prepara la campaña de Marketplace Sync\n\n**Release day:**\n• Activa el SmartLink y publica en IG Reels + TikTok simultáneamente\n\n**Post-lanzamiento:**\n• Monitorea playlists desde Analytics\n• Genera el Media Kit desde Marketplace\n\n¿Cuándo planeas lanzar?`;
+      } else if (lowerMsg.includes('isrc') || lowerMsg.includes('upc') || lowerMsg.includes('distribu')) {
+        response = `Zonyd genera automáticamente ISRC y UPC para cada track/release durante el proceso de creación.\n\nTiempos de distribución:\n• Spotify & Apple Music: 24-48 horas\n• Amazon Music & Deezer: 48-72 horas\n• +150 tiendas adicionales: 3-5 días\n\nEl release debe ser aprobado primero por el equipo editorial de Zonyd.`;
+      } else if (lowerMsg.includes('copyright') || lowerMsg.includes('derechos') || lowerMsg.includes('publishing') || lowerMsg.includes('obra')) {
+        response = `En Zonyd mantienes el **100% de la propiedad intelectual** de tus masters.\n\nPara proteger tus composiciones:\n1. Ve a **Publishing & Rights**\n2. Haz clic en "Registrar Obra"\n3. Completa el formulario con co-autores y letras\n\nSi detectamos reclamaciones de Content ID, recibirás una alerta inmediata. También puedes vincularte con SACM, ASCAP, BMI o SGAE directamente desde Publishing.`;
+      } else if (lowerMsg.includes('lab') || lowerMsg.includes('master') || lowerMsg.includes('stem') || lowerMsg.includes('audio')) {
+        response = `El Lab AI de Zonyd incluye:\n\n• **AI Mastering Pro** — Análisis de LUFS, True Peak y cumplimiento por plataforma (Spotify, Apple Music, YouTube)\n• **Stem Splitter** — Separa voz, batería, bajo e instrumentos\n• **Phase Auditor** — Detecta problemas de correlación de fase estéreo\n• **Exportar Master** — Descarga el audio procesado en WAV\n\nPara usarlo, ve a The Lab (AI) y sube tu archivo de audio.`;
+      } else {
+        response = `He procesado tu consulta. Como tu Co-Manager, los módulos más relevantes para ti ahora son:\n\n• **Analytics** — monitorea streams y audiencia en tiempo real\n• **Publishing** — protege tus derechos de autor\n• **The Lab** — optimiza el audio antes de distribuir\n• **Marketplace** — genera ingresos de sync y licencias\n\n¿Necesitas orientación específica sobre alguno de estos módulos?`;
+      }
 
-    REGLAS: Responde de forma profesional, directa y como un manager experto de la industria musical.
-    `;
-
-    const lowerMessage = message.toLowerCase();
-    let response = "";
-
-    // GUARDRAILS: Verificamos si la consulta es sobre temas prohibidos o sensibles
-    const isSensitiveFinancial = lowerMessage.includes("inversión") || lowerMessage.includes("cuanto ganaré") || lowerMessage.includes("predicción");
-    const isLegalDispute = lowerMessage.includes("demanda") || lowerMessage.includes("legal") || lowerMessage.includes("copyright dispute");
-
-    if (isSensitiveFinancial) {
-      response = "Como Zonyd AI, no puedo dar asesoría financiera o predicciones de ingresos exactas. Te recomiendo consultar el manual de regalías en nuestra web para entender cómo se calculan los pagos.";
-    } else if (isLegalDispute) {
-      response = "Para disputas legales o de copyright activas, por favor contacta directamente a nuestro equipo legal en soporte@zonyd.com. Yo no puedo validar la legitimidad de una disputa.";
-    } else if (lowerMessage.includes("hola") || lowerMessage.includes("ayuda")) {
-      response = `¡Hola, ${artistName}! Soy Zonyd AI. Tengo acceso a nuestro manual de operaciones y a tus métricas. Tienes un balance de $${balance} USD. ¿En qué puedo asistirte técnica o operativamente hoy?`;
-    } else if (lowerMessage.includes("error") || lowerMessage.includes("falla") || lowerMessage.includes("spotify")) {
-      response = "Según nuestro manual técnico: Si tienes un error al conectar Spotify ('Active premium subscription required'), la cuenta de desarrollador debe ser Premium. ¿Es ese tu caso?";
-    } else if (lowerMessage.includes("terminos") || lowerMessage.includes("condiciones") || lowerMessage.includes("privacidad")) {
-      response = "Políticas de Zonyd: Tú conservas el 100% del copyright. Nosotros solo administramos la distribución. Para más detalles, revisa la sección 'Términos' en tu perfil.";
-    } else if (lowerMessage.includes("pagos") || lowerMessage.includes("retiro") || lowerMessage.includes("dinero")) {
-      response = `Tu balance actual es de $${balance} USD. Según las políticas de Zonyd, puedes retirar vía PayPal al alcanzar los $10 USD.`;
-    } else {
-      response = `He analizado tu consulta. Para darte una respuesta precisa sobre esto, necesito que contactes a soporte humano o revises el manual de ayuda, ya que no tengo información suficiente para garantizar la exactitud de la respuesta en este tema específico.`;
+      result = { response, intent: 'fallback', suggestedActions: [] };
     }
 
-
-    res.json({ 
-      response,
-      context: {
-        artistName,
-        releaseCount,
-        balance
-      }
+    res.json({
+      response: result.response,
+      intent: result.intent || 'general',
+      suggestedActions: result.suggestedActions || [],
+      context: result.context || {},
     });
   } catch (error) {
-    logger.error('Error en Zonyd AI Engine:', error);
+    logger.error('[ZonydAI] Error crítico:', error.message);
     next(error);
   }
 }

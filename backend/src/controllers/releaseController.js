@@ -50,10 +50,24 @@ async function createRelease(req, res, next) {
       finalTrackId = newTrack.id;
     } else if (trackIds && trackIds.length > 0) {
       finalTrackId = trackIds[0];
-      await prisma.track.update({
-        where: { id: finalTrackId },
-        data: { releaseId: release.id, isrc: generateISRC(), status: 'ready' }
-      });
+      if (finalTrackId.startsWith('local-')) {
+        // Track mock desde el frontend, lo creamos
+        const newTrack = await prisma.track.create({
+          data: {
+            title: title || 'Untitled Track',
+            releaseId: release.id,
+            artistId: artist.id,
+            isrc: generateISRC(),
+            status: 'ready'
+          }
+        });
+        finalTrackId = newTrack.id;
+      } else {
+        await prisma.track.update({
+          where: { id: finalTrackId },
+          data: { releaseId: release.id, isrc: generateISRC(), status: 'ready' }
+        });
+      }
     }
 
     // 4. Crear Splits de regalías si existen

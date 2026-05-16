@@ -5,7 +5,7 @@ const releaseSchema = z.object({
   artist: z.string().min(1, "El artista es requerido").max(100),
   trackIds: z.array(z.string()).optional(),
   splits: z.array(z.any()).optional()
-});
+}).passthrough();
 
 const validateRelease = (req, res, next) => {
   try {

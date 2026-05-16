@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 // GET /api/smartlinks — Lista SmartLinks del artista
 router.get('/', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findUnique({ where: { userId: req.user.id } });
+    const artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
     if (!artist) return res.json([]);
 
     const links = await prisma.smartLink.findMany({
@@ -24,7 +24,7 @@ router.get('/', authMiddleware, async (req, res, next) => {
 // POST /api/smartlinks — Crear SmartLink
 router.post('/', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findUnique({ where: { userId: req.user.id } });
+    const artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
     if (!artist) return res.status(404).json({ error: 'Perfil de artista no encontrado.' });
 
     const { title = 'Nuevo SmartLink', coverUrl, stores } = req.body;
@@ -40,9 +40,13 @@ router.post('/', authMiddleware, async (req, res, next) => {
       },
     });
     
-    await prisma.auditLog.create({
-      data: { userId: req.user.id, action: 'SMARTLINK_CREATED', details: JSON.stringify({ linkId: link.id, title }) },
-    });
+    try {
+      await prisma.auditLog.create({
+        data: { userId: req.user.id, action: 'SMARTLINK_CREATED', details: JSON.stringify({ linkId: link.id, title }) },
+      });
+    } catch (logErr) {
+      logger.warn(`[SmartLinks:POST] AuditLog write failed: ${logErr.message}`);
+    }
 
     res.json(link);
   } catch (err) {
@@ -54,7 +58,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
 // PATCH /api/smartlinks/:id — Actualizar SmartLink
 router.patch('/:id', authMiddleware, async (req, res, next) => {
   try {
-    const artist = await prisma.artist.findUnique({ where: { userId: req.user.id } });
+    const artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
     const link = await prisma.smartLink.findFirst({ where: { id: req.params.id, artistId: artist?.id } });
     if (!link) return res.status(404).json({ error: 'SmartLink no encontrado.' });
 

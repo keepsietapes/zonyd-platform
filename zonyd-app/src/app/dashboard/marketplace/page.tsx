@@ -33,12 +33,81 @@ export default function MarketplacePage() {
     finally { setIsLoading(false); }
   };
 
-  const handleGenerateMediaKit = () => {
+  const [sendingTrack, setSendingTrack] = useState(false);
+
+  const handleGenerateMediaKit = async () => {
     setIsGeneratingKit(true);
-    setTimeout(() => {
+    try {
+      // Obtenemos datos del artista para el media kit
+      const artistData = await authFetch('/api/me').catch(() => null);
+      const analyticsData = await authFetch('/api/analytics?range=1%20Mes').catch(() => null);
+
+      const kitContent = [
+        `═══════════════════════════════════════════`,
+        `          MEDIA KIT — ZONYD PLATFORM       `,
+        `═══════════════════════════════════════════`,
+        ``,
+        `ARTISTA: ${artistData?.artist?.stageName || 'N/A'}`,
+        `GÉNEROS: ${artistData?.artist?.genres || 'N/A'}`,
+        `PAÍS: ${artistData?.artist?.country || 'N/A'}`,
+        ``,
+        `── MÉTRICAS DE STREAMING ──────────────────`,
+        `Total Streams: ${analyticsData?.totalStreams?.toLocaleString() || '0'}`,
+        `Oyentes Mensuales: ${analyticsData?.monthlyListeners?.toLocaleString() || '0'}`,
+        `Alcance Estimado: ${analyticsData?.estimatedReach?.toLocaleString() || '0'}`,
+        `Zonyd Score: ${analyticsData?.zonydScore || 'N/A'}`,
+        ``,
+        `── PLATAFORMAS CONECTADAS ─────────────────`,
+        `Spotify: ${artistData?.artist?.spotifyUrl ? '✓ Vinculado' : '✗ No conectado'}`,
+        `Instagram: ${artistData?.artist?.instagramUrl ? '✓ Vinculado' : '✗ No conectado'}`,
+        `TikTok: ${artistData?.artist?.tiktokUrl ? '✓ Vinculado' : '✗ No conectado'}`,
+        ``,
+        `── CONTACTO ──────────────────────────────`,
+        `Email: ${artistData?.user?.email || 'N/A'}`,
+        `Plataforma: https://zonyd.pages.dev`,
+        ``,
+        `Generado por Zonyd Platform — ${new Date().toLocaleString('es-MX')}`,
+      ].join('\n');
+
+      const blob = new Blob([kitContent], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `MediaKit_${artistData?.artist?.stageName || 'Artista'}_${Date.now()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error generating media kit:', err);
+      alert('Error al generar Media Kit. Verifica tu conexión.');
+    } finally {
       setIsGeneratingKit(false);
-      alert('¡Media Kit generado! Próximamente podrás compartirlo directamente.');
-    }, 1500);
+    }
+  };
+
+  const handleSendTrack = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'audio/*';
+    input.onchange = async (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setSendingTrack(true);
+      try {
+        const formData = new FormData();
+        formData.append('audio', file);
+        formData.append('title', file.name.replace(/\.[^/.]+$/, ''));
+        await authFetch('/api/upload', { method: 'POST', body: formData });
+        alert(`✓ Track "${file.name}" enviado exitosamente al catálogo. Ahora puedes postularlo a oportunidades de Sync.`);
+        fetchMarketplace();
+      } catch (err: any) {
+        alert(`Error al subir track: ${err.message}`);
+      } finally {
+        setSendingTrack(false);
+      }
+    };
+    input.click();
   };
 
   const filteredOpp = opportunities.filter(o => {
@@ -69,11 +138,11 @@ export default function MarketplacePage() {
           <Button onClick={handleGenerateMediaKit} disabled={isGeneratingKit} variant="outline" className="border-[#FF9F0A] text-[#FF9F0A] font-black px-6 h-12 rounded-xl hover:bg-[#FF9F0A] hover:text-black transition-all">
             {isGeneratingKit ? <Loader2 className="animate-spin mr-2" size={16} /> : <Share2 size={16} className="mr-2" />} MEDIA KIT IA
           </Button>
-          <Button className="bg-white text-black font-black px-6 h-12 rounded-xl hover:scale-105 transition-all" onClick={() => window.location.href = '/dashboard/releases'}>
+          <Button className="bg-white text-black font-black px-6 h-12 rounded-xl hover:scale-105 transition-all" onClick={() => window.location.href = '/dashboard/lab'}>
             <ListMusic size={16} className="mr-2" /> GESTIONAR MASTERS
           </Button>
-          <Button className="bg-[#FF9F0A] text-black font-black px-6 h-12 rounded-xl shadow-lg" onClick={() => alert('Quick-Sync próximamente...')}>
-            <Zap size={16} className="mr-2" /> ENVIAR TRACK
+          <Button className="bg-[#FF9F0A] text-black font-black px-6 h-12 rounded-xl shadow-lg" onClick={handleSendTrack} disabled={sendingTrack}>
+            {sendingTrack ? <Loader2 className="animate-spin mr-2" size={16} /> : <Zap size={16} className="mr-2" />} ENVIAR TRACK
           </Button>
         </div>
       </div>
