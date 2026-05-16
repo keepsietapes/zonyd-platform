@@ -11,8 +11,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # PASO 1: Escribir el .env en el servidor usando printf (evita el problema de indentación del heredoc)
-      - name: Write .env to server
+      # PASO 1: Escribir y limpiar el .env en el servidor
+      - name: Write and sanitize .env on server
         uses: appleboy/ssh-action@master
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
@@ -24,15 +24,44 @@ jobs:
           envs: ENV_FILE
           script: |
             mkdir -p ~/zonyd-platform/backend
-            printf '%s' "$ENV_FILE" > ~/zonyd-platform/backend/.env
-            sed -i 's/\r$//' ~/zonyd-platform/backend/.env
-            sed -i '/^[[:space:]]*$/d' ~/zonyd-platform/backend/.env
-            sed -i '/^[[:space:]]*#/d' ~/zonyd-platform/backend/.env
-            sed -i 's/="\(.*\)"$/=\1/' ~/zonyd-platform/backend/.env
-            sed -i "s/='\(.*\)'$/=\1/" ~/zonyd-platform/backend/.env
-            echo "--- .env escrito: $(wc -l < ~/zonyd-platform/backend/.env) lineas ---"
 
-      # PASO 2: Actualizar codigo y levantar Docker
+            # Escribir el secreto al servidor via variable de entorno (evita indentacion de YAML)
+            printf '%s\n' "$ENV_FILE" > /tmp/env_raw.txt
+
+            # Usar Python para extraer SOLO lineas validas KEY=VALUE (sin comentarios, sin caracteres especiales)
+            python3 - <<'PYEOF'
+import re, os
+
+input_path = '/tmp/env_raw.txt'
+output_path = os.path.expanduser('~/zonyd-platform/backend/.env')
+
+valid_lines = []
+pattern = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*)=(.*)$')
+
+with open(input_path, 'r', errors='replace') as f:
+    for line in f:
+        line = line.rstrip('\r\n')
+        m = pattern.match(line)
+        if m:
+            key = m.group(1)
+            val = m.group(2)
+            # Quitar comillas al inicio y al final del valor
+            if len(val) >= 2 and val[0] == '"' and val[-1] == '"':
+                val = val[1:-1]
+            elif len(val) >= 2 and val[0] == "'" and val[-1] == "'":
+                val = val[1:-1]
+            valid_lines.append(f'{key}={val}')
+
+with open(output_path, 'w') as f:
+    f.write('\n'.join(valid_lines) + '\n')
+
+print(f'[OK] .env escrito con {len(valid_lines)} variables validas')
+PYEOF
+
+            cat ~/zonyd-platform/backend/.env | head -5
+            echo "--- Total de lineas en .env: $(wc -l < ~/zonyd-platform/backend/.env) ---"
+
+      # PASO 2: Desplegar con Docker Compose
       - name: Deploy Docker to AWS
         uses: appleboy/ssh-action@master
         with:
@@ -58,10 +87,13 @@ jobs:
               sudo chmod +x /usr/local/bin/docker-compose
             fi
 
-            # Parar contenedores existentes y limpiar disco
+            # Bajar contenedores viejos y limpiar disco
             sudo docker-compose -f ~/zonyd-platform/docker-compose.prod.yml down --remove-orphans || true
             sudo docker system prune -af --volumes || true
             df -h /
+
+            # Respaldar el .env antes de git reset
+            cp ~/zonyd-platform/backend/.env /tmp/backend_env_backup.txt
 
             # Actualizar el codigo del repositorio
             cd ~/zonyd-platform
@@ -72,16 +104,18 @@ jobs:
               git reset --hard origin/main
             fi
 
-            # Verificar que el .env del paso anterior sigue ahi (git reset no lo borra porque esta en .gitignore)
-            echo "--- Verificando .env antes de build ---"
-            ls -la backend/.env
+            # Restaurar el .env desde el backup
+            cp /tmp/backend_env_backup.txt ~/zonyd-platform/backend/.env
+
+            # Verificacion final del .env
+            echo "--- Verificacion final antes del build ---"
             wc -l backend/.env
 
-            # Construir e iniciar contenedores
+            # Construir y arrancar contenedores
             sudo docker-compose -f docker-compose.prod.yml up -d --build
 
             sleep 5
             sudo docker-compose -f docker-compose.prod.yml logs --tail=50 backend || true
             sudo docker image prune -f
 
-            echo "--- DEPLOY COMPLETADO EXITOSAMENTE ---"
+            echo "=== DEPLOY COMPLETADO EXITOSAMENTE ==="
