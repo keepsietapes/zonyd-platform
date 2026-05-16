@@ -76,12 +76,16 @@ jobs:
 
             cd ~/zonyd-platform
 
-            # Diagnóstico y limpieza preventiva (no destructiva de cache)
-            echo "--- Espacio en disco antes del build ---"
+            # Diagnóstico y limpieza agresiva
+            echo "--- Espacio en disco ANTES de la limpieza ---"
             df -h /
             
-            # Limpiar contenedores detenidos e imágenes huérfanas (dangling)
+            # Limpiar contenedores detenidos, imágenes huérfanas y CACHE de build antigua
             sudo docker system prune -f
+            sudo docker builder prune -f --filter "until=24h"
+            
+            echo "--- Espacio en disco DESPUÉS de la limpieza ---"
+            df -h /
             
             # Build inteligente: usa cache de Docker layers
             sudo docker-compose -f docker-compose.prod.yml build --parallel
@@ -90,7 +94,7 @@ jobs:
             sleep 5
             sudo docker-compose -f docker-compose.prod.yml logs --tail=20 backend || true
 
-            # Limpiar solo imagenes dangling (sin tag), NO toda la cache
-            sudo docker image prune -f
+            # Limpiar solo imagenes dangling e imagenes viejas para liberar espacio
+            sudo docker image prune -f -a --filter "until=24h"
 
             echo "=== ✅ DEPLOY COMPLETADO EXITOSAMENTE ==="

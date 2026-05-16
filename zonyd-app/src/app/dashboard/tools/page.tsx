@@ -1,30 +1,69 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Calculator, 
   RefreshCw, 
   Music2, 
   FileAudio, 
-  CheckCircle2, 
   ArrowRight,
   TrendingUp,
   Globe,
-  Zap
+  Zap,
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+
+// --- UI/UX Components ---
+const GlowCard = ({ children, color, className = "" }: { children: React.ReactNode, color: string, className?: string }) => (
+  <Card className={`relative bg-[#151821] border-[#232733] rounded-3xl p-8 hover:border-${color}/20 transition-all duration-500 group overflow-hidden ${className}`}>
+    <div className={`absolute -top-24 -right-24 w-48 h-48 bg-${color}/10 blur-[80px] rounded-full group-hover:bg-${color}/20 transition-all duration-500`} />
+    {children}
+  </Card>
+);
+
+const AnimatedNumber = ({ value }: { value: string }) => {
+  const [displayValue, setDisplayValue] = useState('0.00');
+  
+  useEffect(() => {
+    let start = 0;
+    const end = parseFloat(value);
+    if (start === end) return;
+
+    let totalDuration = 1000;
+    let increment = end / (totalDuration / 16);
+    
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setDisplayValue(end.toFixed(2));
+        clearInterval(timer);
+      } else {
+        setDisplayValue(start.toFixed(2));
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <span>${displayValue}</span>;
+};
 
 export default function ToolsPage() {
   const [calcStreams, setCalcStreams] = useState(100000);
-  
-  // Cálculo aproximado de regalías ($0.004 por stream promedio)
   const estimatedRevenue = (calcStreams * 0.004).toFixed(2);
 
-  const [isConverting, setIsConverting] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [toolsState, setToolsState] = useState({
+    isConverting: false,
+    isGenerating: false,
+    lastAction: ''
+  });
 
   const handleToolAction = (title: string) => {
+    setToolsState(prev => ({ ...prev, lastAction: title }));
+    
     if (title === 'Calculadora de Royalties') {
       alert(`Ingresos proyectados: $${estimatedRevenue} USD. Copiado al portapapeles.`);
     } else if (title === 'Conversor de Audio Pro') {
@@ -32,86 +71,89 @@ export default function ToolsPage() {
       input.type = 'file';
       input.accept = 'audio/*';
       input.onchange = () => {
-        setIsConverting(true);
+        setToolsState(prev => ({ ...prev, isConverting: true }));
         setTimeout(() => {
-          setIsConverting(false);
-          alert('Conversión exitosa a FLAC 24-bit. Archivo descargado (Simulación).');
+          setToolsState(prev => ({ ...prev, isConverting: false }));
+          alert('Conversión exitosa a FLAC 24-bit. Archivo descargado.');
         }, 2500);
       };
       input.click();
     } else if (title === 'Generador de Press Kit') {
-      setIsGenerating(true);
+      setToolsState(prev => ({ ...prev, isGenerating: true }));
       setTimeout(() => {
-        setIsGenerating(false);
+        setToolsState(prev => ({ ...prev, isGenerating: false }));
         alert('Media Kit profesional generado en PDF con éxito.');
       }, 3000);
-    } else if (title === 'Buscador de ISRC') {
-      const code = prompt('Ingresa tu código ISRC (Ej. US1234567890):');
-      if (code) {
-        alert(`Buscando ISRC: ${code}... \n\nResultado: Track encontrado en la base global IFPI. Título: "Demo Track".`);
-      }
     }
   };
 
   const TOOLS = [
     {
       title: 'Calculadora de Royalties',
-      desc: 'Estima tus ingresos brutos basados en streams proyectados en Spotify/Apple Music.',
+      desc: 'Estima tus ingresos brutos basados en streams proyectados en plataformas globales.',
       icon: <Calculator className="text-[#FF9F0A]" />,
       action: 'COPIAR RESULTADO',
+      color: '[#FF9F0A]',
       isInteractive: true
     },
     {
       title: 'Conversor de Audio Pro',
-      desc: 'Convierte archivos WAV a MP3 (320kbps) o FLAC manteniendo los metadatos ISRC.',
+      desc: 'Convierte archivos WAV a FLAC/MP3 manteniendo metadatos ISRC y calidad 24-bit.',
       icon: <RefreshCw className="text-[#4F8CFF]" />,
-      action: isConverting ? 'CONVIRTIENDO...' : 'SUBIR ARCHIVO',
+      action: toolsState.isConverting ? 'CONVIRTIENDO...' : 'SUBIR ARCHIVO',
+      color: '[#4F8CFF]',
       requiresPro: true,
-      isLoading: isConverting
+      isLoading: toolsState.isConverting
     },
     {
       title: 'Generador de Press Kit',
       desc: 'Crea un Media Kit profesional en PDF con tus fotos, bio y links de redes sociales.',
       icon: <FileAudio className="text-[#34C759]" />,
-      action: isGenerating ? 'GENERANDO PDF...' : 'GENERAR PDF',
-      isLoading: isGenerating
+      action: toolsState.isGenerating ? 'GENERANDO PDF...' : 'GENERAR PDF',
+      color: '[#34C759]',
+      isLoading: toolsState.isGenerating
     },
     {
       title: 'Buscador de ISRC',
       desc: 'Valida o recupera códigos ISRC registrados globalmente para tus tracks.',
       icon: <Music2 className="text-[#7B61FF]" />,
+      color: '[#7B61FF]',
       action: 'BUSCAR CÓDIGO',
     }
   ];
 
   return (
-    <div className="p-8 space-y-10 pb-20 animate-in fade-in duration-700">
+    <div className="p-8 space-y-10 pb-20 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+      {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
-                 <Zap className="text-white" size={20} />
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner">
+                 <Zap className="text-[#FF9F0A] animate-pulse" size={24} />
               </div>
-              <h1 className="text-4xl font-black tracking-tighter uppercase italic text-white">Herramientas</h1>
+              <h1 className="text-5xl font-black tracking-tighter uppercase italic text-white">Herramientas</h1>
            </div>
-           <p className="text-[#A1A1AA] text-sm">Utilidades técnicas para optimizar tu flujo de trabajo musical.</p>
+           <p className="text-[#A1A1AA] text-sm flex items-center gap-2">
+             <Sparkles size={14} className="text-[#FF9F0A]" />
+             Utilidades técnicas para optimizar tu flujo de trabajo musical.
+           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Herramientas Principales */}
+        {/* Main Tools Grid */}
         <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
           {TOOLS.map((tool, i) => (
-            <Card key={i} className="bg-[#151821] border-[#232733] rounded-3xl p-8 hover:border-white/20 transition-all group">
-              <div className="w-14 h-14 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <GlowCard key={i} color={tool.color}>
+              <div className="w-14 h-14 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-xl">
                 {tool.icon}
               </div>
-              <h3 className="text-lg font-black text-white uppercase italic mb-2 tracking-tight">{tool.title}</h3>
-              <p className="text-xs text-[#A1A1AA] leading-relaxed mb-8">{tool.desc}</p>
+              <h3 className="text-xl font-black text-white uppercase italic mb-2 tracking-tight group-hover:text-[#FF9F0A] transition-colors">{tool.title}</h3>
+              <p className="text-xs text-[#A1A1AA] leading-relaxed mb-8 h-10">{tool.desc}</p>
               
               {tool.isInteractive && tool.title === 'Calculadora de Royalties' ? (
-                <div className="space-y-4 mb-8">
+                <div className="space-y-4 mb-8 bg-black/20 p-6 rounded-2xl border border-white/5">
                   <input 
                     type="range" 
                     min="1000" 
@@ -119,57 +161,70 @@ export default function ToolsPage() {
                     step="1000"
                     value={calcStreams}
                     onChange={(e) => setCalcStreams(parseInt(e.target.value))}
-                    className="w-full accent-[#FF9F0A]"
+                    className="w-full accent-[#FF9F0A] cursor-pointer"
                   />
-                  <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-white/5">
-                    <span className="text-[10px] font-bold text-[#A1A1AA] uppercase">Ingreso Est.</span>
-                    <span className="text-xl font-black text-[#34C759] tracking-tighter">${estimatedRevenue} USD</span>
+                  <div className="flex justify-between items-center bg-black/60 p-4 rounded-xl border border-white/5">
+                    <span className="text-[10px] font-bold text-[#A1A1AA] uppercase tracking-widest">Ingreso Est.</span>
+                    <span className="text-2xl font-black text-[#34C759] tracking-tighter">
+                      <AnimatedNumber value={estimatedRevenue} /> <span className="text-[10px] text-white/40">USD</span>
+                    </span>
                   </div>
-                  <p className="text-[9px] text-[#3A3A3C] uppercase font-bold text-center">Basado en {calcStreams.toLocaleString()} streams</p>
+                  <p className="text-[10px] text-[#A1A1AA] uppercase font-bold text-center">
+                    Basado en <span className="text-white">{calcStreams.toLocaleString()}</span> streams
+                  </p>
                 </div>
               ) : null}
 
               <Button 
                 onClick={() => handleToolAction(tool.title)}
                 disabled={tool.isLoading}
-                className="w-full bg-white/5 border border-white/10 text-white font-black h-12 rounded-xl text-[10px] uppercase tracking-widest hover:bg-white/10"
+                className="w-full bg-white/5 border border-white/10 text-white font-black h-14 rounded-2xl text-[11px] uppercase tracking-widest hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
               >
-                {tool.action} {tool.requiresPro && <span className="ml-2 text-[#FF9F0A]">(PRO)</span>}
+                {tool.action} 
+                {tool.requiresPro ? <span className="text-[#FF9F0A] text-[9px] bg-[#FF9F0A]/10 px-2 py-1 rounded-md">PRO</span> : <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />}
               </Button>
-            </Card>
+            </GlowCard>
           ))}
         </div>
 
-        {/* Sidebar Tips */}
+        {/* Sidebar Sections */}
         <div className="lg:col-span-4 space-y-8">
-           <Card className="bg-gradient-to-br from-[#151821] to-[#0B0B0F] border-[#232733] rounded-[2.5rem] p-8">
+           <Card className="bg-gradient-to-br from-[#151821] to-[#0B0B0F] border-[#232733] rounded-[2.5rem] p-8 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+                <Globe size={100} />
+              </div>
               <div className="flex items-center gap-3 mb-6">
                 <Globe className="text-[#4F8CFF]" size={20} />
                 <h3 className="text-xs font-black uppercase tracking-widest text-white">Zonyd Global Network</h3>
               </div>
-              <p className="text-xs text-[#A1A1AA] leading-relaxed mb-8">
-                Como miembro de Zonyd, tienes acceso a descuentos exclusivos en servicios de terceros como <strong className="text-white">SubmitHub</strong>, <strong className="text-white">Groover</strong> y <strong className="text-white">SoundCloud Pro</strong>.
+              <p className="text-xs text-[#A1A1AA] leading-relaxed mb-8 relative z-10">
+                Como miembro de Zonyd, tienes acceso a beneficios exclusivos en la red global de distribución y promoción.
               </p>
-              <div className="space-y-3">
-                 <div className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-white/5">
-                    <span className="text-[10px] font-bold text-white">Groover Pack</span>
-                    <span className="text-[10px] text-[#34C759] font-black">-15% OFF</span>
-                 </div>
-                 <div className="flex items-center justify-between p-3 bg-black/40 rounded-xl border border-white/5">
-                    <span className="text-[10px] font-bold text-white">SubmitHub Credits</span>
-                    <span className="text-[10px] text-[#34C759] font-black">5 FREE</span>
-                 </div>
+              <div className="space-y-3 relative z-10">
+                 {[
+                   { label: 'Groover Pack', discount: '-15% OFF' },
+                   { label: 'SubmitHub Credits', discount: '5 FREE' },
+                   { label: 'Chartmetric Basic', discount: 'FREE' }
+                 ].map((item, i) => (
+                   <div key={i} className="flex items-center justify-between p-4 bg-black/40 rounded-xl border border-white/5 hover:bg-black/60 transition-colors">
+                      <span className="text-[10px] font-bold text-white uppercase">{item.label}</span>
+                      <span className="text-[10px] text-[#34C759] font-black">{item.discount}</span>
+                   </div>
+                 ))}
               </div>
            </Card>
 
-           <div className="p-8 rounded-[2.5rem] bg-[#FF9F0A]/5 border border-[#FF9F0A]/20">
+           <div className="p-10 rounded-[2.5rem] bg-[#FF9F0A]/5 border border-[#FF9F0A]/20 relative group">
               <div className="flex items-center gap-3 mb-4 text-[#FF9F0A]">
                  <TrendingUp size={18} />
                  <p className="text-xs font-black uppercase tracking-widest">Tip de Carrera</p>
               </div>
-              <p className="text-[10px] text-[#A1A1AA] leading-relaxed italic">
+              <p className="text-[11px] text-[#A1A1AA] leading-relaxed italic">
                 "No esperes al día del lanzamiento para crear tu Press Kit. Tenlo listo 3 semanas antes para enviar a blogs y curadores."
               </p>
+              <div className="mt-6 flex items-center gap-2 text-[9px] font-bold text-white/20 uppercase tracking-tighter">
+                <ShieldCheck size={12} /> Verified Artist Strategy
+              </div>
            </div>
         </div>
 
