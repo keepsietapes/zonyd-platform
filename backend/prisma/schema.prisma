@@ -82,9 +82,16 @@ model Artist {
   deezerFans            Int       @default(0)
   deezerLastSync        DateTime?
 
+  // Publishing
+  proSociety            String?   // SACM, ASCAP, BMI, SGAE, etc.
+
   releases        Release[]
   collaborations  Collaborator[]
   splits          Split[]
+  royalties       Royalty[]
+  fans            Fan[]
+  smartLinks      SmartLink[]
+  publishingWorks PublishingWork[]
 }
 
 
@@ -215,8 +222,10 @@ model Wallet {
 
 model Royalty {
   id          String   @id @default(uuid())
-  walletId    String
-  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  walletId    String?
+  wallet      Wallet?  @relation(fields: [walletId], references: [id])
+  artistId    String?
+  artist      Artist?  @relation(fields: [artistId], references: [id])
   amount      Float
   source      String   // Spotify, Apple Music, etc.
   reportDate  DateTime
@@ -303,3 +312,48 @@ model AiConversation {
   response  String
   createdAt DateTime @default(now())
 }
+
+// ------------------------------------------------------
+// 6. SMART LINKS, FANS Y PUBLISHING
+// ------------------------------------------------------
+model SmartLink {
+  id          String   @id @default(uuid())
+  artistId    String
+  artist      Artist   @relation(fields: [artistId], references: [id])
+  title       String
+  artistName  String?
+  coverUrl    String?
+  status      String   @default("Draft")   // Draft, Live
+  clicks      Int      @default(0)
+  stores      Json?    // Array de { name, url }
+  slug        String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Fan {
+  id              String   @id @default(uuid())
+  artistId        String
+  artist          Artist   @relation(fields: [artistId], references: [id])
+  name            String?
+  email           String?
+  country         String?
+  engagementScore Float    @default(0)
+  lastActiveAt    DateTime?
+  source          String?  // presave, smartlink, direct
+  createdAt       DateTime @default(now())
+}
+
+model PublishingWork {
+  id          String   @id @default(uuid())
+  artistId    String
+  artist      Artist   @relation(fields: [artistId], references: [id])
+  title       String
+  coAuthors   Json?    // Array de nombres
+  pro         String?  // SACM, ASCAP, etc.
+  lyrics      String?  @db.Text
+  status      String   @default("REGISTERED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+

@@ -123,6 +123,10 @@ app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/legal', require('./routes/legalRoutes'));
 app.use('/api/lab',   require('./routes/labRoutes'));    // ZONYD LAB AI — Phase 1
+app.use('/api/smartlinks', require('./routes/smartlinksRoutes'));
+app.use('/api/publishing', require('./routes/publishingRoutes'));
+app.use('/api/audience',   require('./routes/audienceRoutes'));
+app.use('/api/marketing',  require('./routes/marketingRoutes'));
 
 
 // Inicializar Workers de procesamiento (Zonyd Engine)

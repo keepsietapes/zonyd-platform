@@ -96,7 +96,20 @@ export default function AdminDashboard() {
           <Button onClick={fetchAdminData} variant="outline" className="border-white/10 text-white hover:bg-white/5">
             RECARGAR DATOS
           </Button>
-          <Button className="bg-[#FF9F0A] text-black font-black">
+          <Button className="bg-[#FF9F0A] text-black font-black" onClick={() => {
+            const csvRows = [
+              ['Email', 'Rol', 'Plan', 'Fecha Registro'],
+              ...users.map((u: any) => [u.email, u.role, u.artistProfiles?.[0]?.plan || 'N/A', new Date(u.createdAt).toLocaleDateString()])
+            ];
+            const csv = csvRows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `zonyd_reporte_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}>
             DESCARGAR REPORTES
           </Button>
         </div>
@@ -271,6 +284,99 @@ export default function AdminDashboard() {
                 </div>
              </CardContent>
            </Card>
+        )}
+
+        {activeTab === 'users' && (
+          <Card className="bg-[#151821] border-[#232733] rounded-3xl overflow-hidden">
+            <CardHeader className="bg-black/20 p-6 border-b border-white/5">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-white">Usuarios y Planes</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {users.length === 0 ? (
+                <div className="p-12 text-center text-[#A1A1AA]">
+                  <Users className="mx-auto mb-4 text-[#232733]" size={48} />
+                  <p className="text-sm">No hay usuarios registrados aún.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-black/40 border-b border-white/5">
+                      <tr>
+                        {['Usuario', 'Rol', 'Plan', 'Artista', 'Registro'].map(h => (
+                          <th key={h} className="px-6 py-4 text-[9px] font-black text-[#3A3A3C] uppercase tracking-widest">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {users.map((u: any) => (
+                        <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4">
+                            <p className="text-xs font-bold text-white">{u.email}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`text-[9px] font-black px-2 py-1 rounded uppercase ${
+                              u.role === 'ADMIN' ? 'bg-[#FF9F0A]/20 text-[#FF9F0A]' : 'bg-white/5 text-[#A1A1AA]'
+                            }`}>{u.role}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`text-[9px] font-black px-2 py-1 rounded uppercase ${
+                              u.artistProfiles?.[0]?.plan === 'LABEL' ? 'bg-[#7B61FF]/20 text-[#7B61FF]' :
+                              u.artistProfiles?.[0]?.plan === 'PRO' ? 'bg-[#4F8CFF]/20 text-[#4F8CFF]' :
+                              'bg-white/5 text-[#A1A1AA]'
+                            }`}>{u.artistProfiles?.[0]?.plan || 'FREE'}</span>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-[#A1A1AA]">{u.artistProfiles?.[0]?.stageName || '—'}</td>
+                          <td className="px-6 py-4 text-[10px] text-[#A1A1AA]">{new Date(u.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'logs' && (
+          <Card className="bg-[#151821] border-[#232733] rounded-3xl overflow-hidden">
+            <CardHeader className="bg-black/20 p-6 border-b border-white/5">
+              <CardTitle className="text-sm font-black uppercase tracking-widest text-white">Bitácora de Sistema</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {logs.length === 0 ? (
+                <div className="p-12 text-center text-[#A1A1AA]">
+                  <Activity className="mx-auto mb-4 text-[#232733]" size={48} />
+                  <p className="text-sm">No hay eventos registrados en la bitácora.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-black/40 border-b border-white/5">
+                      <tr>
+                        {['Acción', 'Usuario', 'Detalles', 'Fecha'].map(h => (
+                          <th key={h} className="px-6 py-4 text-[9px] font-black text-[#3A3A3C] uppercase tracking-widest">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {logs.map((log: any, i: number) => (
+                        <tr key={i} className="hover:bg-white/5 transition-colors">
+                          <td className="px-6 py-4">
+                            <span className="text-[10px] font-black text-[#FF9F0A] uppercase">{log.action}</span>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-[#A1A1AA]">{log.user?.email || '—'}</td>
+                          <td className="px-6 py-4 text-[10px] text-[#A1A1AA] max-w-xs truncate">
+                            {typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}
+                          </td>
+                          <td className="px-6 py-4 text-[10px] text-[#A1A1AA]">{new Date(log.createdAt).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
       </div>

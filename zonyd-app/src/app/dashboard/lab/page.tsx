@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   Sparkles, 
   Activity, 
@@ -20,11 +20,13 @@ import {
   Maximize2,
   Settings2,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  FileText
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { authFetch } from '@/lib/api';
 
 export default function TheLabPage() {
   const [mounted, setMounted] = useState(false);
@@ -34,21 +36,48 @@ export default function TheLabPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [waveformHeights, setWaveformHeights] = useState<number[]>([]);
   const [file, setFile] = useState<File | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [isStemProcessing, setIsStemProcessing] = useState(false);
+  const [stemResult, setStemResult] = useState<any>(null);
+  const [isPhaseProcessing, setIsPhaseProcessing] = useState(false);
+  const [phaseResult, setPhaseResult] = useState<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    // Generate static random heights only on the client to avoid hydration mismatch
     const heights = Array.from({ length: 60 }).map(() => Math.random() * 100);
     setWaveformHeights(heights);
   }, []);
 
-  if (!mounted) return null; // Evitar renderizado en servidor para componentes con random/browser-only logic
+  useEffect(() => {
+    return () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    };
+  }, [audioUrl]);
+
+  if (!mounted) return null;
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
+      const url = URL.createObjectURL(selectedFile);
+      setAudioUrl(url);
+      if (audioRef.current) {
+        audioRef.current.src = url;
+        audioRef.current.load();
+      }
       startMastering(selectedFile);
     }
   };
@@ -57,45 +86,109 @@ export default function TheLabPage() {
     setIsMastering(true);
     setMasteringProgress(10);
     setAnalysisResult(null);
-    
+    const progressInterval = setInterval(() => {
+      setMasteringProgress(p => p < 88 ? p + 6 : p);
+    }, 500);
     try {
       const formData = new FormData();
       formData.append('audio', audioFile);
-      formData.append('genre', 'pop');
-
-      // Simulate progress while uploading
-      const progressInterval = setInterval(() => {
-        setMasteringProgress(p => p < 90 ? p + 5 : p);
-      }, 500);
-
-      // Call the real backend API (SpectralEngine)
-      const token = localStorage.getItem('sb-token') || ''; // Adjust depending on Supabase auth setup
-      const res = await fetch('http://localhost:4000/api/lab/spectral/analyze', {
+      formData.append('genre', selectedPreset);
+      const data = await authFetch('/api/lab/spectral/analyze', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
         body: formData,
       });
-
       clearInterval(progressInterval);
       setMasteringProgress(100);
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || 'Error en análisis espectral');
-      }
-
       setAnalysisResult(data);
       setTimeout(() => setIsMastering(false), 500);
-
     } catch (err: any) {
+      clearInterval(progressInterval);
       console.error(err);
-      alert(`Error: ${err.message}`);
+      alert(`Error al analizar audio: ${err.message}`);
       setIsMastering(false);
       setMasteringProgress(0);
     }
+  };
+
+  const handleStemSplit = async () => {
+    if (!file) { alert('Primero selecciona un archivo de audio.'); return; }
+    setIsStemProcessing(true);
+    setStemResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('audio', file);
+      const data = await authFetch('/api/lab/stems/split', { method: 'POST', body: formData });
+      setStemResult(data);
+    } catch (err: any) {
+      alert(`Error en Stem Splitter: ${err.message}`);
+    } finally {
+      setIsStemProcessing(false);
+    }
+  };
+
+  const handlePhaseAudit = async () => {
+    if (!file) { alert('Primero selecciona un archivo de audio.'); return; }
+    setIsPhaseProcessing(true);
+    setPhaseResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('audio', file);
+      const data = await authFetch('/api/lab/phase/analyze', { method: 'POST', body: formData });
+      setPhaseResult(data);
+    } catch (err: any) {
+      alert(`Error en Phase Auditor: ${err.message}`);
+    } finally {
+      setIsPhaseProcessing(false);
+    }
+  };
+
+  const handleExportWav = async () => {
+    if (!file) { alert('Primero selecciona un archivo de audio para exportar.'); return; }
+    try {
+      const formData = new FormData();
+      formData.append('audio', file);
+      formData.append('preset', selectedPreset);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession();
+      const res = await fetch(`${API_URL}/api/lab/export/wav`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Error al exportar WAV');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${file.name.replace(/\.[^/.]+$/, '')}_master_${selectedPreset}.wav`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(`Error al exportar: ${err.message}`);
+    }
+  };
+
+  const handleTechnicalReport = () => {
+    if (!analysisResult) { alert('Primero analiza un archivo de audio.'); return; }
+    const report = [
+      `REPORTE TÉCNICO DE AUDIO — ZONYD LAB`,
+      `Archivo: ${file?.name || 'N/A'}`,
+      `Preset aplicado: ${selectedPreset.toUpperCase()}`,
+      `---`,
+      `LUFS Integrado: ${analysisResult?.metrics?.integrated_lufs?.toFixed(2) ?? 'N/A'} LUFS`,
+      `True Peak: ${analysisResult?.metrics?.true_peak_db?.toFixed(2) ?? 'N/A'} dBTP`,
+      `Cumple Spotify/Apple: ${analysisResult?.compliance?.spotify ? 'SÍ' : 'NO'}`,
+      `---`,
+      `Recomendaciones IA:`,
+      analysisResult?.recommendations || 'Sin recomendaciones adicionales.',
+    ].join('\n');
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reporte_tecnico_zonyd_${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -114,10 +207,12 @@ export default function TheLabPage() {
         </div>
 
         <div className="flex gap-2">
-           <Button variant="outline" className="border-[#232733] bg-[#151821] text-xs font-bold rounded-xl h-12 px-6">
-              <Settings2 size={16} className="mr-2" /> AJUSTES DE AUDIO
-           </Button>
-           <Button className="bg-[#FF9F0A] text-black font-black px-6 h-12 rounded-xl shadow-lg shadow-[#FF9F0A]/20 hover:scale-105 transition-all">
+           <Link href="/dashboard/lab/console">
+             <Button variant="outline" className="border-[#232733] bg-[#151821] text-xs font-bold rounded-xl h-12 px-6">
+               <Settings2 size={16} className="mr-2" /> AJUSTES DE AUDIO
+             </Button>
+           </Link>
+           <Button onClick={handleExportWav} className="bg-[#FF9F0A] text-black font-black px-6 h-12 rounded-xl shadow-lg shadow-[#FF9F0A]/20 hover:scale-105 transition-all">
               <Download size={16} className="mr-2" /> EXPORTAR WAV
            </Button>
         </div>
@@ -151,8 +246,9 @@ export default function TheLabPage() {
                      </div>
                   </div>
 
-                  {/* WAVEFORM SIMULATION */}
-                  <div className="h-48 bg-black/40 rounded-3xl border border-white/5 relative overflow-hidden flex items-center justify-center group cursor-pointer" onClick={() => setIsPlaying(!isPlaying)}>
+                  {/* WAVEFORM + AUDIO REAL */}
+                  {audioUrl && <audio ref={audioRef} src={audioUrl} onEnded={() => setIsPlaying(false)} />}
+                  <div className="h-48 bg-black/40 rounded-3xl border border-white/5 relative overflow-hidden flex items-center justify-center group cursor-pointer" onClick={togglePlay}>
                      <div className="flex items-end gap-[2px] w-full px-10 h-32">
                         {waveformHeights.map((h, i) => (
                            <div 
@@ -170,6 +266,11 @@ export default function TheLabPage() {
                            {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
                         </div>
                      </div>
+                     {!audioUrl && (
+                       <div className="absolute bottom-4 left-0 right-0 text-center">
+                         <p className="text-[10px] text-[#3A3A3C] font-black uppercase tracking-widest">Selecciona un archivo para previsualizar</p>
+                       </div>
+                     )}
                   </div>
 
                   <div className="space-y-6">
@@ -213,33 +314,52 @@ export default function TheLabPage() {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <Card className="bg-[#151821] border-[#232733] rounded-[2.5rem] p-6 hover:border-[#FF9F0A]/30 transition-all cursor-pointer group">
-                  <div className="flex items-center gap-4 mb-6">
+               <Card className="bg-[#151821] border-[#232733] rounded-[2.5rem] p-6 hover:border-[#FF9F0A]/30 transition-all group">
+                  <div className="flex items-center gap-4 mb-4">
                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#FF9F0A]">
                         <Layers size={24} />
                      </div>
                      <div>
                         <h4 className="text-sm font-black text-white uppercase italic">Stem Splitter</h4>
-                        <p className="text-[10px] text-[#A1A1AA]">Separa voz, bajo y batería con IA.</p>
+                        <p className="text-[10px] text-[#A1A1AA]">Separa voz, bajo, batería e instrumentos con IA.</p>
                      </div>
                   </div>
-                  <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-[#3A3A3C] group-hover:text-white transition-colors">
-                     SUBIR ARCHIVO <ChevronRight size={14} className="ml-2" />
+                  {stemResult && (
+                    <div className="mb-4 p-3 bg-black/40 rounded-xl border border-[#FF9F0A]/20 text-[10px] text-[#A1A1AA] space-y-1">
+                      {Object.entries(stemResult).map(([k, v]: any) => (
+                        <div key={k} className="flex items-center justify-between">
+                          <span className="text-white font-bold capitalize">{k}</span>
+                          <a href={v} download className="text-[#FF9F0A] hover:underline">Descargar</a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Button onClick={handleStemSplit} disabled={isStemProcessing} className="w-full bg-[#FF9F0A]/10 hover:bg-[#FF9F0A]/20 text-[#FF9F0A] text-[10px] font-black uppercase tracking-widest border border-[#FF9F0A]/30">
+                     {isStemProcessing ? <Loader2 size={14} className="animate-spin mr-2" /> : <ChevronRight size={14} className="mr-2" />}
+                     {isStemProcessing ? 'PROCESANDO...' : (file ? 'SEPARAR STEMS' : 'SELECCIONAR AUDIO PRIMERO')}
                   </Button>
                </Card>
 
-               <Card className="bg-[#151821] border-[#232733] rounded-[2.5rem] p-6 hover:border-[#32D74B]/30 transition-all cursor-pointer group">
-                  <div className="flex items-center gap-4 mb-6">
+               <Card className="bg-[#151821] border-[#232733] rounded-[2.5rem] p-6 hover:border-[#32D74B]/30 transition-all group">
+                  <div className="flex items-center gap-4 mb-4">
                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#32D74B]">
                         <Activity size={24} />
                      </div>
                      <div>
                         <h4 className="text-sm font-black text-white uppercase italic">Phase Auditor</h4>
-                        <p className="text-[10px] text-[#A1A1AA]">Analiza la correlación de fase estéreo.</p>
+                        <p className="text-[10px] text-[#A1A1AA]">Correlación de fase estéreo y compatibilidad mono.</p>
                      </div>
                   </div>
-                  <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-widest text-[#3A3A3C] group-hover:text-white transition-colors">
-                     INICIAR TEST <ChevronRight size={14} className="ml-2" />
+                  {phaseResult && (
+                    <div className="mb-4 p-3 bg-black/40 rounded-xl border border-[#32D74B]/20 text-[10px] text-[#A1A1AA] space-y-1">
+                      <p><span className="text-white font-bold">Correlación:</span> {phaseResult.correlation?.toFixed(3) ?? 'N/A'}</p>
+                      <p><span className="text-white font-bold">Estado Mono:</span> {phaseResult.monoCompatible ? '✓ Compatible' : '⚠ Problemas detectados'}</p>
+                      {phaseResult.recommendation && <p className="italic text-[#A1A1AA]">{phaseResult.recommendation}</p>}
+                    </div>
+                  )}
+                  <Button onClick={handlePhaseAudit} disabled={isPhaseProcessing} className="w-full bg-[#32D74B]/10 hover:bg-[#32D74B]/20 text-[#32D74B] text-[10px] font-black uppercase tracking-widest border border-[#32D74B]/30">
+                     {isPhaseProcessing ? <Loader2 size={14} className="animate-spin mr-2" /> : <ChevronRight size={14} className="mr-2" />}
+                     {isPhaseProcessing ? 'ANALIZANDO...' : (file ? 'INICIAR ANÁLISIS DE FASE' : 'SELECCIONAR AUDIO PRIMERO')}
                   </Button>
                </Card>
             </div>
@@ -287,8 +407,8 @@ export default function TheLabPage() {
                  </div>
                )}
 
-               <Button className="w-full mt-10 bg-white/5 text-white font-black h-12 rounded-xl text-[10px] uppercase tracking-widest hover:bg-white/10">
-                  GENERAR REPORTE TÉCNICO
+               <Button onClick={handleTechnicalReport} className="w-full mt-10 bg-white/5 text-white font-black h-12 rounded-xl text-[10px] uppercase tracking-widest hover:bg-white/10 flex items-center justify-center gap-2">
+                  <FileText size={14} /> GENERAR REPORTE TÉCNICO
                </Button>
             </Card>
 
