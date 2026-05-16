@@ -5,17 +5,14 @@ RUN apt-get update && apt-get install -y ffmpeg python3 make g++ && rm -rf /var/
 
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copiar archivos de dependencias PRIMERO (Docker cachea esta capa)
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Instalar dependencias
-RUN npm install
+# Instalar dependencias (se cachea si package.json no cambió)
+RUN npm ci --omit=dev && npx prisma generate
 
-# Generar cliente Prisma
-RUN npx prisma generate
-
-# Copiar el resto del código
+# Copiar el resto del código (solo esta capa se reconstruye en cada deploy)
 COPY . .
 
 # Exponer puerto

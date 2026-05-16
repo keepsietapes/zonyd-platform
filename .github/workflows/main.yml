@@ -15,8 +15,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
       - name: Install dependencies
-        run: cd backend && npm install
+        run: cd backend && npm ci --prefer-offline
       - name: Generate Prisma
         run: cd backend && npx prisma generate
       - name: Run Tests
@@ -30,8 +32,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: zonyd-app/package-lock.json
       - name: Install dependencies
-        run: cd zonyd-app && npm install
+        run: cd zonyd-app && npm ci --prefer-offline
       - name: Build Next.js
         run: cd zonyd-app && npm run build
         env:

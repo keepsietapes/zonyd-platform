@@ -11,23 +11,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # PASO 1: Limpiar el .env en el runner de GitHub (no en SSH, sin problemas de YAML)
+      # PASO 1: Limpiar el .env en el runner de GitHub
       - name: Sanitize .env file on runner
         run: python3 sanitize_env.py
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
 
-      # PASO 2: Preparar el servidor (git clone/reset)
+      # PASO 2: Preparar el servidor (git pull incremental, sin reinstalar paquetes del OS)
       - name: Setup server and pull code
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 20m
+          command_timeout: 10m
           script: |
             set -e
-            sudo apt-get update -qq && sudo apt-get install -y -qq ca-certificates git curl
             mkdir -p ~/zonyd-platform/backend
             cd ~/zonyd-platform
             if [ ! -d ".git" ]; then
@@ -36,9 +35,9 @@ jobs:
               git fetch origin
               git reset --hard origin/main
             fi
-            echo "Code updated successfully"
+            echo "✅ Code updated successfully"
 
-      # PASO 3: Copiar el .env limpio al servidor via SCP (el metodo mas confiable)
+      # PASO 3: Copiar el .env limpio al servidor via SCP
       - name: Copy clean .env to server
         uses: appleboy/scp-action@master
         with:
@@ -48,14 +47,14 @@ jobs:
           source: "backend_clean.env"
           target: "/home/ubuntu/zonyd-platform/backend/"
 
-      # PASO 4: Renombrar .env y levantar Docker
+      # PASO 4: Renombrar .env y rebuild inteligente con Docker cache
       - name: Deploy Docker containers
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 60m
+          command_timeout: 30m
           script: |
             set -e
 
@@ -63,29 +62,29 @@ jobs:
             mv ~/zonyd-platform/backend/backend_clean.env ~/zonyd-platform/backend/.env
             echo "--- .env en servidor: $(wc -l < ~/zonyd-platform/backend/.env) lineas ---"
 
-            # Instalar Docker si no existe
+            # Instalar Docker solo si no existe (una sola vez)
             if ! command -v docker &> /dev/null; then
               curl -fsSL https://get.docker.com | sh
               sudo usermod -aG docker ubuntu
             fi
 
-            # Instalar docker-compose si no existe
+            # Instalar docker-compose solo si no existe
             if ! command -v docker-compose &> /dev/null; then
               sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
             fi
 
-            # Limpiar contenedores e imagenes viejas
-            sudo docker-compose -f ~/zonyd-platform/docker-compose.prod.yml down --remove-orphans || true
-            sudo docker system prune -af --volumes || true
-            df -h /
-
-            # Construir y arrancar
             cd ~/zonyd-platform
-            sudo docker-compose -f docker-compose.prod.yml up -d --build
+
+            # Build inteligente: usa cache de Docker layers (NO borrar cache)
+            # Solo detener y reemplazar los contenedores, conservando la cache de builds
+            sudo docker-compose -f docker-compose.prod.yml build --parallel
+            sudo docker-compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
             sleep 5
-            sudo docker-compose -f docker-compose.prod.yml logs --tail=30 backend || true
+            sudo docker-compose -f docker-compose.prod.yml logs --tail=20 backend || true
+
+            # Limpiar solo imagenes dangling (sin tag), NO toda la cache
             sudo docker image prune -f
 
-            echo "=== DEPLOY COMPLETADO EXITOSAMENTE ==="
+            echo "=== ✅ DEPLOY COMPLETADO EXITOSAMENTE ==="

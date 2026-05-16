@@ -1,15 +1,20 @@
 # Stage 1: Build
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+# Copiar dependencias PRIMERO (Docker cachea esta capa)
 COPY package*.json ./
-RUN npm install
+RUN npm ci
+
+# Copiar código fuente (solo esta capa se reconstruye)
 COPY . .
+
 # Pasar variables de entorno para el build de Next.js
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
-# Stage 2: Production
+# Stage 2: Production (imagen mínima)
 FROM node:20-alpine AS runner
 WORKDIR /app
 
