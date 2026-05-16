@@ -11,7 +11,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to AWS via SSH
+      # PASO 1: Escribir el .env en el servidor usando printf (evita el problema de indentación del heredoc)
+      - name: Write .env to server
+        uses: appleboy/ssh-action@master
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          command_timeout: 10m
+          envs: ENV_FILE
+          script: |
+            mkdir -p ~/zonyd-platform/backend
+            printf '%s' "$ENV_FILE" > ~/zonyd-platform/backend/.env
+            sed -i 's/\r$//' ~/zonyd-platform/backend/.env
+            sed -i '/^[[:space:]]*$/d' ~/zonyd-platform/backend/.env
+            sed -i '/^[[:space:]]*#/d' ~/zonyd-platform/backend/.env
+            sed -i 's/="\(.*\)"$/=\1/' ~/zonyd-platform/backend/.env
+            sed -i "s/='\(.*\)'$/=\1/" ~/zonyd-platform/backend/.env
+            echo "--- .env escrito: $(wc -l < ~/zonyd-platform/backend/.env) lineas ---"
+
+      # PASO 2: Actualizar codigo y levantar Docker
+      - name: Deploy Docker to AWS
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -19,60 +41,47 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           command_timeout: 60m
           script: |
-            set -e # Abortar si cualquier comando falla
-            
-            # Asegurar certificados de seguridad actualizados
-            sudo apt-get update && sudo apt-get install -y ca-certificates git
-            
-            # ── Limpieza agresiva de disco ──────────────────────────
-            # Detener contenedores activos antes de limpiar
-            sudo docker-compose -f docker-compose.prod.yml down --remove-orphans || true
-            # Eliminar todos los contenedores, imágenes, volúmenes y cachés de build
+            set -e
+
+            # Instalar dependencias del sistema
+            sudo apt-get update && sudo apt-get install -y ca-certificates git curl
+
+            # Instalar Docker si no existe
+            if ! command -v docker &> /dev/null; then
+              curl -fsSL https://get.docker.com | sh
+              sudo usermod -aG docker ubuntu
+            fi
+
+            # Instalar docker-compose si no existe
+            if ! command -v docker-compose &> /dev/null; then
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            fi
+
+            # Parar contenedores existentes y limpiar disco
+            sudo docker-compose -f ~/zonyd-platform/docker-compose.prod.yml down --remove-orphans || true
             sudo docker system prune -af --volumes || true
-            # Limpiar caché de npm acumulada en el host
-            sudo rm -rf /root/.npm/_cacache || true
-            sudo rm -rf /tmp/npm-* || true
-            # Mostrar espacio disponible para verificar en los logs
             df -h /
-            
-            # Crear carpeta del proyecto si no existe
-            mkdir -p ~/zonyd-platform
+
+            # Actualizar el codigo del repositorio
             cd ~/zonyd-platform
-            
-            # Si el repo no existe, clonarlo. Si existe, forzar actualización exacta
             if [ ! -d ".git" ]; then
               git clone https://github.com/${{ github.repository }} .
             else
               git fetch origin
               git reset --hard origin/main
-              git clean -fd
             fi
-            
-            # Crear el archivo .env desde el secreto de GitHub de forma segura (preservando saltos de línea)
-            cat << 'EOF' > backend/.env
-            ${{ secrets.ENV_FILE }}
-            EOF
-            
-            # Limpiar el .env de retornos de carro de Windows (\r), líneas vacías y comentarios que rompen Docker Compose
-            sed -i 's/\r$//' backend/.env
-            sed -i '/^[[:space:]]*$/d' backend/.env
-            sed -i '/^[[:space:]]*#/d' backend/.env
-            
-            # Quitar comillas dobles o simples de los valores (docker-compose no las quita y rompe las URLs)
-            sed -i 's/="\(.*\)"$/=\1/' backend/.env
-            sed -i "s/='\(.*\)'$/=\1/" backend/.env
-            
-            # Asegurarse de que el archivo existe y tiene contenido
+
+            # Verificar que el .env del paso anterior sigue ahi (git reset no lo borra porque esta en .gitignore)
+            echo "--- Verificando .env antes de build ---"
             ls -la backend/.env
-            
-            # Construir e iniciar los contenedores
+            wc -l backend/.env
+
+            # Construir e iniciar contenedores
             sudo docker-compose -f docker-compose.prod.yml up -d --build
-            
-            # Esperar un poco para asegurar que el contenedor arrancó y no se cayó inmediatamente
+
             sleep 5
-            
-            # Imprimir los logs del backend en la consola de GitHub Actions para depurar si algo salió mal
-            sudo docker-compose -f docker-compose.prod.yml logs backend || true
-            
-            # Limpiar imágenes antiguas para no llenar el disco
+            sudo docker-compose -f docker-compose.prod.yml logs --tail=50 backend || true
             sudo docker image prune -f
+
+            echo "--- DEPLOY COMPLETADO EXITOSAMENTE ---"
