@@ -22,54 +22,60 @@ const localAI = new OpenAI({
  * @returns {Promise<string>} La respuesta generada
  */
 async function generateAIContent(systemPrompt, message, history = []) {
-  if (useLocalModel) {
+  // Intentar usar Gemini (Cloud) PRIMERO para ahorrar recursos de la PC local
+  if (genAI) {
     try {
-      logger.info('[aiClient] Utilizando LM Studio (modelo local)');
-      
-      const messages = [
-        { role: 'system', content: systemPrompt },
-        ...history.map(msg => ({ role: msg.role === 'ai' ? 'assistant' : 'user', content: msg.text })),
-        { role: 'user', content: message }
-      ];
-
-      const response = await localAI.chat.completions.create({
-        model: process.env.LOCAL_MODEL_NAME || 'local-model', // LM studio usa el cargado en memoria
-        messages,
-        temperature: 0.7,
-      });
-
-      const outputText = response.choices[0].message.content;
-      
-      // TELEMETRÍA PROPIETARIA (Fase 1: Recolección Silenciosa)
-      // Guardamos la interacción para futuro Fine-Tuning de nuestro propio modelo
-      try {
-        const prisma = require('./prisma');
-        await prisma.auditLog.create({
-          data: {
-            userId: 'SYSTEM', // O el ID real si se pasa en contexto
-            action: 'AI_FEEDBACK_LOOP',
-            details: JSON.stringify({
-              model: 'LM_STUDIO',
-              inputLength: messages.length,
-              outputSnippet: outputText.substring(0, 100),
-              timestamp: new Date().toISOString()
-            })
-          }
-        });
-      } catch (logErr) {
-        logger.warn(`[aiClient] Error en telemetría propietaria: ${logErr.message}`);
-      }
-
-      return outputText;
-    } catch (err) {
-      logger.warn(`[aiClient] LM Studio falló, intentando fallback a Gemini. Error: ${err.message}`);
-      if (!genAI) throw new Error('Ambos modelos, Local y Gemini, fallaron o no están configurados.');
       return await generateGeminiContent(systemPrompt, message, history);
+    } catch (err) {
+      logger.warn(`[aiClient] Error en Gemini: ${err.message}. Intentando fallback a LM Studio (Local)...`);
+      if (useLocalModel) {
+        return await generateLocalContent(systemPrompt, message, history);
+      }
+      throw new Error('Gemini falló y la IA Local no está configurada.');
     }
+  } else if (useLocalModel) {
+    // Si Gemini no está configurado, intentar directo con Local
+    return await generateLocalContent(systemPrompt, message, history);
   } else {
-    if (!genAI) throw new Error('Gemini API key no configurada.');
-    return await generateGeminiContent(systemPrompt, message, history);
+    throw new Error('No hay ningún motor de IA configurado (Ni Gemini ni Local).');
   }
+}
+
+async function generateLocalContent(systemPrompt, message, history) {
+  logger.info('[aiClient] Utilizando LM Studio (modelo local como respaldo)');
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    ...history.map(msg => ({ role: msg.role === 'ai' ? 'assistant' : 'user', content: msg.text })),
+    { role: 'user', content: message }
+  ];
+
+  const response = await localAI.chat.completions.create({
+    model: process.env.LOCAL_MODEL_NAME || 'local-model',
+    messages,
+    temperature: 0.7,
+  });
+
+  const outputText = response.choices[0].message.content;
+  
+  try {
+    const prisma = require('./prisma');
+    await prisma.auditLog.create({
+      data: {
+        userId: 'SYSTEM',
+        action: 'AI_FEEDBACK_LOOP',
+        details: JSON.stringify({
+          model: 'LM_STUDIO_FALLBACK',
+          inputLength: messages.length,
+          outputSnippet: outputText.substring(0, 100),
+          timestamp: new Date().toISOString()
+        })
+      }
+    });
+  } catch (logErr) {
+    logger.warn(`[aiClient] Error en telemetría propietaria: ${logErr.message}`);
+  }
+
+  return outputText;
 }
 
 async function generateGeminiContent(systemPrompt, message, history) {
@@ -114,24 +120,32 @@ async function generateGeminiContent(systemPrompt, message, history) {
  * Genera contenido de un solo tiro sin historial de chat.
  */
 async function generateSingleContent(prompt) {
-  if (useLocalModel) {
+  // Intentar Gemini primero
+  if (genAI) {
     try {
-      logger.info('[aiClient] Utilizando LM Studio (single content)');
-      const response = await localAI.chat.completions.create({
-        model: process.env.LOCAL_MODEL_NAME || 'local-model',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
-      });
-      return response.choices[0].message.content;
-    } catch (err) {
-      logger.warn(`[aiClient] LM Studio falló en single content, intentando fallback. Error: ${err.message}`);
-      if (!genAI) throw new Error('Ambos modelos fallaron.');
       return await generateSingleGeminiContent(prompt);
+    } catch (err) {
+      logger.warn(`[aiClient] Error en Gemini (Single): ${err.message}. Intentando fallback a LM Studio...`);
+      if (useLocalModel) {
+        return await generateSingleLocalContent(prompt);
+      }
+      throw new Error('Gemini falló y no hay IA local configurada.');
     }
+  } else if (useLocalModel) {
+    return await generateSingleLocalContent(prompt);
   } else {
-    if (!genAI) throw new Error('Gemini API key no configurada.');
-    return await generateSingleGeminiContent(prompt);
+    throw new Error('No hay motores IA configurados.');
   }
+}
+
+async function generateSingleLocalContent(prompt) {
+  logger.info('[aiClient] Utilizando LM Studio (single content, fallback)');
+  const response = await localAI.chat.completions.create({
+    model: process.env.LOCAL_MODEL_NAME || 'local-model',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.7,
+  });
+  return response.choices[0].message.content;
 }
 
 async function generateSingleGeminiContent(prompt) {
