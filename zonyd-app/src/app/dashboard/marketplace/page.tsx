@@ -69,7 +69,7 @@ export default function MarketplacePage() {
           <Button onClick={handleGenerateMediaKit} disabled={isGeneratingKit} variant="outline" className="border-[#FF9F0A] text-[#FF9F0A] font-black px-6 h-12 rounded-xl hover:bg-[#FF9F0A] hover:text-black transition-all">
             {isGeneratingKit ? <Loader2 className="animate-spin mr-2" size={16} /> : <Share2 size={16} className="mr-2" />} MEDIA KIT IA
           </Button>
-          <Button className="bg-white text-black font-black px-6 h-12 rounded-xl hover:scale-105 transition-all" onClick={() => alert('Librería de Masters próximamente...')}>
+          <Button className="bg-white text-black font-black px-6 h-12 rounded-xl hover:scale-105 transition-all" onClick={() => window.location.href = '/dashboard/releases'}>
             <ListMusic size={16} className="mr-2" /> GESTIONAR MASTERS
           </Button>
           <Button className="bg-[#FF9F0A] text-black font-black px-6 h-12 rounded-xl shadow-lg" onClick={() => alert('Quick-Sync próximamente...')}>
@@ -181,7 +181,7 @@ export default function MarketplacePage() {
                 </div>
               ))}
             </div>
-            <Button variant="outline" className="w-full mt-8 border-[#232733] text-[10px] font-black uppercase tracking-widest hover:bg-white/5 h-12 rounded-xl" onClick={() => alert('Editor de catálogo próximamente...')}>
+            <Button variant="outline" className="w-full mt-8 border-[#232733] text-[10px] font-black uppercase tracking-widest hover:bg-white/5 h-12 rounded-xl" onClick={() => window.location.href = '/dashboard/releases'}>
               COMPLETAR CATÁLOGO
             </Button>
           </Card>

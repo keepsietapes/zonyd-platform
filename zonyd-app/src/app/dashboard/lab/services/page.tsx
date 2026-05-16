@@ -40,28 +40,20 @@ export default function LabServicesPage() {
     setResult(null);
 
     try {
-      let url = `http://localhost:4000${activeAgent.endpoint}`;
+      let endpoint = activeAgent.endpoint;
       let options: RequestInit = {
         method: activeAgent.method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('sb-token') || ''}`
-        }
       };
 
       if (activeAgent.method === 'GET') {
         const queryParams = new URLSearchParams(formData).toString();
-        url += `?${queryParams}`;
+        endpoint += `?${queryParams}`;
       } else {
         options.body = JSON.stringify(formData);
       }
 
-      const res = await fetch(url, options);
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || 'Error en la IA');
-      
-      setResult(data);
+      const res = await authFetch(endpoint, options);
+      setResult(res);
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     } finally {

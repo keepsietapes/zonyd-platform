@@ -64,6 +64,10 @@ model Artist {
 
   appleMusicUrl         String?
 
+  // Payout Methods
+  paypalEmail           String?
+  clabe                 String?
+
   // Redes sociales
   instagramUrl          String?
   instagramConnected    Boolean   @default(false)

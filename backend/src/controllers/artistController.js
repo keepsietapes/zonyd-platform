@@ -2,7 +2,7 @@ const prisma = require('../utils/prisma');
 const { sendWelcomeEmail, sendValidationSuccessEmail } = require('../services/emailService');
 
 async function createOrUpdateArtist(req, res) {
-  const { id, stageName, spotifyUrl, appleMusicUrl, bio, genres, country, instagramUrl, tiktokUrl } = req.body;
+  const { id, stageName, spotifyUrl, appleMusicUrl, bio, genres, country, instagramUrl, tiktokUrl, paypalEmail, clabe } = req.body;
   try {
     // Garantizar que el usuario exista en la BD pública, buscando por email para evitar conflictos si el UUID cambió
     const dbUser = await prisma.user.upsert({
@@ -29,6 +29,8 @@ async function createOrUpdateArtist(req, res) {
           ...(appleMusicUrl !== undefined && { appleMusicUrl }),
           ...(instagramUrl !== undefined && { instagramUrl }),
           ...(tiktokUrl !== undefined && { tiktokUrl }),
+          ...(paypalEmail !== undefined && { paypalEmail }),
+          ...(clabe !== undefined && { clabe }),
         }
       });
     } else {
@@ -49,6 +51,8 @@ async function createOrUpdateArtist(req, res) {
             ...(appleMusicUrl !== undefined && { appleMusicUrl }),
             ...(instagramUrl !== undefined && { instagramUrl }),
             ...(tiktokUrl !== undefined && { tiktokUrl }),
+            ...(paypalEmail !== undefined && { paypalEmail }),
+            ...(clabe !== undefined && { clabe }),
           }
         });
       } else {
@@ -64,6 +68,8 @@ async function createOrUpdateArtist(req, res) {
             appleMusicUrl,
             instagramUrl,
             tiktokUrl,
+            paypalEmail,
+            clabe,
           }
         });
       }

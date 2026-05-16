@@ -72,6 +72,8 @@ function SettingsContent() {
             if (primary.plan) setCurrentPlan(primary.plan);
             if (primary.stageName) setArtistName(primary.stageName);
             if (primary.bio) setBio(primary.bio);
+            if (primary.paypalEmail) setPayoutMethod(primary.paypalEmail);
+            if (primary.clabe) setBankAccount(primary.clabe);
             if (res.email) setContactEmail(res.email);
           } else {
             console.warn('⚠️ No se encontraron perfiles de artista.');
@@ -129,6 +131,8 @@ function SettingsContent() {
         method: 'POST',
         body: JSON.stringify({ plan })
       });
+      if (!res) throw new Error('Sesión inválida o error de conexión. Por favor recarga la página e intenta de nuevo.');
+      
       if (res.checkoutUrl) {
         window.location.href = res.checkoutUrl;
       } else {
@@ -443,12 +447,22 @@ function SettingsContent() {
                        
                        <Button
                          disabled={isSaving}
-                         onClick={() => {
+                         onClick={async () => {
                            setIsSaving(true);
-                           setTimeout(() => {
+                           try {
+                             const payload: any = { paypalEmail: payoutMethod, clabe: bankAccount };
+                             const artistId = artistProfiles[0]?.id;
+                             if (artistId) payload.id = artistId;
+                             
+                             const saved = await authFetch('/api/artist/profile', { method: 'PUT', body: JSON.stringify(payload) });
+                             if (saved && !saved.error) {
+                               alert('✅ Métodos de pago actualizados correctamente.');
+                             }
+                           } catch (err: any) {
+                             alert(`❌ ${err.message || 'Error al guardar.'}`);
+                           } finally {
                              setIsSaving(false);
-                             alert('Métodos de pago actualizados correctamente.');
-                           }, 1000);
+                           }
                          }}
                          className="bg-[#FF9F0A] hover:bg-[#FF9F0A]/90 text-black font-black px-8 rounded-xl h-12 shadow-lg shadow-[#FF9F0A]/20"
                        >
