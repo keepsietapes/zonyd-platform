@@ -11,58 +11,45 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # PASO 1: Escribir y limpiar el .env en el servidor
-      - name: Write and sanitize .env on server
-        uses: appleboy/ssh-action@master
+      # PASO 1: Limpiar el .env en el runner de GitHub (no en SSH, sin problemas de YAML)
+      - name: Sanitize .env file on runner
+        run: python3 sanitize_env.py
         env:
           ENV_FILE: ${{ secrets.ENV_FILE }}
+
+      # PASO 2: Preparar el servidor (git clone/reset)
+      - name: Setup server and pull code
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          command_timeout: 10m
-          envs: ENV_FILE
+          command_timeout: 20m
           script: |
+            set -e
+            sudo apt-get update -qq && sudo apt-get install -y -qq ca-certificates git curl
             mkdir -p ~/zonyd-platform/backend
+            cd ~/zonyd-platform
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/keepsietapes/zonyd-platform .
+            else
+              git fetch origin
+              git reset --hard origin/main
+            fi
+            echo "Code updated successfully"
 
-            # Escribir el secreto al servidor via variable de entorno (evita indentacion de YAML)
-            printf '%s\n' "$ENV_FILE" > /tmp/env_raw.txt
+      # PASO 3: Copiar el .env limpio al servidor via SCP (el metodo mas confiable)
+      - name: Copy clean .env to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "backend_clean.env"
+          target: "/home/ubuntu/zonyd-platform/backend/"
 
-            # Usar Python para extraer SOLO lineas validas KEY=VALUE (sin comentarios, sin caracteres especiales)
-            python3 - <<'PYEOF'
-import re, os
-
-input_path = '/tmp/env_raw.txt'
-output_path = os.path.expanduser('~/zonyd-platform/backend/.env')
-
-valid_lines = []
-pattern = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*)=(.*)$')
-
-with open(input_path, 'r', errors='replace') as f:
-    for line in f:
-        line = line.rstrip('\r\n')
-        m = pattern.match(line)
-        if m:
-            key = m.group(1)
-            val = m.group(2)
-            # Quitar comillas al inicio y al final del valor
-            if len(val) >= 2 and val[0] == '"' and val[-1] == '"':
-                val = val[1:-1]
-            elif len(val) >= 2 and val[0] == "'" and val[-1] == "'":
-                val = val[1:-1]
-            valid_lines.append(f'{key}={val}')
-
-with open(output_path, 'w') as f:
-    f.write('\n'.join(valid_lines) + '\n')
-
-print(f'[OK] .env escrito con {len(valid_lines)} variables validas')
-PYEOF
-
-            cat ~/zonyd-platform/backend/.env | head -5
-            echo "--- Total de lineas en .env: $(wc -l < ~/zonyd-platform/backend/.env) ---"
-
-      # PASO 2: Desplegar con Docker Compose
-      - name: Deploy Docker to AWS
+      # PASO 4: Renombrar .env y levantar Docker
+      - name: Deploy Docker containers
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -72,8 +59,9 @@ PYEOF
           script: |
             set -e
 
-            # Instalar dependencias del sistema
-            sudo apt-get update && sudo apt-get install -y ca-certificates git curl
+            # Renombrar el archivo que llego por SCP
+            mv ~/zonyd-platform/backend/backend_clean.env ~/zonyd-platform/backend/.env
+            echo "--- .env en servidor: $(wc -l < ~/zonyd-platform/backend/.env) lineas ---"
 
             # Instalar Docker si no existe
             if ! command -v docker &> /dev/null; then
@@ -87,35 +75,17 @@ PYEOF
               sudo chmod +x /usr/local/bin/docker-compose
             fi
 
-            # Bajar contenedores viejos y limpiar disco
+            # Limpiar contenedores e imagenes viejas
             sudo docker-compose -f ~/zonyd-platform/docker-compose.prod.yml down --remove-orphans || true
             sudo docker system prune -af --volumes || true
             df -h /
 
-            # Respaldar el .env antes de git reset
-            cp ~/zonyd-platform/backend/.env /tmp/backend_env_backup.txt
-
-            # Actualizar el codigo del repositorio
+            # Construir y arrancar
             cd ~/zonyd-platform
-            if [ ! -d ".git" ]; then
-              git clone https://github.com/${{ github.repository }} .
-            else
-              git fetch origin
-              git reset --hard origin/main
-            fi
-
-            # Restaurar el .env desde el backup
-            cp /tmp/backend_env_backup.txt ~/zonyd-platform/backend/.env
-
-            # Verificacion final del .env
-            echo "--- Verificacion final antes del build ---"
-            wc -l backend/.env
-
-            # Construir y arrancar contenedores
             sudo docker-compose -f docker-compose.prod.yml up -d --build
 
             sleep 5
-            sudo docker-compose -f docker-compose.prod.yml logs --tail=50 backend || true
+            sudo docker-compose -f docker-compose.prod.yml logs --tail=30 backend || true
             sudo docker image prune -f
 
             echo "=== DEPLOY COMPLETADO EXITOSAMENTE ==="
