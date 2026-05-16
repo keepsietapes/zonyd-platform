@@ -38,7 +38,29 @@ async function generateAIContent(systemPrompt, message, history = []) {
         temperature: 0.7,
       });
 
-      return response.choices[0].message.content;
+      const outputText = response.choices[0].message.content;
+      
+      // TELEMETRÍA PROPIETARIA (Fase 1: Recolección Silenciosa)
+      // Guardamos la interacción para futuro Fine-Tuning de nuestro propio modelo
+      try {
+        const prisma = require('./prisma');
+        await prisma.auditLog.create({
+          data: {
+            userId: 'SYSTEM', // O el ID real si se pasa en contexto
+            action: 'AI_FEEDBACK_LOOP',
+            details: JSON.stringify({
+              model: 'LM_STUDIO',
+              inputLength: messages.length,
+              outputSnippet: outputText.substring(0, 100),
+              timestamp: new Date().toISOString()
+            })
+          }
+        });
+      } catch (logErr) {
+        logger.warn(`[aiClient] Error en telemetría propietaria: ${logErr.message}`);
+      }
+
+      return outputText;
     } catch (err) {
       logger.warn(`[aiClient] LM Studio falló, intentando fallback a Gemini. Error: ${err.message}`);
       if (!genAI) throw new Error('Ambos modelos, Local y Gemini, fallaron o no están configurados.');
@@ -64,7 +86,28 @@ async function generateGeminiContent(systemPrompt, message, history) {
 
   const chat = model.startChat({ history: geminiHistory });
   const result = await chat.sendMessage(message);
-  return result.response.text();
+  const outputText = result.response.text();
+
+  // TELEMETRÍA PROPIETARIA (Fase 1: Recolección Silenciosa)
+  try {
+    const prisma = require('./prisma');
+    await prisma.auditLog.create({
+      data: {
+        userId: 'SYSTEM',
+        action: 'AI_FEEDBACK_LOOP',
+        details: JSON.stringify({
+          model: 'GEMINI_1_5',
+          inputLength: message.length,
+          outputSnippet: outputText.substring(0, 100),
+          timestamp: new Date().toISOString()
+        })
+      }
+    });
+  } catch (logErr) {
+    logger.warn(`[aiClient] Error en telemetría Gemini: ${logErr.message}`);
+  }
+
+  return outputText;
 }
 
 /**
