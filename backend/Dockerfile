@@ -10,7 +10,8 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Instalar dependencias (se cachea si package.json no cambió)
-RUN npm ci --omit=dev && npx prisma generate
+# Instalamos TODO primero para poder generar Prisma, luego limpiamos o simplemente usamos ci
+RUN npm ci && npx prisma generate && npm prune --production
 
 # Copiar el resto del código (solo esta capa se reconstruye en cada deploy)
 COPY . .

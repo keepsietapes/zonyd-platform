@@ -76,8 +76,14 @@ jobs:
 
             cd ~/zonyd-platform
 
-            # Build inteligente: usa cache de Docker layers (NO borrar cache)
-            # Solo detener y reemplazar los contenedores, conservando la cache de builds
+            # Diagnóstico y limpieza preventiva (no destructiva de cache)
+            echo "--- Espacio en disco antes del build ---"
+            df -h /
+            
+            # Limpiar contenedores detenidos e imágenes huérfanas (dangling)
+            sudo docker system prune -f
+            
+            # Build inteligente: usa cache de Docker layers
             sudo docker-compose -f docker-compose.prod.yml build --parallel
             sudo docker-compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans
 
