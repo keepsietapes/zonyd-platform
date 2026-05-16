@@ -8,11 +8,11 @@ async function upgradePlan(req, res) {
   }
 
   try {
-    const artist = await prisma.artist.update({
+    const artist = await prisma.artist.updateMany({
       where: { userId: req.user.id },
       data: { plan: planUpper }
     });
-    res.json({ success: true, artist });
+    res.json({ success: true, updated: artist.count > 0 });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

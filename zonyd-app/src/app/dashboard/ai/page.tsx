@@ -121,7 +121,10 @@ export default function ZonydAIPage() {
             <div className="flex items-center gap-3 text-xs text-white/80"><ShieldCheck size={14} className="text-[#34C759]" /> Auditoría de Copyright Preventiva</div>
             <div className="flex items-center gap-3 text-xs text-white/80"><TrendingUp size={14} className="text-[#4F8CFF]" /> Predicciones de Streams y Revenue</div>
           </div>
-          <Button className="w-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-white font-black h-14 rounded-2xl text-lg shadow-xl shadow-[#7B61FF]/20 group">
+          <Button 
+            onClick={() => window.location.href = '/dashboard/settings'}
+            className="w-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-white font-black h-14 rounded-2xl text-lg shadow-xl shadow-[#7B61FF]/20 group"
+          >
             DESBLOQUEAR AHORA <ArrowRight size={20} className="ml-2 group-hover:translate-x-2 transition-transform" />
           </Button>
           <p className="mt-4 text-[10px] text-[#A1A1AA] uppercase font-black tracking-widest">Desde $9.99 USD / mes</p>
