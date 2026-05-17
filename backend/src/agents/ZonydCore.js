@@ -199,16 +199,16 @@ async function orchestrate(userId, artistPlan, message, history = []) {
     const lowerMsg = message.toLowerCase();
     let dynamicResponse = `Entendido. Estoy procesando tu solicitud sobre "${message.substring(0, 30)}...".\n\n`;
 
-    if (lowerMsg.includes('hola') || lowerMsg.includes('ayuda') || lowerMsg.includes('que puedes')) {
-      dynamicResponse = `¡Hola! Soy Zonyd AI, tu Co-Manager. He analizado tu perfil y tu Zonyd Score está en ${context?.artistScore || 50}. ¿Quieres que analice tu próximo lanzamiento o revisemos estrategias de marketing?`;
+    if (intent === 'ANALYTICS' || lowerMsg.includes('estadística') || lowerMsg.includes('streams') || lowerMsg.includes('1000') || lowerMsg.includes('reproducciones')) {
+      dynamicResponse = `¡Claro! Lograr **1,000 streams en un mes** es totalmente viable. Te sugiero un plan de 3 pasos:\n\n1. **Pre-Save Activo:** Genera un Smart Link en Zonyd y publícalo en tu bio.\n2. **Contenido Orgánico (Reels/TikTok):** Graba 3 videos contando el trasfondo o anécdota de tu letra, usando la canción de fondo.\n3. **Playlists de la Comunidad:** Pide a tu comunidad que agregue el tema a sus playlists personales para entrenar el algoritmo de Spotify.\n\n¿Quieres que profundicemos en alguna de estas tácticas?`;
     } else if (intent === 'AUDIO_ANALYSIS' || lowerMsg.includes('master') || lowerMsg.includes('audio')) {
       dynamicResponse = `He revisado tus parámetros de audio. Para asegurar la mejor calidad en plataformas, te sugiero usar nuestro conversor PRO o la consola de Mastering en The Lab. ¿Te gustaría que ajuste los LUFS a -14 automáticamente?`;
     } else if (intent === 'DISTRIBUTION' || lowerMsg.includes('lanzar') || lowerMsg.includes('subir')) {
       dynamicResponse = `¡Excelente! Para tu próximo lanzamiento te recomiendo un ciclo de promoción de 4 semanas. ¿Es un sencillo o un álbum? Asegúrate de tener tu portada a 3000x3000px y el audio en WAV.`;
     } else if (intent === 'MARKETING' || lowerMsg.includes('playlist') || lowerMsg.includes('promoción')) {
       dynamicResponse = `Basado en tu demografía actual, una campaña en TikTok Ads orientada a la Ciudad de México y Bogotá podría aumentar tus streams en un 45%. Además, tengo 5 recomendaciones de curadores en SubmitHub para tu género.`;
-    } else if (intent === 'ANALYTICS' || lowerMsg.includes('estadística') || lowerMsg.includes('streams')) {
-      dynamicResponse = `Tus oyentes mensuales se han mantenido estables. El 60% de tu tráfico viene de listas algorítmicas de Spotify. Sugiero crear un SmartLink para retener tráfico y convertirlo en "Superfans".`;
+    } else if (lowerMsg.includes('hola') || lowerMsg.includes('ayuda') || lowerMsg.includes('que puedes')) {
+      dynamicResponse = `¡Hola! Soy Zonyd AI, tu Co-Manager. He analizado tu perfil y tu Zonyd Score está en ${context?.artistScore || 50}. ¿Quieres que analice tu próximo lanzamiento o revisemos estrategias de marketing?`;
     } else {
       dynamicResponse = `He analizado eso a detalle. Con tu plan actual, la mejor estrategia es mantener la consistencia. Te sugiero usar las Herramientas Pro (como el Generador de Press Kit) para darle un boost a tu profesionalismo ante promotores. ¿Quieres que te muestre cómo?`;
     }

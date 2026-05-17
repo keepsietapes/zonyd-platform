@@ -6,8 +6,8 @@ const requireRole = (role) => {
     
     const userRole = req.user.role; 
     
-    // Si el usuario es ADMIN, tiene acceso total
-    if (userRole === 'ADMIN') {
+    // Si el usuario es ADMIN, SUPERADMIN o LABEL, tiene acceso total a administración
+    if (userRole === 'ADMIN' || userRole === 'SUPERADMIN' || userRole === 'LABEL') {
       return next();
     }
 

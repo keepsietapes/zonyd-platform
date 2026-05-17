@@ -37,6 +37,21 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const init = async () => {
+      try {
+        const { authFetch } = await import('@/lib/api');
+        const res = await authFetch('/api/user/me');
+        if (res) {
+          const profile = res.artistProfiles?.[0];
+          if (profile || res.role === 'ADMIN' || res.role === 'SUPERADMIN' || res.role === 'LABEL') {
+            console.log('[Onboarding] Usuario con perfil o rol administrativo, redirigiendo a dashboard.');
+            router.push('/dashboard');
+            return;
+          }
+        }
+      } catch (err) {
+        console.error('Error cargando perfil en onboarding:', err);
+      }
+
       const { supabase } = await import('@/lib/supabase');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) return;
@@ -46,7 +61,7 @@ export default function OnboardingPage() {
       setUserName(namePart);
     };
     init();
-  }, []);
+  }, [router]);
 
   const handleSpotifyChange = (val: string) => {
     setFormData(prev => ({ ...prev, spotifyUrl: val }));

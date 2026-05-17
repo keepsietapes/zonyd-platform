@@ -56,21 +56,21 @@ exports.getAnalytics = async (req, res) => {
       popularity: artist?.spotifyPopularity || 45,
     };
 
-    // MOCK DATA: Si no hay datos reales, generamos proyecciones para que el dashboard sea útil
+    // MOCK DATA: Si no hay datos reales de streams, no inflamos con números falsos
     if (totalStreams === 0) {
-      totalStreams = artist?.spotifyFollowers ? Math.floor(artist.spotifyFollowers * 12.5) : 42150;
-      spotifyData.followers = artist?.spotifyFollowers || 1240;
+      totalStreams = 0;
+      spotifyData.followers = artist?.spotifyFollowers || 0;
       
-      platformMap['Spotify'] = Math.floor(totalStreams * 0.65);
-      platformMap['Apple Music'] = Math.floor(totalStreams * 0.20);
-      platformMap['Deezer'] = Math.floor(totalStreams * 0.10);
-      platformMap['Otros'] = Math.floor(totalStreams * 0.05);
+      platformMap['Spotify'] = 0;
+      platformMap['Apple Music'] = 0;
+      platformMap['Deezer'] = 0;
+      platformMap['Otros'] = 0;
       
-      countryMap['México'] = Math.floor(totalStreams * 0.45);
-      countryMap['Colombia'] = Math.floor(totalStreams * 0.25);
-      countryMap['España'] = Math.floor(totalStreams * 0.15);
-      countryMap['Estados Unidos'] = Math.floor(totalStreams * 0.10);
-      countryMap['Otros'] = Math.floor(totalStreams * 0.05);
+      countryMap['México'] = 0;
+      countryMap['Colombia'] = 0;
+      countryMap['España'] = 0;
+      countryMap['Estados Unidos'] = 0;
+      countryMap['Otros'] = 0;
     }
     let deezerData = { fans: 0, topTracks: [] };
     if (artist?.stageName) {

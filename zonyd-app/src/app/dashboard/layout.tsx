@@ -110,8 +110,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         const profile = res.artistProfiles?.[0];
 
-        // Si no tiene perfil de artista y no es admin, enviar al onboarding UNA SOLA VEZ
-        if (!profile && res.role !== 'ADMIN' && res.role !== 'SUPERADMIN') {
+        // Si no tiene perfil de artista y su rol es ARTIST o TEAM_MEMBER, enviar al onboarding
+        if (!profile && (res.role === 'ARTIST' || res.role === 'TEAM_MEMBER')) {
           router.push('/onboarding');
           return;
         }

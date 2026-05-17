@@ -101,7 +101,7 @@ async function getArtistProfile(req, res) {
     // Devolver estado real de conexiones OAuth
     // spotifyConnected es true solo si existe un token OAuth almacenado en la BD
     // Por ahora se infiere de la presencia de spotifyUrl hasta implementar OAuth completo
-    const spotifyConnected = !!(artist?.spotifyUrl && artist.spotifyUrl.startsWith('https://open.spotify.com'));
+    const spotifyConnected = !!(artist?.spotifyUrl && artist.spotifyUrl.toLowerCase().includes('spotify'));
     const instagramConnected = !!(artist?.instagramUrl);
     const tiktokConnected = !!(artist?.tiktokUrl);
 

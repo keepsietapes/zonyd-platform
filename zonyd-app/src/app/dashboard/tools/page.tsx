@@ -80,10 +80,220 @@ export default function ToolsPage() {
       input.click();
     } else if (title === 'Generador de Press Kit') {
       setToolsState(prev => ({ ...prev, isGenerating: true }));
-      setTimeout(() => {
-        setToolsState(prev => ({ ...prev, isGenerating: false }));
-        alert('Media Kit profesional generado en PDF con éxito.');
-      }, 3000);
+      
+      const generateEPK = async () => {
+        try {
+          const { authFetch } = await import('@/lib/api');
+          // Obtener perfil real del artista
+          const artist = await authFetch('/api/artist/profile').catch(() => null);
+          const stageName = artist?.stageName || 'Artista Principal';
+          const bio = artist?.bio || 'Artista independiente enfocado en la innovación y creación musical de vanguardia.';
+          const followers = artist?.spotifyFollowers || 0;
+          const plan = artist?.plan || 'PRO';
+          const spotify = artist?.spotifyUrl || 'No vinculado';
+          const instagram = artist?.instagramUrl || 'No vinculado';
+          
+          // Abrir ventana de impresión
+          const printWindow = window.open('', '_blank');
+          if (!printWindow) {
+            alert('Por favor, permite las ventanas emergentes en tu navegador para descargar tu Press Kit.');
+            return;
+          }
+          
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>Press Kit - ${stageName}</title>
+                <style>
+                  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+                  body {
+                    font-family: 'Inter', sans-serif;
+                    background-color: #0B0B0F;
+                    color: #FFFFFF;
+                    margin: 0;
+                    padding: 40px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                  }
+                  .epk-container {
+                    max-width: 800px;
+                    width: 100%;
+                    border: 1px solid #232733;
+                    background: linear-gradient(135deg, #151821 0%, #0B0B0F 100%);
+                    border-radius: 24px;
+                    padding: 40px;
+                    box-sizing: border-box;
+                    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+                  }
+                  .header {
+                    border-bottom: 2px solid #FF9F0A;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-end;
+                  }
+                  .title {
+                    font-size: 32px;
+                    font-weight: 900;
+                    text-transform: uppercase;
+                    font-style: italic;
+                    letter-spacing: -1px;
+                    margin: 0;
+                  }
+                  .subtitle {
+                    font-size: 12px;
+                    font-weight: 700;
+                    color: #FF9F0A;
+                    letter-spacing: 2px;
+                    text-transform: uppercase;
+                    margin-top: 5px;
+                  }
+                  .logo {
+                    font-size: 24px;
+                    font-weight: 900;
+                    color: #FFFFFF;
+                    font-style: italic;
+                  }
+                  .logo span {
+                    color: #FF9F0A;
+                  }
+                  .section-title {
+                    font-size: 14px;
+                    font-weight: 900;
+                    text-transform: uppercase;
+                    letter-spacing: 1.5px;
+                    color: #FF9F0A;
+                    margin-bottom: 15px;
+                  }
+                  .bio-card {
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 16px;
+                    padding: 24px;
+                    margin-bottom: 30px;
+                    line-height: 1.6;
+                    font-size: 14px;
+                    color: #E1E1E6;
+                  }
+                  .grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 20px;
+                    margin-bottom: 30px;
+                  }
+                  .card {
+                    background: rgba(255,255,255,0.03);
+                    border: 1px solid rgba(255,255,255,0.05);
+                    border-radius: 16px;
+                    padding: 20px;
+                  }
+                  .metric-value {
+                    font-size: 28px;
+                    font-weight: 900;
+                    margin: 5px 0;
+                    color: #FFFFFF;
+                  }
+                  .metric-label {
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: #A1A1AA;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                  }
+                  .footer {
+                    margin-top: 40px;
+                    border-top: 1px solid rgba(255,255,255,0.05);
+                    padding-top: 20px;
+                    text-align: center;
+                    font-size: 10px;
+                    color: #666;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                  }
+                  @media print {
+                    body {
+                      background-color: #FFFFFF;
+                      color: #000000;
+                      padding: 0;
+                    }
+                    .epk-container {
+                      border: none;
+                      box-shadow: none;
+                      background: #FFFFFF;
+                      color: #000000;
+                    }
+                    .bio-card, .card {
+                      background: #F4F4F7;
+                      border: 1px solid #E1E1E6;
+                      color: #333333;
+                    }
+                    .metric-value {
+                      color: #000000;
+                    }
+                    .footer {
+                      color: #999;
+                    }
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="epk-container">
+                  <div class="header">
+                    <div>
+                      <h1 class="title">${stageName}</h1>
+                      <div class="subtitle">Official Electronic Press Kit</div>
+                    </div>
+                    <div class="logo">ZO<span>NYD</span></div>
+                  </div>
+                  
+                  <div class="section-title">Biografía Oficial</div>
+                  <div class="bio-card">${bio}</div>
+                  
+                  <div class="grid">
+                    <div class="card">
+                      <div class="section-title" style="margin-bottom: 10px;">Estadísticas Clave</div>
+                      <div class="metric-value">${followers.toLocaleString()}</div>
+                      <div class="metric-label">Spotify Followers</div>
+                    </div>
+                    <div class="card">
+                      <div class="section-title" style="margin-bottom: 10px;">Nivel de Cuenta</div>
+                      <div class="metric-value" style="color: #FF9F0A;">${plan}</div>
+                      <div class="metric-label">Zonyd Membership Plan</div>
+                    </div>
+                  </div>
+
+                  <div class="section-title">Presencia Digital y Enlaces</div>
+                  <div class="bio-card" style="margin-bottom: 0;">
+                    <div style="margin-bottom: 10px;"><strong>Spotify Profile:</strong> <span style="font-family: monospace; font-size: 12px; color: #FF9F0A;">${spotify}</span></div>
+                    <div><strong>Instagram Handle:</strong> <span style="font-family: monospace; font-size: 12px; color: #FF9F0A;">${instagram}</span></div>
+                  </div>
+                  
+                  <div class="footer">
+                    Powered by Zonyd Autonomous Distribution System &bull; EPK Autogenerado
+                  </div>
+                </div>
+                <script>
+                  window.onload = function() {
+                    setTimeout(function() {
+                      window.print();
+                    }, 500);
+                  };
+                </script>
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
+        } catch (err) {
+          console.error(err);
+          alert('Error al generar el Press Kit.');
+        } finally {
+          setToolsState(prev => ({ ...prev, isGenerating: false }));
+        }
+      };
+      
+      generateEPK();
     }
   };
 
