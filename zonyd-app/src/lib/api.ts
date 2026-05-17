@@ -1,6 +1,18 @@
 import { supabase } from './supabase';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+let API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+if (!API_URL && typeof window !== 'undefined') {
+  const hostname = window.location.hostname;
+  if (hostname && hostname !== 'localhost' && !hostname.endsWith('.lt') && !hostname.endsWith('.local')) {
+    // Si estamos en la red local (ej. 192.168.100.74), apuntamos al puerto 4000 del mismo host
+    API_URL = `http://${hostname}:4000`;
+  } else {
+    API_URL = 'http://localhost:4000';
+  }
+} else if (!API_URL) {
+  API_URL = 'http://localhost:4000';
+}
 
 export async function authFetch(endpoint: string, options: RequestInit = {}) {
   try {

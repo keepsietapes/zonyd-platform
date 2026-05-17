@@ -55,6 +55,7 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || 
+        process.env.NODE_ENV !== 'production' ||
         allowedOrigins.includes(origin) || 
         origin.endsWith('.zonyd.pages.dev') ||
         origin.endsWith('.keepsietapes.workers.dev')) {
