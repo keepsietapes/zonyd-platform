@@ -234,9 +234,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Search size={18} />
           </button>
 
+          {/* Botón de Ayuda / Tutorial Relaunch */}
+          <button 
+            id="tour-btn-relaunch-tutorial"
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('start-onboarding-tutorial'));
+            }}
+            className="p-2.5 rounded-full border border-[#232733] text-[#A1A1AA] hover:border-[#FF9F0A]/50 hover:text-[#FF9F0A] transition-all relative group shrink-0"
+            title="Iniciar Tutorial"
+          >
+            <Sparkles size={18} className="group-hover:animate-pulse" />
+            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded bg-black border border-white/10 text-[8px] font-mono text-white opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+              Ver Tutorial
+            </span>
+          </button>
+
           {/* Notificaciones */}
           <div className="relative">
             <button 
+              id="tour-notifications"
               onClick={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsProfileOpen(false); setHasNotifications(false); }}
               className={`p-2.5 rounded-full border border-[#232733] transition-all relative ${isNotificationsOpen ? 'bg-[#FF9F0A] border-[#FF9F0A] text-black' : 'text-[#A1A1AA] hover:border-white/20'}`}
               aria-label="Notificaciones"
@@ -504,8 +520,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 // ============================================================
 
 function SidebarItem({ icon, label, href, active, isOpen }: NavItemProps) {
+  const getTourId = () => {
+    if (label === 'Dashboard') return 'tour-nav-dashboard';
+    if (label === 'Lanzamientos') return 'tour-nav-releases';
+    if (label === 'Analíticas') return 'tour-nav-analytics';
+    if (label === 'Finanzas') return 'tour-nav-royalties';
+    if (label === 'The Lab (AI)') return 'tour-nav-lab';
+    if (label === 'Zonyd Label') return 'tour-nav-label';
+    if (label === 'Zonyd AI') return 'tour-nav-ai';
+    return undefined;
+  };
+
   return (
     <Link 
+      id={getTourId()}
       href={href} 
       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
         active 

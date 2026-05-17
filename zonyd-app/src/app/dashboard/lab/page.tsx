@@ -4,7 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Sparkles, Download, Play, Pause, Activity, Layers, Volume2, 
   Maximize2, Zap, Loader2, AlertCircle, Mic2, Settings2, Sliders, 
-  RotateCcw, HelpCircle, Flame, Music, RefreshCw, BarChart2, ShieldCheck
+  RotateCcw, HelpCircle, Flame, Music, RefreshCw, BarChart2, ShieldCheck,
+  Trash2
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,6 +82,62 @@ function audioBufferToWav(buffer: AudioBuffer) {
   }
 }
 
+// Utilidades para IndexedDB (memoria y persistencia de track de sesión)
+const DB_NAME = 'ZonydLabDB';
+const STORE_NAME = 'tracks';
+
+function saveTrackToDB(file: File) {
+  if (typeof window === 'undefined') return;
+  const request = indexedDB.open(DB_NAME, 1);
+  request.onupgradeneeded = (e: any) => {
+    const db = e.target.result;
+    if (!db.objectStoreNames.contains(STORE_NAME)) {
+      db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    }
+  };
+  request.onsuccess = (e: any) => {
+    const db = e.target.result;
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.put({ id: 'last_track', file: file, name: file.name, timestamp: Date.now() });
+  };
+}
+
+function getTrackFromDB(callback: (file: File) => void) {
+  if (typeof window === 'undefined') return;
+  const request = indexedDB.open(DB_NAME, 1);
+  request.onupgradeneeded = (e: any) => {
+    const db = e.target.result;
+    if (!db.objectStoreNames.contains(STORE_NAME)) {
+      db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+    }
+  };
+  request.onsuccess = (e: any) => {
+    const db = e.target.result;
+    if (!db.objectStoreNames.contains(STORE_NAME)) return;
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const getReq = store.get('last_track');
+    getReq.onsuccess = () => {
+      if (getReq.result && getReq.result.file) {
+        callback(getReq.result.file);
+      }
+    };
+  };
+}
+
+function clearTrackFromDB() {
+  if (typeof window === 'undefined') return;
+  const request = indexedDB.open(DB_NAME, 1);
+  request.onsuccess = (e: any) => {
+    const db = e.target.result;
+    if (!db.objectStoreNames.contains(STORE_NAME)) return;
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.delete('last_track');
+  };
+}
+
 export default function LabAIPage() {
   const [file, setFile] = useState<File | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -137,11 +194,36 @@ export default function LabAIPage() {
   const humFilterRef = useRef<BiquadFilterNode | null>(null);
   const expanderNodeRef = useRef<GainNode | null>(null);
 
+  // Stems Web Audio nodes and synchronization refs
+  const stemSourcesRef = useRef<{
+    vocals: AudioBufferSourceNode | null;
+    drums: AudioBufferSourceNode | null;
+    bass: AudioBufferSourceNode | null;
+    other: AudioBufferSourceNode | null;
+  }>({ vocals: null, drums: null, bass: null, other: null });
+
+  const stemGainsRef = useRef<{
+    vocals: GainNode | null;
+    drums: GainNode | null;
+    bass: GainNode | null;
+    other: GainNode | null;
+  }>({ vocals: null, drums: null, bass: null, other: null });
+
+  const stemPannersRef = useRef<{
+    vocals: StereoPannerNode | null;
+    drums: StereoPannerNode | null;
+    bass: StereoPannerNode | null;
+    other: StereoPannerNode | null;
+  }>({ vocals: null, drums: null, bass: null, other: null });
+
+  const stemPlaybackTimeRef = useRef<number>(0);
+  const stemStartTimeRef = useRef<number>(0);
+
   // Canvas Refs
   const fftCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const phaseCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const animationRef = useRef<number>();
-  const phaseAnimationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
+  const phaseAnimationRef = useRef<number | undefined>(undefined);
 
   // Synth Generator Demo State
   const demoIntervalRef = useRef<any>(null);
@@ -286,18 +368,55 @@ export default function LabAIPage() {
       // De-esser
       deesserFilterRef.current.gain.setTargetAtTime(corrections.deesser ? -8 : 0, time, 0.15);
       
-      // Hum reduction
+      // Hum reduction (fixes bug where Q: 0.001 filters the entire frequency range)
       if (corrections.hum) {
+        humFilterRef.current.type = 'notch';
+        humFilterRef.current.frequency.setTargetAtTime(60, time, 0.1);
         humFilterRef.current.Q.setTargetAtTime(25, time, 0.1);
       } else {
-        // bypass hum by setting Q very low or setting frequency to 0 (notch frequency to 0 doesn't affect standard frequencies)
-        humFilterRef.current.Q.setTargetAtTime(0.001, time, 0.1);
+        // Change type to allpass for 100% transparent bypass
+        humFilterRef.current.type = 'allpass';
       }
 
       // Expander (noise floor reduction below threshold)
       expanderNodeRef.current.gain.setTargetAtTime(corrections.expander ? 0.92 : 1.0, time, 0.15);
     }
   }, [corrections]);
+
+  // Load saved track from IndexedDB on mount
+  useEffect(() => {
+    getTrackFromDB((savedFile) => {
+      setFile(savedFile);
+      const url = URL.createObjectURL(savedFile);
+      setAudioUrl(url);
+      fetchSpectralAnalysis(savedFile);
+      showToast(`Track "${savedFile.name}" restaurado de la sesión anterior.`, 'success');
+    });
+  }, []);
+
+  // Synchronize stem volume, pan, mute, and solo controls with Web Audio Nodes in real-time
+  useEffect(() => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const isAnySoloed = Object.values(stems).some(s => s.soloed);
+
+    Object.keys(stems).forEach((key) => {
+      const trackKey = key as keyof typeof stems;
+      const track = stems[trackKey];
+      const gainNode = stemGainsRef.current[trackKey];
+      const pannerNode = stemPannersRef.current[trackKey];
+
+      if (gainNode) {
+        const isMuted = track.muted || (isAnySoloed && !track.soloed);
+        gainNode.gain.setTargetAtTime(isMuted ? 0 : track.volume, now, 0.05);
+      }
+
+      if (pannerNode) {
+        pannerNode.pan.setTargetAtTime(track.panned, now, 0.05);
+      }
+    });
+  }, [stems]);
 
   // Real-Time Canvas Spectrum Drawing
   useEffect(() => {
@@ -626,16 +745,19 @@ export default function LabAIPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) {
-      // Disconnect and stop demo
+      // Disconnect and stop demo / stems
       stopDemoSynth();
+      stopStems();
       setIsDemoMode(false);
       
       setFile(selected);
+      saveTrackToDB(selected); // Persist track
       const url = URL.createObjectURL(selected);
       setAudioUrl(url);
       setPhaseResult(null);
       setMixerActive(false);
       setIsPlaying(false);
+      stemPlaybackTimeRef.current = 0;
       fetchSpectralAnalysis(selected);
       
       if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
@@ -643,6 +765,148 @@ export default function LabAIPage() {
       }
       showToast(`Track "${selected.name}" cargado exitosamente.`, 'success');
     }
+  };
+
+  const handleRemoveTrack = () => {
+    stopDemoSynth();
+    stopStems();
+    setIsDemoMode(false);
+    setIsPlaying(false);
+    
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
+
+    setFile(null);
+    setAudioUrl(null);
+    setPhaseResult(null);
+    setMixerActive(false);
+    setAnalysisResult(null);
+    stemPlaybackTimeRef.current = 0;
+    
+    // Reset stems blobs
+    setStems(prev => ({
+      vocals: { ...prev.vocals, blob: null, buffer: null },
+      drums: { ...prev.drums, blob: null, buffer: null },
+      bass: { ...prev.bass, blob: null, buffer: null },
+      other: { ...prev.other, blob: null, buffer: null }
+    } as any));
+
+    clearTrackFromDB();
+    showToast('Track eliminado de la consola.', 'info');
+  };
+
+  const stopStems = () => {
+    Object.keys(stemSourcesRef.current).forEach((key) => {
+      const source = stemSourcesRef.current[key as keyof typeof stems];
+      if (source) {
+        try { source.stop(); } catch(e){}
+        try { source.disconnect(); } catch(e){}
+        stemSourcesRef.current[key as keyof typeof stems] = null;
+      }
+    });
+  };
+
+  const playStems = async () => {
+    initAudioCtx();
+    const ctx = audioCtxRef.current!;
+    if (ctx.state === 'suspended') await ctx.resume();
+
+    stopStems();
+    stopDemoSynth();
+
+    const isAnySoloed = Object.values(stems).some(s => s.soloed);
+    const now = ctx.currentTime;
+    stemStartTimeRef.current = now;
+
+    const tracksKeys = Object.keys(stems) as Array<keyof typeof stems>;
+    
+    for (const key of tracksKeys) {
+      const track = stems[key];
+      if (!track.blob) continue;
+
+      let buffer = (track as any).buffer;
+      if (!buffer) {
+        const arrayBuffer = await track.blob.arrayBuffer();
+        buffer = await ctx.decodeAudioData(arrayBuffer);
+        (track as any).buffer = buffer; // Cache buffer
+      }
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+
+      const panner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+      const gainNode = ctx.createGain();
+
+      const isMuted = track.muted || (isAnySoloed && !track.soloed);
+      gainNode.gain.setValueAtTime(isMuted ? 0 : track.volume, now);
+      if (panner) {
+        panner.pan.setValueAtTime(track.panned, now);
+      }
+
+      if (panner) {
+        source.connect(panner);
+        panner.connect(gainNode);
+      } else {
+        source.connect(gainNode);
+      }
+      
+      gainNode.connect(humFilterRef.current!);
+
+      const offset = stemPlaybackTimeRef.current;
+      source.start(0, offset % buffer.duration);
+
+      stemSourcesRef.current[key] = source;
+      stemGainsRef.current[key] = gainNode;
+      stemPannersRef.current[key] = panner;
+
+      if (key === 'vocals') {
+        source.onended = () => {
+          setIsPlaying(false);
+          stemPlaybackTimeRef.current = 0;
+        };
+      }
+    }
+  };
+
+  const handlePanStart = (e: React.MouseEvent, trackKey: 'vocals' | 'drums' | 'bass' | 'other') => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startPan = stems[trackKey].panned;
+    
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaY = startY - moveEvent.clientY;
+      const newPan = Math.max(-1, Math.min(1, startPan + deltaY / 100));
+      handleStemPanChange(trackKey, parseFloat(newPan.toFixed(2)));
+    };
+    
+    const handleMouseUp = () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handlePanTouchStart = (e: React.TouchEvent, trackKey: 'vocals' | 'drums' | 'bass' | 'other') => {
+    const startY = e.touches[0].clientY;
+    const startPan = stems[trackKey].panned;
+    
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      const deltaY = startY - moveEvent.touches[0].clientY;
+      const newPan = Math.max(-1, Math.min(1, startPan + deltaY / 100));
+      handleStemPanChange(trackKey, parseFloat(newPan.toFixed(2)));
+    };
+    
+    const handleTouchEnd = () => {
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+    
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleTouchEnd);
   };
 
   const togglePlay = () => {
@@ -653,6 +917,25 @@ export default function LabAIPage() {
         setIsPlaying(false);
       } else {
         startDemoSynth();
+      }
+      return;
+    }
+
+    if (mixerActive) {
+      if (isPlaying) {
+        if (audioCtxRef.current) {
+          const elapsed = audioCtxRef.current.currentTime - stemStartTimeRef.current;
+          stemPlaybackTimeRef.current += elapsed;
+        }
+        stopStems();
+        setIsPlaying(false);
+      } else {
+        playStems().then(() => {
+          setIsPlaying(true);
+        }).catch(err => {
+          console.error(err);
+          showToast('Error al reproducir stems.', 'error');
+        });
       }
       return;
     }
@@ -678,6 +961,7 @@ export default function LabAIPage() {
 
   // Switch to synthetic demo mode
   const loadDemoTrack = () => {
+    stopStems();
     setFile(null);
     setAudioUrl(null);
     setPhaseResult(null);
@@ -779,6 +1063,20 @@ export default function LabAIPage() {
 
       setMixerActive(true);
       showToast('Consola de Mezcla Multicanal de Stems inicializada correctamente.', 'success');
+      
+      // Seamless playback transfer from master to stems
+      if (isPlaying) {
+        if (audioRef.current) {
+          const currentPos = audioRef.current.currentTime;
+          audioRef.current.pause();
+          stemPlaybackTimeRef.current = currentPos;
+        }
+        setTimeout(() => {
+          playStems().then(() => {
+            setIsPlaying(true);
+          });
+        }, 100);
+      }
     } catch (err) {
       console.error(err);
       showToast('Error aislando frecuencias tonales. Verifica el archivo.', 'error');
@@ -889,9 +1187,12 @@ export default function LabAIPage() {
     });
   };
 
-  // Clean demo synthesizers on unmount
+  // Clean demo synthesizers and stems on unmount
   useEffect(() => {
-    return () => stopDemoSynth();
+    return () => {
+      stopDemoSynth();
+      stopStems();
+    };
   }, []);
 
   return (
@@ -933,7 +1234,17 @@ export default function LabAIPage() {
         </div>
 
         {/* Action button row */}
-        <div className="flex flex-wrap gap-3 shrink-0">
+        <div className="flex flex-wrap gap-3 shrink-0 items-center">
+          {file && (
+            <Button
+              onClick={handleRemoveTrack}
+              variant="outline"
+              className="border-red-500/20 bg-[#0F1115] text-red-400 hover:bg-red-500/10 hover:border-red-500 hover:text-red-500 font-bold h-12 rounded-xl text-xs uppercase tracking-wider transition-all"
+            >
+              <Trash2 size={14} className="mr-2" /> Eliminar Track
+            </Button>
+          )}
+
           <Button 
             onClick={loadDemoTrack}
             variant="outline"
@@ -946,7 +1257,7 @@ export default function LabAIPage() {
             onClick={() => document.getElementById('audioUpload')?.click()}
             className="bg-[#00FFCC] hover:bg-[#00DDAA] text-black font-black px-8 h-12 rounded-xl shadow-[0_0_20px_rgba(0,255,204,0.25)] transition-all hover:scale-[1.02]"
           >
-            <Zap size={14} className="mr-2" fill="currentColor" /> {file ? 'REEMPLAZAR TRACK' : 'CARGAR MI TRACK'}
+            <Zap size={14} className="mr-2" fill="currentColor" /> {file ? 'CAMBIAR TRACK' : 'CARGAR MI TRACK'}
           </Button>
           <input type="file" id="audioUpload" className="hidden" accept="audio/*" onChange={handleFileChange} />
         </div>
@@ -1127,8 +1438,19 @@ export default function LabAIPage() {
                   </div>
                   <Button 
                     onClick={() => {
+                      if (isPlaying) {
+                        const elapsed = audioCtxRef.current ? audioCtxRef.current.currentTime - stemStartTimeRef.current : 0;
+                        const currentPos = stemPlaybackTimeRef.current + elapsed;
+                        stopStems();
+                        if (audioRef.current) {
+                          audioRef.current.currentTime = currentPos;
+                          audioRef.current.play().catch(()=>{});
+                        }
+                      } else {
+                        stopStems();
+                      }
                       setMixerActive(false);
-                      showToast('Consola de mezcla multicanal desactivada.', 'info');
+                      showToast('Consola de mezcla multicanal desactivada. Audio retornado a pista máster.', 'info');
                     }}
                     variant="ghost" 
                     className="text-[9px] text-[#A1A1AA] hover:text-[#FF453A] uppercase tracking-widest"
@@ -1151,7 +1473,16 @@ export default function LabAIPage() {
                         {/* Circular Panning Dial Simulation */}
                         <div className="flex flex-col items-center gap-1 mb-4">
                           <span className="text-[7px] font-mono uppercase text-[#A1A1AA]">Pan</span>
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1C1C24] to-[#0A0A0C] border border-white/10 relative flex items-center justify-center cursor-pointer">
+                          <div 
+                            className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1C1C24] to-[#0A0A0C] border border-white/10 relative flex items-center justify-center cursor-pointer select-none"
+                            onMouseDown={(e) => handlePanStart(e, trackKey)}
+                            onTouchStart={(e) => handlePanTouchStart(e, trackKey)}
+                            onDoubleClick={() => {
+                              handleStemPanChange(trackKey, 0);
+                              showToast(`Balance de ${trackKey} centrado (C)`, 'info');
+                            }}
+                            title="Arrastra verticalmente para balancear. Doble clic para centrar."
+                          >
                             {/* Dial line indicator */}
                             <div 
                               className="absolute w-1 h-3.5 bg-[#00FFCC] rounded-full top-1 transition-transform"
@@ -1164,7 +1495,7 @@ export default function LabAIPage() {
                           </div>
                           <div className="flex justify-between w-14 text-[7px] font-mono text-[#666] mt-0.5">
                             <span>L</span>
-                            <span className="text-[#00FFCC] font-bold">C</span>
+                            <span className="text-[#00FFCC] font-bold">{track.panned === 0 ? 'C' : track.panned > 0 ? `R${track.panned.toFixed(1)}` : `L${Math.abs(track.panned).toFixed(1)}`}</span>
                             <span>R</span>
                           </div>
                         </div>
@@ -1481,9 +1812,20 @@ export default function LabAIPage() {
            </button>
            
            <div className="flex flex-col min-w-0">
-             <span className="text-white font-bold text-xs truncate max-w-[200px] sm:max-w-md">
-               {isDemoMode ? 'Bucle Generativo Elias Synth' : (file?.name || 'Ningún archivo cargado')}
-             </span>
+             <div className="flex items-center gap-2">
+               <span className="text-white font-bold text-xs truncate max-w-[200px] sm:max-w-md">
+                 {isDemoMode ? 'Bucle Generativo Elias Synth' : (file?.name || 'Ningún archivo cargado')}
+               </span>
+               {file && (
+                 <button 
+                   onClick={handleRemoveTrack}
+                   className="text-red-400 hover:text-red-500 transition-colors p-1"
+                   title="Eliminar Track"
+                 >
+                   <Trash2 size={12} />
+                 </button>
+               )}
+             </div>
              <span className="text-[9px] text-[#A1A1AA] uppercase tracking-widest font-mono mt-0.5">
                {isDemoMode ? '110 BPM • Generación Real-time' : (file ? `${(file.size / 1024 / 1024).toFixed(1)} MB` : 'Bandeja en espera')}
              </span>

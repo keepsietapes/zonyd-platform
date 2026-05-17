@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { 
@@ -10,9 +10,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 import { authFetch } from '@/lib/api';
 import { OnboardingTutorial } from '@/components/dashboard/OnboardingTutorial';
@@ -64,13 +62,13 @@ export default function DashboardPage() {
       <OnboardingTutorial />
       
       {/* 🚀 HEADER PREMIUM */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div id="tour-dashboard-header" className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
            <h1 className="text-2xl md:text-4xl font-black tracking-tighter uppercase italic text-white">Dashboard</h1>
            <p className="text-[#A1A1AA] text-xs md:text-sm mt-1">Bienvenido de nuevo. Tu arsenal está listo.</p>
         </div>
 
-        <Link href="/dashboard/releases/new" className="hidden sm:block">
+        <Link href="/dashboard/releases/new" className="hidden sm:block" id="tour-btn-new-release">
            <Button className="bg-[#FF9F0A] text-black font-black px-6 md:px-10 h-12 md:h-14 rounded-2xl shadow-xl shadow-[#FF9F0A]/20 hover:scale-105 transition-all group text-sm">
               <Plus size={18} className="mr-2 group-hover:rotate-90 transition-transform" /> NUEVO LANZAMIENTO
            </Button>
@@ -78,7 +76,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 📊 KPI GRID — Dinámico */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+      <div id="tour-kpi-grid" className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
          <MetricCard title="Ingresos Totales" value={`$${stats.revenue.toLocaleString()}`} change="0%" trend="none" icon={<DollarSign className="text-[#32D74B]" size={18} />} />
          <MetricCard title="Streams Totales" value={stats.streams > 1000000 ? `${(stats.streams / 1000000).toFixed(1)}M` : stats.streams.toLocaleString()} change="0%" trend="none" icon={<Activity className="text-[#4F8CFF]" size={18} />} />
          <MetricCard title="SmartLinks Activos" value={stats.activeSmartLinks.toString()} change="0" trend="none" icon={<LinkIcon className="text-[#FF9F0A]" size={18} />} />
@@ -98,7 +96,8 @@ export default function DashboardPage() {
                     <p className="text-[10px] text-[#A1A1AA] mt-1">Streaming Global - Datos en tiempo real</p>
                  </div>
                  <BarChart3 className="text-[#4F8CFF]" size={18} />
-              </CardHeader>               <CardContent className="p-8 h-[300px]">
+              </CardHeader>
+              <CardContent className="p-8 h-[300px]">
                   <div className="h-full flex flex-col items-center justify-center text-[#232733] space-y-4">
                      <BarChart3 size={48} className="opacity-10" />
                      <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">Esperando datos de plataformas...</p>
@@ -107,7 +106,7 @@ export default function DashboardPage() {
            </Card>
 
            {/* Lanzamientos Recientes */}
-           <Card className="bg-[#151821] border-[#232733] rounded-[2.5rem] overflow-hidden shadow-2xl">
+           <Card id="tour-recent-catalog" className="bg-[#151821] border-[#232733] rounded-[2.5rem] overflow-hidden shadow-2xl">
               <CardHeader className="border-b border-white/5 p-6 bg-black/20">
                  <div className="flex items-center justify-between">
                     <CardTitle className="text-xs font-black uppercase tracking-widest text-[#A1A1AA]">Catálogo Reciente</CardTitle>
@@ -159,7 +158,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-4 space-y-8">
            
            {/* Pipeline de Producción — Solo se muestra si hay lanzamientos en curso */}
-           <Card className="bg-[#151821] border-[#232733] rounded-[2.5rem] overflow-hidden shadow-2xl border-t-4 border-t-[#4F8CFF]">
+           <Card id="tour-live-pipeline" className="bg-[#151821] border-[#232733] rounded-[2.5rem] overflow-hidden shadow-2xl border-t-4 border-t-[#4F8CFF]">
               <CardHeader className="bg-black/20 p-6 border-b border-white/5">
                  <div className="flex items-center justify-between">
                     <CardTitle className="text-xs font-black uppercase tracking-widest text-white">Producción en Vivo</CardTitle>
@@ -202,14 +201,14 @@ export default function DashboardPage() {
                  <CardTitle className="text-xs font-black uppercase tracking-widest text-[#FF9F0A]">Actividad de Fans</CardTitle>
               </CardHeader>
                <CardContent className="p-6">
-                 <div className="text-center py-6 text-[#A1A1AA]">
-                    <Globe className="mx-auto mb-2 opacity-20" size={24} />
-                    <p className="text-xs">Esperando primera interacción...</p>
-                 </div>
+                  <div className="text-center py-6 text-[#A1A1AA]">
+                     <Globe className="mx-auto mb-2 opacity-20" size={24} />
+                     <p className="text-xs">Esperando primera interacción...</p>
+                  </div>
                </CardContent>
            </Card>
 
-           <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-[#7B61FF] to-[#4F8CFF] text-white shadow-2xl shadow-[#7B61FF]/20 relative overflow-hidden group cursor-pointer" onClick={() => setIsAIOpen(true)}>
+           <div id="tour-ai-banner" className="p-8 rounded-[2.5rem] bg-gradient-to-br from-[#7B61FF] to-[#4F8CFF] text-white shadow-2xl shadow-[#7B61FF]/20 relative overflow-hidden group cursor-pointer" onClick={() => setIsAIOpen(true)}>
               <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:rotate-12 transition-transform">
                  <Sparkles size={100} />
               </div>
@@ -260,24 +259,6 @@ function PipelineStep({ label, status, icon }: any) {
   );
 }
 
-function LiveItem({ location, action, avatar, time, dimmed = false }: any) {
-  return (
-    <div className={`flex items-center gap-4 p-3 bg-white/5 rounded-2xl border border-white/5 transition-all hover:bg-white/10 ${dimmed ? 'opacity-40 hover:opacity-100' : ''}`}>
-       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/10 shrink-0">
-          <img src={avatar} className="w-full h-full object-cover" />
-       </div>
-       <div className="min-w-0">
-          <p className="text-[10px] text-white font-bold italic truncate">Un fan en <span className="text-[#FF9F0A]">{location}</span></p>
-          <p className="text-[9px] text-[#A1A1AA] mt-0.5">{action}</p>
-       </div>
-       <div className="ml-auto flex flex-col items-end gap-1">
-          <Activity size={12} className={dimmed ? 'text-[#232733]' : 'text-[#FF9F0A] animate-pulse'} />
-          <span className="text-[7px] font-black uppercase text-[#232733]">{time}</span>
-       </div>
-    </div>
-  );
-}
-
 function MetricCard({ title, value, change, trend, icon }: any) {
   return (
     <Card className="bg-[#151821] border-[#232733] rounded-[2rem] p-6 hover:border-[#4F8CFF]/30 transition-all group shadow-xl">
@@ -286,7 +267,7 @@ function MetricCard({ title, value, change, trend, icon }: any) {
              {icon}
           </div>
           <div className={`flex items-center gap-1 text-[10px] font-bold ${trend === 'up' ? 'text-[#32D74B]' : trend === 'down' ? 'text-[#FF453A]' : 'text-[#A1A1AA]'}`}>
-             {change} {trend === 'up' ? <TrendingUp size={12} /> : trend === 'down' ? <TrendingUp size={12} className="rotate-180" /> : null}
+             {change}
           </div>
        </div>
        <div className="space-y-1">
@@ -378,6 +359,7 @@ function AIAssistant({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (v: bo
       )}
 
       <button 
+        id="tour-ai-assistant"
         onClick={() => setIsOpen(!isOpen)}
         className="w-16 h-16 rounded-full bg-[#7B61FF] shadow-[0_0_30px_rgba(123,97,255,0.4)] flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-all group relative overflow-hidden"
       >

@@ -27,7 +27,7 @@ const AGENTS = [
 
 export default function LabServicesPage() {
   const [activeAgent, setActiveAgent] = useState<any>(AGENTS[0]);
-  const [formData, setFormData] = useState<Record<string, string>>(AGENTS[0].defaultVals);
+  const [formData, setFormData] = useState<Record<string, string>>(AGENTS[0].defaultVals as any);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
