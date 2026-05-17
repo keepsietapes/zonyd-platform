@@ -25,10 +25,10 @@ async function createOrUpdateArtist(req, res) {
           ...(bio !== undefined && { bio }),
           ...(genres !== undefined && { genres }),
           ...(country !== undefined && { country }),
-          ...(spotifyUrl !== undefined && { spotifyUrl }),
+          ...(spotifyUrl !== undefined && { spotifyUrl, spotifyConnected: !!spotifyUrl }),
           ...(appleMusicUrl !== undefined && { appleMusicUrl }),
-          ...(instagramUrl !== undefined && { instagramUrl }),
-          ...(tiktokUrl !== undefined && { tiktokUrl }),
+          ...(instagramUrl !== undefined && { instagramUrl, instagramConnected: !!instagramUrl }),
+          ...(tiktokUrl !== undefined && { tiktokUrl, tiktokConnected: !!tiktokUrl }),
           ...(paypalEmail !== undefined && { paypalEmail }),
           ...(clabe !== undefined && { clabe }),
         }
@@ -47,10 +47,10 @@ async function createOrUpdateArtist(req, res) {
             ...(bio !== undefined && { bio }),
             ...(genres !== undefined && { genres }),
             ...(country !== undefined && { country }),
-            ...(spotifyUrl !== undefined && { spotifyUrl }),
+            ...(spotifyUrl !== undefined && { spotifyUrl, spotifyConnected: !!spotifyUrl }),
             ...(appleMusicUrl !== undefined && { appleMusicUrl }),
-            ...(instagramUrl !== undefined && { instagramUrl }),
-            ...(tiktokUrl !== undefined && { tiktokUrl }),
+            ...(instagramUrl !== undefined && { instagramUrl, instagramConnected: !!instagramUrl }),
+            ...(tiktokUrl !== undefined && { tiktokUrl, tiktokConnected: !!tiktokUrl }),
             ...(paypalEmail !== undefined && { paypalEmail }),
             ...(clabe !== undefined && { clabe }),
           }
@@ -65,9 +65,12 @@ async function createOrUpdateArtist(req, res) {
             genres,
             country,
             spotifyUrl,
+            spotifyConnected: !!spotifyUrl,
             appleMusicUrl,
             instagramUrl,
+            instagramConnected: !!instagramUrl,
             tiktokUrl,
+            tiktokConnected: !!tiktokUrl,
             paypalEmail,
             clabe,
           }
@@ -81,7 +84,6 @@ async function createOrUpdateArtist(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
-
 
 async function getArtistProfile(req, res) {
   try {
@@ -101,7 +103,7 @@ async function getArtistProfile(req, res) {
     // Devolver estado real de conexiones OAuth
     // spotifyConnected es true solo si existe un token OAuth almacenado en la BD
     // Por ahora se infiere de la presencia de spotifyUrl hasta implementar OAuth completo
-    const spotifyConnected = !!(artist?.spotifyUrl && artist.spotifyUrl.toLowerCase().includes('spotify'));
+    const spotifyConnected = !!(artist?.spotifyUrl);
     const instagramConnected = !!(artist?.instagramUrl);
     const tiktokConnected = !!(artist?.tiktokUrl);
 
@@ -132,7 +134,6 @@ async function getArtistProfile(req, res) {
     res.status(500).json({ error: error.message });
   }
 }
-
 
 async function verifyArtistEmail(req, res) {
   const { email } = req.query;

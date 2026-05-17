@@ -13,6 +13,14 @@ export default function AudiencePage() {
   const [isLaunchingAirdrop, setIsLaunchingAirdrop] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Estados de recompensa Airdrop interactivos
+  const [isRewardModalOpen, setIsRewardModalOpen] = useState(false);
+  const [rewardTitle, setRewardTitle] = useState('');
+  const [rewardType, setRewardType] = useState('Audio Demo (WAV)');
+  const [rewardContent, setRewardContent] = useState('');
+  const [isSavingReward, setIsSavingReward] = useState(false);
+  const [activeReward, setActiveReward] = useState<{title: string, type: string, content: string} | null>(null);
+
   // Estado dinámico
   const [kpis, setKpis] = useState({ totalFans: 0, superfans: 0, countries: 0 });
   const [fans, setFans] = useState<any[]>([]);
@@ -181,12 +189,21 @@ export default function AudiencePage() {
               <Gift className="text-[#FF9F0A]" size={28} />
             </div>
             <h3 className="text-xl font-black text-white italic tracking-tighter mb-2">Airdrop de Recompensa</h3>
-            <p className="text-xs text-[#A1A1AA] leading-relaxed mb-8">
+            <p className="text-xs text-[#A1A1AA] leading-relaxed mb-6">
               Envía contenido exclusivo (Demos, Behind the scenes, Merch) a tus{' '}
               <span className="text-white font-bold">{hasData ? `${kpis.superfans} Superfans` : 'Superfans'}</span> automáticamente.
             </p>
-            <Button onClick={() => alert('Editor de Airdrops próximamente...')} className="w-full bg-[#FF9F0A] text-black font-black h-12 rounded-xl">
-              CONFIGURAR REGALO
+
+            {activeReward ? (
+              <div className="mb-6 p-4 bg-black/40 border border-[#FF9F0A]/20 rounded-2xl space-y-2">
+                <p className="text-[10px] font-black text-[#FF9F0A] uppercase tracking-widest">Recompensa Activa</p>
+                <h4 className="text-xs font-bold text-white truncate">{activeReward.title}</h4>
+                <p className="text-[9px] text-[#A1A1AA] uppercase">{activeReward.type}</p>
+              </div>
+            ) : null}
+
+            <Button onClick={() => setIsRewardModalOpen(true)} className="w-full bg-[#FF9F0A] text-black font-black h-12 rounded-xl">
+              {activeReward ? 'MODIFICAR RECOMPENSA' : 'CONFIGURAR REGALO'}
             </Button>
           </Card>
 
@@ -209,6 +226,86 @@ export default function AudiencePage() {
           </Card>
         </div>
       </div>
+
+      {/* Modal interactivo de Recompensa Airdrop */}
+      {isRewardModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <Card className="w-full max-w-md bg-[#151821] border-[#232733] rounded-[2rem] overflow-hidden shadow-2xl relative">
+            <button 
+              onClick={() => setIsRewardModalOpen(false)} 
+              className="absolute top-4 right-4 text-[#A1A1AA] hover:text-white p-2"
+            >
+              <span className="text-lg">×</span>
+            </button>
+            <div className="bg-black/20 border-b border-white/5 p-8 text-center">
+              <div className="w-16 h-16 bg-[#FF9F0A]/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[#FF9F0A]/20">
+                <Gift className="text-[#FF9F0A]" size={32} />
+              </div>
+              <h3 className="text-xl font-black text-white italic uppercase">Configurar Regalo Airdrop</h3>
+              <p className="text-xs text-[#A1A1AA] mt-2">Personaliza el archivo o enlace exclusivo para tus fans leales.</p>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest">Título del Regalo</label>
+                <input 
+                  type="text" 
+                  placeholder="Ej: WAV Inédito - Neon Nights (Demo)"
+                  className="w-full bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-xs text-white focus:border-[#FF9F0A] outline-none transition-all"
+                  value={rewardTitle}
+                  onChange={(e) => setRewardTitle(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest">Tipo de Contenido</label>
+                <select 
+                  className="w-full h-12 px-4 rounded-xl bg-black/40 border border-[#232733] text-xs text-white focus:border-[#FF9F0A] outline-none cursor-pointer"
+                  value={rewardType}
+                  onChange={(e) => setRewardType(e.target.value)}
+                >
+                  <option>Audio Demo (WAV)</option>
+                  <option>PDF Book / Letras exclusivas</option>
+                  <option>Merch Voucher / Descuento</option>
+                  <option>Enlace de Video Privado</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-[#A1A1AA] tracking-widest">URL / Enlace de Descarga</label>
+                <input 
+                  type="text" 
+                  placeholder="https://drive.google.com/..."
+                  className="w-full bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-xs text-white focus:border-[#FF9F0A] outline-none transition-all"
+                  value={rewardContent}
+                  onChange={(e) => setRewardContent(e.target.value)}
+                />
+              </div>
+
+              <Button 
+                onClick={async () => {
+                  if (!rewardTitle || !rewardContent) {
+                    alert('Por favor completa todos los campos.');
+                    return;
+                  }
+                  setIsSavingReward(true);
+                  setTimeout(() => {
+                    setActiveReward({ title: rewardTitle, type: rewardType, content: rewardContent });
+                    setPreSaveEnabled(true);
+                    setIsSavingReward(false);
+                    setIsRewardModalOpen(false);
+                    alert('¡Recompensa guardada y activada con éxito para Pre-save Reward!');
+                  }, 1000);
+                }}
+                disabled={isSavingReward}
+                className="w-full h-12 bg-[#FF9F0A] text-black font-black rounded-xl hover:bg-[#FF9F0A]/90 transition-colors flex items-center justify-center gap-2"
+              >
+                {isSavingReward ? <Loader2 size={16} className="animate-spin" /> : null}
+                GUARDAR Y ACTIVAR
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

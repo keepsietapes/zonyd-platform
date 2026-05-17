@@ -118,14 +118,7 @@ export default function ToolsPage() {
       
       const generateEPK = async () => {
         try {
-          // Abrir ventana de impresión con los campos editados por el usuario
-          const printWindow = window.open('', '_blank');
-          if (!printWindow) {
-            alert('Por favor, permite las ventanas emergentes en tu navegador para descargar tu Press Kit.');
-            return;
-          }
-          
-          printWindow.document.write(`
+          const htmlContent = `
             <html>
               <head>
                 <title>Press Kit - ${epkStageName}</title>
@@ -308,8 +301,18 @@ export default function ToolsPage() {
                 </script>
               </body>
             </html>
-          `);
-          printWindow.document.close();
+          `;
+          
+          const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `PressKit_${epkStageName.replace(/\s+/g, '_')}.html`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          alert('Tu Press Kit ha sido descargado. Ábrelo en tu navegador para guardarlo como PDF.');
         } catch (err) {
           console.error(err);
           alert('Error al generar el Press Kit.');

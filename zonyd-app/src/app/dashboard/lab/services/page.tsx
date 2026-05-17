@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { 
   Sparkles, Megaphone, Palette, Globe2, Ticket, 
   MessageSquare, Music, Camera, Zap, TrendingUp,
-  Loader2, CheckCircle2, ChevronRight, Bot
+  Loader2, CheckCircle2, ChevronRight, Bot, AlertCircle
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,10 +34,13 @@ export default function LabServicesPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const handleExecute = async () => {
     if (!activeAgent) return;
     setLoading(true);
     setResult(null);
+    setErrorMsg(null);
 
     try {
       let endpoint = activeAgent.endpoint;
@@ -55,7 +58,7 @@ export default function LabServicesPage() {
       const res = await authFetch(endpoint, options);
       setResult(res);
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      setErrorMsg(err.message || 'Error al ejecutar el agente.');
     } finally {
       setLoading(false);
     }
@@ -139,6 +142,12 @@ export default function LabServicesPage() {
                         >
                            {loading ? <Loader2 size={20} className="animate-spin" /> : 'Ejecutar Agente'}
                         </Button>
+                        {errorMsg && (
+                           <div className="mt-4 p-4 rounded-xl bg-[#FF453A]/10 border border-[#FF453A]/20 flex items-center gap-3">
+                              <AlertCircle size={18} className="text-[#FF453A] shrink-0" />
+                              <p className="text-xs text-[#FF453A] font-bold">{errorMsg}</p>
+                           </div>
+                        )}
                      </div>
                   ) : (
                      <div className="space-y-6 animate-in slide-in-from-right-4">

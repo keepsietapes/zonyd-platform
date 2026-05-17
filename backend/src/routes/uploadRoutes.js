@@ -9,6 +9,40 @@ const { trackSchema } = require('../schemas/musicSchemas');
 
 router.post('/', authMiddleware, multer.single('audio'), validate(trackSchema), uploadTrack);
 
+// Nuevo endpoint para subir portadas/imágenes del artista (SmartLinks, Perfil, etc)
+router.post('/image', authMiddleware, require('multer')({ storage: require('multer').memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }).single('file'), async (req, res) => {
+  try {
+    const { supabase } = require('../utils/supabase');
+    const { v4: uuidv4 } = require('uuid');
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No se recibió ningún archivo de imagen.' });
+    }
+
+    const fileExt = req.file.originalname.split('.').pop() || 'png';
+    const fileName = `covers/${req.user.id}/${uuidv4()}.${fileExt}`;
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('releases')
+      .upload(fileName, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('releases')
+      .getPublicUrl(fileName);
+
+    res.json({ url: publicUrl });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Generar URL firmada para subida directa (Cloudflare R2 / S3)
 router.get('/presigned', authMiddleware, async (req, res) => {
   try {

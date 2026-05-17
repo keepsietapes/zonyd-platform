@@ -255,7 +255,17 @@ export default function MarketplacePage() {
             </Button>
           </Card>
 
-          <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-[#7B61FF] to-[#4F8CFF] text-white shadow-2xl relative overflow-hidden group cursor-pointer" onClick={() => alert('Zonyd Sync Agent próximamente...')}>
+          <div 
+            className="p-8 rounded-[2.5rem] bg-gradient-to-br from-[#7B61FF] to-[#4F8CFF] text-white shadow-2xl relative overflow-hidden group cursor-pointer" 
+            onClick={(e) => {
+              const el = e.currentTarget.querySelector('.sync-action-text');
+              if (el) {
+                const original = el.innerHTML;
+                el.innerHTML = '¡PRÓXIMAMENTE! <ArrowUpRight size={14} />';
+                setTimeout(() => el.innerHTML = original, 2000);
+              }
+            }}
+          >
             <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:rotate-12 transition-transform">
               <Sparkles size={80} />
             </div>
@@ -264,7 +274,7 @@ export default function MarketplacePage() {
               <h3 className="text-xl font-black italic leading-tight">
                 {opportunities.length > 0 ? '"Tu catálogo está siendo analizado para oportunidades Sync."' : '"Completa tu catálogo para que el Sync Agent encuentre oportunidades."'}
               </h3>
-              <div className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase">APLICAR CON IA <ArrowUpRight size={14} /></div>
+              <div className="sync-action-text mt-6 flex items-center gap-2 text-[10px] font-black uppercase">APLICAR CON IA <ArrowUpRight size={14} /></div>
             </div>
           </div>
         </div>

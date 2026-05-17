@@ -145,7 +145,7 @@ export default function SmartLinksPage() {
       formData.append('file', file);
       const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession();
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const res = await fetch(`${API_URL}/api/uploads/image`, {
+      const res = await fetch(`${API_URL}/api/upload/image`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session?.access_token}` },
         body: formData,

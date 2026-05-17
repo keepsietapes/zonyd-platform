@@ -65,37 +65,20 @@ exports.getAnalytics = async (req, res) => {
       }
     }
 
-    // MOCK DATA: Si no hay datos reales de streams pero Spotify está vinculado,
-    // calculamos métricas realistas y profesionales derivadas del perfil de Spotify.
+    // SIN MOCK DATA: Mantener 100% la veracidad de los datos.
     if (totalStreams === 0) {
-      if (spotifyData.connected) {
-        totalStreams = Math.floor(spotifyData.followers * 18.5);
-        
-        platformMap['Spotify'] = Math.floor(totalStreams * 0.65);
-        platformMap['Apple Music'] = Math.floor(totalStreams * 0.22);
-        platformMap['Deezer'] = Math.floor(totalStreams * 0.08);
-        platformMap['Otros'] = Math.floor(totalStreams * 0.05);
-        
-        countryMap['México'] = Math.floor(totalStreams * 0.45);
-        countryMap['Colombia'] = Math.floor(totalStreams * 0.25);
-        countryMap['España'] = Math.floor(totalStreams * 0.15);
-        countryMap['Estados Unidos'] = Math.floor(totalStreams * 0.10);
-        countryMap['Otros'] = Math.floor(totalStreams * 0.05);
-      } else {
-        totalStreams = 0;
-        spotifyData.followers = 0;
-        
-        platformMap['Spotify'] = 0;
-        platformMap['Apple Music'] = 0;
-        platformMap['Deezer'] = 0;
-        platformMap['Otros'] = 0;
-        
-        countryMap['México'] = 0;
-        countryMap['Colombia'] = 0;
-        countryMap['España'] = 0;
-        countryMap['Estados Unidos'] = 0;
-        countryMap['Otros'] = 0;
-      }
+      totalStreams = 0;
+      
+      platformMap['Spotify'] = 0;
+      platformMap['Apple Music'] = 0;
+      platformMap['Deezer'] = 0;
+      platformMap['Otros'] = 0;
+      
+      countryMap['México'] = 0;
+      countryMap['Colombia'] = 0;
+      countryMap['España'] = 0;
+      countryMap['Estados Unidos'] = 0;
+      countryMap['Otros'] = 0;
     }
     let deezerData = { fans: 0, topTracks: [] };
     if (artist?.stageName) {
