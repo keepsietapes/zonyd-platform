@@ -55,22 +55,22 @@ export default function LandingPage() {
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#232733] bg-[#0B0B0F]/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <img src="/logo.png" alt="Zonyd Logo" className="w-10 h-10 object-contain" />
-            <span className="text-xl font-black tracking-tighter uppercase italic">Zonyd</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <img src="/logo.png" alt="Zonyd Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain shrink-0" />
+            <span className="text-lg sm:text-xl font-black tracking-tighter uppercase italic shrink-0">Zonyd</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-8 text-[11px] font-black uppercase tracking-widest text-[#A1A1AA]">
+          <nav className="hidden md:flex items-center gap-8 text-[11px] font-black uppercase tracking-widest text-[#A1A1AA] shrink-0">
             <Link href="#features" className="hover:text-white transition-colors">Características</Link>
             <Link href="#pricing" className="hover:text-white transition-colors">Planes</Link>
             <Link href="#faq" className="hover:text-white transition-colors">FAQ</Link>
           </nav>
-          <div className="flex items-center gap-4">
-            <Link href="/login">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <Link href="/login" className="hidden sm:block">
               <Button variant="ghost" className="text-[11px] font-black uppercase tracking-widest text-[#A1A1AA] hover:text-white hover:bg-[#151821]">Entrar</Button>
             </Link>
             <Link href="/login">
-              <Button className="bg-[#FF9F0A] text-[#0B0B0F] hover:bg-[#FF9F0A]/90 font-black text-[11px] uppercase tracking-widest px-6 rounded-xl h-11">
+              <Button className="bg-[#FF9F0A] text-[#0B0B0F] hover:bg-[#FF9F0A]/90 font-black text-[10px] sm:text-[11px] uppercase tracking-widest px-4 sm:px-6 rounded-xl h-10 sm:h-11">
                 Empezar Gratis
               </Button>
             </Link>
