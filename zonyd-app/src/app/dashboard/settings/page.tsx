@@ -537,7 +537,7 @@ function SettingsContent() {
                    price="0" 
                    active={currentPlan === 'FREE'}
                    highlighted={currentPlan === 'FREE'}
-                   features={['85% Royalties', 'Distribución a tiendas básicas', 'Dashboard estándar', 'Soporte vía Email']} 
+                   features={['85% Royalties (15% Comisión)', '1 Perfil de Artista Activo', 'Zonyd AI (10 consultas/semana)', 'Soporte vía email (soporte@zonyd.com)']} 
                    onUpgrade={() => handleUpgradePlan('FREE')}
                  />
                  <PlanCard 
@@ -545,7 +545,7 @@ function SettingsContent() {
                    price="4.99" 
                    active={currentPlan === 'INDIE'}
                    highlighted={currentPlan === 'INDIE'}
-                   features={['95% Royalties', 'Distribución rápida', 'Soporte Prioritario', 'Sin límites de artistas']} 
+                   features={['85% Royalties (15% Comisión)', '1 Perfil de Artista Activo', 'Splits de regalías gratuitos', 'The Lab AI (15 usos/mes)', 'Soporte rápido por ticket']} 
                    onUpgrade={() => handleUpgradePlan('INDIE')}
                  />
                  <PlanCard 
@@ -553,7 +553,7 @@ function SettingsContent() {
                    price="9.99" 
                    active={currentPlan === 'PRO'}
                    highlighted={currentPlan === 'PRO'}
-                   features={['100% Royalties', 'Distribución ilimitada', 'Zonyd AI Co-Manager', 'SmartLinks Premium', 'Soporte 24/7']} 
+                   features={['100% Royalties (0% Comisión)', 'Hasta 5 Artistas en Simultáneo', 'YouTube Content ID Gratis', 'The Lab AI ILIMITADO', 'Soporte VIP < 2 horas']} 
                    onUpgrade={() => handleUpgradePlan('PRO')}
                  />
                  <PlanCard 
@@ -561,7 +561,7 @@ function SettingsContent() {
                    price="29.99" 
                    active={currentPlan === 'LABEL'}
                    highlighted={currentPlan === 'LABEL'}
-                   features={['100% Royalties', 'Artistas Ilimitados', 'Contratos Personalizados', 'Manager Dedicado', 'Analíticas en tiempo real']} 
+                   features={['100% Royalties (0% Comisión)', 'Artistas y Sellos Ilimitados', 'Firma de Contratos Digitales', 'The Lab AI VIP (Procesamiento Veloz)', 'Mánager Dedicado']} 
                    onUpgrade={() => handleUpgradePlan('LABEL')}
                  />
               </div>
@@ -831,8 +831,30 @@ function SocialRow({ icon, label, status, onClick }: { icon: React.ReactNode, la
 }
 
 function PlanCard({ title, price, features, active, highlighted, onUpgrade }: { title: string, price: string, features: string[], active?: boolean, highlighted?: boolean, onUpgrade?: () => void }) {
+  const isLabel = title.toLowerCase() === 'label';
+  const isIndie = title.toLowerCase() === 'indie';
+  const isPro = title.toLowerCase() === 'pro';
+
+  const checkColor = active || isPro
+    ? 'text-[#FF9F0A]'
+    : isLabel
+      ? 'text-[#BF5AF2]'
+      : isIndie
+        ? 'text-[#4F8CFF]'
+        : 'text-[#A1A1AA]';
+
+  const cardBorder = active
+    ? 'border-[#FF9F0A] shadow-[0_0_20px_rgba(255,159,10,0.1)]'
+    : isLabel
+      ? 'border-[#BF5AF2]/40 hover:border-[#BF5AF2] shadow-[0_0_15px_rgba(191,90,242,0.05)]'
+      : isIndie
+        ? 'border-[#4F8CFF]/40 hover:border-[#4F8CFF] shadow-[0_0_15px_rgba(79,140,255,0.05)]'
+        : isPro
+          ? 'border-[#FF9F0A]/40 hover:border-[#FF9F0A]'
+          : 'border-white/5 hover:border-white/20';
+
   return (
-    <Card className={`relative overflow-hidden rounded-[2rem] border-2 transition-colors duration-500 ${highlighted ? 'bg-gradient-to-b from-[#FF9F0A]/10 to-[#151821] border-[#FF9F0A]' : 'bg-[#151821] border-white/5'}`}>
+    <Card className={`relative overflow-hidden rounded-[2rem] border-2 transition-all duration-500 bg-[#151821] ${cardBorder}`}>
        {active && (
          <div className="absolute top-0 right-0 px-4 py-1 bg-[#FF9F0A] text-black text-[9px] font-black uppercase tracking-widest rounded-bl-xl z-10">ACTIVO</div>
        )}
@@ -847,7 +869,7 @@ function PlanCard({ title, price, features, active, highlighted, onUpgrade }: { 
           <div className="space-y-3">
              {features.map((f, i) => (
                <div key={i} className="flex items-center gap-2 text-[11px] text-[#A1A1AA] transition-colors duration-500">
-                  <CheckCircle2 size={12} className={highlighted ? "text-[#FF9F0A]" : "text-[#A1A1AA]"} /> {f}
+                  <CheckCircle2 size={12} className={checkColor} /> {f}
                </div>
              ))}
           </div>
@@ -857,9 +879,11 @@ function PlanCard({ title, price, features, active, highlighted, onUpgrade }: { 
             className={`w-full py-6 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
             active 
             ? 'bg-[#232733] text-[#A1A1AA] cursor-default' 
-            : highlighted 
+            : title.toLowerCase() === 'pro' 
               ? 'bg-[#FF9F0A] text-black hover:scale-105 active:scale-95 shadow-lg shadow-[#FF9F0A]/20' 
-              : 'bg-white text-black hover:bg-[#FF9F0A] hover:text-black'
+              : title.toLowerCase() === 'label'
+                ? 'bg-gradient-to-r from-[#BF5AF2] to-[#7B61FF] text-white hover:scale-105 hover:opacity-90 border-none'
+                : 'bg-white text-black hover:bg-[#FF9F0A] hover:text-black'
           }`}>
              {active ? 'Plan Actual' : `Mejorar a ${title}`}
           </Button>

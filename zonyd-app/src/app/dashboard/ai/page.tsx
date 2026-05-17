@@ -29,6 +29,8 @@ export default function ZonydAIPage() {
   const [messages, setMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [weeklyQueries, setWeeklyQueries] = useState(10);
+  const [resetDate, setResetDate] = useState('');
 
   // Conexiones reales del usuario — false por defecto hasta que se verifique
   const [connections, setConnections] = useState({
@@ -47,6 +49,54 @@ export default function ZonydAIPage() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (userPlan === 'FREE') {
+      const saved = localStorage.getItem('zonyd-free-ai-weekly-quota');
+      const savedDate = localStorage.getItem('zonyd-free-ai-reset-date');
+      const now = new Date();
+      
+      // Calculate next Monday at 00:00:00
+      let nextMonday = new Date();
+      nextMonday.setDate(now.getDate() + (1 + 7 - now.getDay()) % 7);
+      nextMonday.setHours(0, 0, 0, 0);
+      const nextMondayStr = nextMonday.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
+      setResetDate(nextMondayStr);
+
+      if (savedDate) {
+        const resetTime = new Date(savedDate).getTime();
+        if (now.getTime() >= resetTime) {
+          localStorage.setItem('zonyd-free-ai-weekly-quota', '10');
+          const nextReset = new Date();
+          nextReset.setDate(now.getDate() + (1 + 7 - now.getDay()) % 7);
+          nextReset.setHours(0, 0, 0, 0);
+          localStorage.setItem('zonyd-free-ai-reset-date', nextReset.toISOString());
+          setWeeklyQueries(10);
+        } else {
+          setWeeklyQueries(saved ? parseInt(saved) : 10);
+        }
+      } else {
+        localStorage.setItem('zonyd-free-ai-weekly-quota', '10');
+        const nextReset = new Date();
+        nextReset.setDate(now.getDate() + (1 + 7 - now.getDay()) % 7);
+        nextReset.setHours(0, 0, 0, 0);
+        localStorage.setItem('zonyd-free-ai-reset-date', nextReset.toISOString());
+        setWeeklyQueries(10);
+      }
+    }
+  }, [userPlan]);
+
+  const isValidQuery = (text: string) => {
+    const clean = text.trim().toLowerCase();
+    if (clean.length < 15) return false;
+    
+    const basicWords = [
+      'hola', 'buenas', 'hey', 'hello', 'hi', 'buenos dias', 'buenas tardes', 
+      'buenas noches', 'gracias', 'adios', 'test', 'prueba', 'saludos', 
+      'ok', 'entendido', 'gracias ia', 'ayuda'
+    ];
+    return !basicWords.includes(clean);
+  };
 
   const fetchProfile = async () => {
     setIsLoading(true);
@@ -80,15 +130,48 @@ export default function ZonydAIPage() {
   const handleSend = async () => {
     if (!query.trim() || isTyping) return;
     const userMsg = query.trim();
+    
+    let consumesToken = false;
+    if (userPlan === 'FREE') {
+      if (weeklyQueries <= 0) {
+        setMessages(prev => [...prev, 
+          { role: 'user', text: userMsg },
+          { role: 'ai', text: '⚠️ Has alcanzado el límite de tus 10 consultas semanales de Zonyd AI Co-Manager. Tu cuota se renovará automáticamente el próximo lunes. ¡Mejora tu plan a PRO o LABEL para tener acceso ilimitado e inmediato!' }
+        ]);
+        setQuery('');
+        return;
+      }
+      consumesToken = isValidQuery(userMsg);
+    }
+    
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setQuery('');
     setIsTyping(true);
+    
     try {
       const data = await authFetch('/api/ai/chat', {
         method: 'POST',
         body: JSON.stringify({ message: userMsg, history: messages }),
       });
+      
       setMessages(prev => [...prev, { role: 'ai', text: data.response || 'Sin respuesta del servidor.' }]);
+      
+      if (userPlan === 'FREE') {
+        if (consumesToken) {
+          setWeeklyQueries(prev => {
+            const newVal = Math.max(0, prev - 1);
+            localStorage.setItem('zonyd-free-ai-weekly-quota', newVal.toString());
+            return newVal;
+          });
+        } else {
+          setTimeout(() => {
+            setMessages(prev => [...prev, { 
+              role: 'ai', 
+              text: '✨ Consulta de cortesía: He detectado que tu mensaje es un saludo o una consulta muy básica. Tu cuota de 10 consultas semanales válidas sigue intacta.' 
+            }]);
+          }, 600);
+        }
+      }
     } catch (err) {
       setMessages(prev => [...prev, { role: 'ai', text: 'Lo siento, la conexión con el motor de IA se interrumpió. Intenta de nuevo.' }]);
     } finally {
@@ -96,42 +179,7 @@ export default function ZonydAIPage() {
     }
   };
 
-  // Paywall para usuarios FREE e INDIE
-  if (!isLoading && (userPlan === 'FREE' || userPlan === 'INDIE')) {
-    return (
-      <div className="p-8 h-full flex items-center justify-center relative">
-        <div className="absolute inset-0 bg-[#0B0B0F]/40 backdrop-blur-md z-10" />
-        <div className="w-full max-w-5xl opacity-20 pointer-events-none filter blur-sm">
-          <div className="h-64 bg-[#151821] rounded-3xl mb-8" />
-          <div className="grid grid-cols-2 gap-8">
-            <div className="h-96 bg-[#151821] rounded-3xl" />
-            <div className="h-96 bg-[#151821] rounded-3xl" />
-          </div>
-        </div>
-        <Card className="relative z-20 w-full max-w-lg bg-[#151821] border-[#7B61FF]/50 shadow-[0_0_100px_rgba(123,97,255,0.2)] rounded-[2.5rem] overflow-hidden p-8 text-center border-2">
-          <div className="w-20 h-20 bg-[#7B61FF]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-[#7B61FF]/20">
-            <Lock className="text-[#7B61FF]" size={32} />
-          </div>
-          <h2 className="text-3xl font-black text-white mb-4 uppercase italic">Contenido Exclusivo Pro</h2>
-          <p className="text-[#A1A1AA] text-sm leading-relaxed mb-8 px-4">
-            El AI Command Center utiliza modelos de lenguaje y análisis de datos en tiempo real para optimizar tu carrera. Disponible para miembros <strong className="text-white">Pro</strong> y <strong className="text-white">Label</strong>.
-          </p>
-          <div className="space-y-4 mb-8 text-left bg-black/40 p-6 rounded-2xl border border-white/5">
-            <div className="flex items-center gap-3 text-xs text-white/80"><Sparkles size={14} className="text-[#7B61FF]" /> Estrategias de Marketing Personalizadas</div>
-            <div className="flex items-center gap-3 text-xs text-white/80"><ShieldCheck size={14} className="text-[#34C759]" /> Auditoría de Copyright Preventiva</div>
-            <div className="flex items-center gap-3 text-xs text-white/80"><TrendingUp size={14} className="text-[#4F8CFF]" /> Predicciones de Streams y Revenue</div>
-          </div>
-          <Button 
-            onClick={() => window.location.href = '/dashboard/settings'}
-            className="w-full bg-[#7B61FF] hover:bg-[#7B61FF]/90 text-white font-black h-14 rounded-2xl text-lg shadow-xl shadow-[#7B61FF]/20 group"
-          >
-            DESBLOQUEAR AHORA <ArrowRight size={20} className="ml-2 group-hover:translate-x-2 transition-transform" />
-          </Button>
-          <p className="mt-4 text-[10px] text-[#A1A1AA] uppercase font-black tracking-widest">Desde $9.99 USD / mes</p>
-        </Card>
-      </div>
-    );
-  }
+  // No page paywall - chat is accessible to Free (capped) and Indie/Pro/Label (unlimited)
 
   const connectedCount = Object.values(connections).filter(Boolean).length;
   const hasMetrics = metrics.viralidad > 0;
@@ -189,16 +237,39 @@ export default function ZonydAIPage() {
 
           {/* AI Chat */}
           <Card className="bg-[#151821] border-[#232733] rounded-3xl overflow-hidden flex flex-col h-[500px] shadow-2xl">
-            <div className="bg-black/20 p-4 border-b border-white/5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#7B61FF] flex items-center justify-center animate-pulse shadow-[0_0_15px_rgba(123,97,255,0.5)]">
-                <Bot size={16} className="text-white" />
+            <div className="bg-black/20 p-4 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#7B61FF] flex items-center justify-center animate-pulse shadow-[0_0_15px_rgba(123,97,255,0.5)]">
+                  <Bot size={16} className="text-white" />
+                </div>
+                <div>
+                  <span className="text-xs font-black text-white uppercase tracking-widest italic">Zonyd AI Co-Manager</span>
+                  {connectedCount === 0 && (
+                    <p className="text-[9px] text-[#FF9F0A] font-bold mt-0.5">Conecta una red social para análisis contextual</p>
+                  )}
+                </div>
               </div>
-              <div>
-                <span className="text-xs font-black text-white uppercase tracking-widest italic">Zonyd AI Co-Manager</span>
-                {connectedCount === 0 && (
-                  <p className="text-[9px] text-[#FF9F0A] font-bold mt-0.5">Conecta una red social para análisis contextual</p>
-                )}
-              </div>
+
+              {/* Weekly Quota Meter for FREE users */}
+              {userPlan === 'FREE' && (
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#A1A1AA]">Cuota Semanal:</span>
+                    <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-md ${weeklyQueries > 3 ? 'bg-[#34C759]/10 text-[#34C759] border border-[#34C759]/20' : 'bg-[#FF453A]/10 text-[#FF453A] border border-[#FF453A]/20'}`}>
+                      {weeklyQueries} / 10 válidas
+                    </span>
+                  </div>
+                  <span className="text-[8px] text-[#A1A1AA] uppercase tracking-widest font-bold">Próximo reinicio: lunes ({resetDate})</span>
+                </div>
+              )}
+
+              {/* Tag for INDIE, PRO, LABEL users */}
+              {userPlan !== 'FREE' && (
+                <div className="flex items-center gap-2 bg-[#7B61FF]/10 border border-[#7B61FF]/30 px-3 py-1 rounded-full">
+                  <Sparkles size={10} className="text-[#7B61FF]" />
+                  <span className="text-[8px] font-black uppercase tracking-widest text-[#7B61FF]">Acceso AI Ilimitado ({userPlan})</span>
+                </div>
+              )}
             </div>
 
             <div className="flex-1 p-6 space-y-6 overflow-y-auto">
@@ -264,7 +335,21 @@ export default function ZonydAIPage() {
         <div className="lg:col-span-4 space-y-6">
           <Card className="bg-[#151821] border-[#232733] rounded-3xl p-6">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-[#A1A1AA] mb-4">Métricas de Influencia IA</h3>
-            {!hasMetrics ? (
+            {(userPlan === 'FREE' || userPlan === 'INDIE') ? (
+              <div className="py-8 text-center bg-black/20 p-6 rounded-2xl border border-white/5 space-y-4">
+                <Lock size={24} className="text-[#FF9F0A] mx-auto mb-2" />
+                <p className="text-[10px] font-black text-[#A1A1AA] uppercase tracking-widest">Métricas bloqueadas</p>
+                <p className="text-[9px] text-[#A1A1AA]/60 leading-relaxed">
+                  Las métricas avanzadas de viralidad y optimización acústica por IA requieren un plan PRO o LABEL.
+                </p>
+                <Button 
+                  onClick={() => window.location.href = '/dashboard/settings'}
+                  className="w-full bg-[#FF9F0A] text-black hover:bg-[#FF9F0A]/90 font-black h-9 rounded-xl text-[10px] uppercase tracking-wider"
+                >
+                  Mejorar Plan
+                </Button>
+              </div>
+            ) : !hasMetrics ? (
               <div className="py-8 text-center">
                 <TrendingUp size={32} className="text-[#232733] mx-auto mb-3" />
                 <p className="text-[10px] font-black text-[#3A3A3C] uppercase tracking-widest">Sin datos aún</p>

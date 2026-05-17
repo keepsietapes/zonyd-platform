@@ -169,20 +169,60 @@ export default function LandingPage() {
           <p className="text-[#A1A1AA] max-w-xl mx-auto font-bold uppercase text-[10px] tracking-[0.2em]">Sin cargos ocultos. Transparencia total.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <PriceCard 
             title="Free" price="0" 
-            features={['85% Royalties', 'Distribución Estándar', 'Dashboard Básico']} 
+            features={[
+              '85% Royalties Retenidos (15% Comisión)', 
+              '1 Perfil de Artista Activo', 
+              'Distribución a Tiendas Básicas (Spotify, Apple)', 
+              'Zonyd AI (10 consultas semanales válidas)',
+              '🛡️ Filtro Anti-Saludos (no consume cuota)',
+              'Soporte vía email (soporte@zonyd.com)',
+              '🔒 The Lab AI (Acceso Bloqueado)'
+            ]} 
             cta="Empezar Ahora" 
           />
           <PriceCard 
-            title="Indie" price="4.99" highlighted 
-            features={['95% Royalties', 'Distribución Rápida', 'Artistas Ilimitados', 'Soporte Prioritario']} 
+            title="Indie" price="4.99" 
+            features={[
+              '85% Royalties Retenidos (15% Comisión)', 
+              '1 Perfil de Artista Activo', 
+              'Distribución Rápida (14 días)', 
+              'Splits de Regalías Gratuitos',
+              'Zonyd AI Co-Manager Ilimitado', 
+              '🧪 The Lab AI Estándar (15 usos/mes)',
+              'Soporte por ticket en la plataforma'
+            ]} 
             cta="Suscribirse" 
           />
           <PriceCard 
-            title="Pro" price="9.99" 
-            features={['100% Royalties', 'Zonyd AI Co-Manager', 'SmartLinks Premium', 'Content ID Management']} 
+            title="Pro" price="9.99" highlighted 
+            features={[
+              'Todo lo incluido en INDIE más:',
+              '⭐ 100% de tus Royalties (0% Comisión)', 
+              '⭐ Hasta 5 Artistas en Simultáneo', 
+              'Distribución Exprés (48-72 horas)', 
+              'Tiendas de nicho (Beatport y Traxsource)',
+              'YouTube Content ID de Cortesía', 
+              'SmartLinks Pro (+Meta y TikTok Pixels)', 
+              '🧪 The Lab AI Completo (ILIMITADO)', 
+              'Soporte VIP por Chat (< 2h en Vivo)'
+            ]} 
+            cta="Suscribirse" 
+          />
+          <PriceCard 
+            title="Label" price="29.99" 
+            features={[
+              'Todo lo incluido en PRO más:',
+              '👑 Sellos y Artistas ILIMITADOS', 
+              'Carga Inmediata A&R (< 24 horas)', 
+              'Gestión de Contratos Digitales y Splits', 
+              'SmartLinks White-Label (Dominio Propio)', 
+              '🧪 Cola de Audio VIP (Procesamiento Veloz)', 
+              'Acceso completo a la API Zonyd',
+              'Account Manager Dedicado (WhatsApp/Zoom)'
+            ]} 
             cta="Suscribirse" 
           />
         </div>
@@ -279,10 +319,34 @@ function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: stri
 }
 
 function PriceCard({ title, price, features, cta, highlighted = false }: { title: string, price: string, features: string[], cta: string, highlighted?: boolean }) {
+  const isLabel = title.toLowerCase() === 'label';
+  const isFree = title.toLowerCase() === 'free';
+  const isIndie = title.toLowerCase() === 'indie';
+  
+  // Clean, high-contrast, modern styles with distinctive solid borders and backgrounds
+  const cardStyles = highlighted 
+    ? 'bg-[#1A1E29] text-white border-2 border-[#FF9F0A] scale-105 z-10 shadow-[0_15px_40px_rgba(255,159,10,0.15)]' 
+    : isLabel 
+      ? 'bg-[#151821] text-white border border-[#BF5AF2]/50 hover:border-[#BF5AF2] shadow-[0_10px_30px_rgba(191,90,242,0.05)] transition-all duration-300 scale-100 hover:scale-[1.02]' 
+      : isIndie
+        ? 'bg-[#151821] text-white border border-[#4F8CFF]/50 hover:border-[#4F8CFF] transition-all duration-300 scale-100 hover:scale-[1.02]'
+        : 'bg-[#11131A] text-white border border-[#232733] hover:border-white/10 transition-all duration-300 scale-100 hover:scale-[1.02]';
+
+  const checkColor = highlighted 
+    ? 'text-[#FF9F0A]' 
+    : isLabel 
+      ? 'text-[#BF5AF2]' 
+      : isIndie
+        ? 'text-[#4F8CFF]'
+        : 'text-[#A1A1AA]';
+
   return (
-    <div className={`p-8 rounded-[2.5rem] border transition-all duration-500 relative flex flex-col ${highlighted ? 'bg-white text-black border-white scale-105 z-10 shadow-[0_0_50px_rgba(255,255,255,0.1)]' : 'bg-[#151821] text-white border-[#232733] hover:border-white/20'}`}>
+    <div className={`p-8 rounded-[2.5rem] border transition-all duration-500 relative flex flex-col ${cardStyles}`}>
       {highlighted && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#FF9F0A] text-black text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">Más Popular</div>
+      )}
+      {isLabel && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#BF5AF2] to-[#7B61FF] text-white text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">Elite Sello</div>
       )}
       <div className="mb-8">
         <h4 className="text-[11px] font-black uppercase tracking-[0.3em] mb-4 opacity-60">{title}</h4>
@@ -292,15 +356,19 @@ function PriceCard({ title, price, features, cta, highlighted = false }: { title
         </div>
       </div>
       <ul className="space-y-4 mb-10 flex-1">
-        {features.map((f, i) => (
-          <li key={i} className="flex items-center gap-3 text-xs font-bold">
-            <Check size={14} className={highlighted ? 'text-black' : 'text-[#FF9F0A]'} />
-            <span className="opacity-80">{f}</span>
-          </li>
-        ))}
+        {features.map((f, i) => {
+          const isHeader = f.includes('Todo lo incluido');
+          const isStar = f.includes('⭐') || f.includes('👑');
+          return (
+            <li key={i} className={`flex items-start gap-3 text-xs ${isHeader ? 'font-black text-white mt-4 border-b border-white/5 pb-2 uppercase tracking-wider text-[10px]' : isStar ? 'font-bold text-white' : 'font-medium opacity-80'}`}>
+              {!isHeader && <Check size={14} className={`${checkColor} mt-0.5 shrink-0`} />}
+              <span>{f}</span>
+            </li>
+          );
+        })}
       </ul>
       <Link href="/login">
-        <Button className={`w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${highlighted ? 'bg-black text-white hover:bg-black/90' : 'bg-white text-black hover:bg-gray-200'}`}>
+        <Button className={`w-full h-14 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${highlighted ? 'bg-[#FF9F0A] text-black hover:bg-[#FF9F0A]/90' : isLabel ? 'bg-gradient-to-r from-[#BF5AF2] to-[#7B61FF] text-white hover:opacity-90' : 'bg-white/5 text-white border border-white/10 hover:bg-white/10'}`}>
           {cta}
         </Button>
       </Link>
