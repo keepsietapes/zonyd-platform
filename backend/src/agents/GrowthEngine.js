@@ -1,5 +1,5 @@
 const logger = require('../utils/logger');
-const { generateSingleContent } = require('../utils/aiClient');
+const { generateSingleContent, extractJson } = require('../utils/aiClient');
 
 /**
  * GROWTH ENGINE — Agente de Campañas Publicitarias
@@ -23,8 +23,8 @@ Devuelve JSON estricto:
 
   try {
     const rawResponse = await generateSingleContent(prompt);
-    const jsonMatch = rawResponse.match(/\{\s*"recommended_platform"[\s\S]*\}\s*/);
-    return { success: true, ...JSON.parse(jsonMatch[0]) };
+    const parsedData = extractJson(rawResponse);
+    return { success: true, ...parsedData };
   } catch (err) {
     logger.error(`[GrowthEngine] Error: ${err.message}`);
     return { success: false, error: 'Error generando estrategia de ads.' };

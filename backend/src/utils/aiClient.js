@@ -207,8 +207,58 @@ async function generateSingleGeminiContent(prompt) {
   return result.response.text();
 }
 
+/**
+ * Extrae y parsea JSON de la respuesta de un LLM (maneja bloques markdown)
+ */
+function extractJson(text) {
+  try {
+    // Si ya es un objeto JSON, retornarlo
+    if (typeof text !== 'string') return text;
+    
+    let cleanText = text.trim();
+    // Eliminar bloques markdown (```json y ```)
+    if (cleanText.startsWith('```')) {
+      const firstNewLine = cleanText.indexOf('\n');
+      const lastTick = cleanText.lastIndexOf('```');
+      if (firstNewLine !== -1 && lastTick !== -1 && lastTick > firstNewLine) {
+        cleanText = cleanText.substring(firstNewLine + 1, lastTick).trim();
+      }
+    }
+    
+    // Buscar la primera '{' o '[' y la última '}' o ']'
+    const firstBrace = cleanText.indexOf('{');
+    const firstBracket = cleanText.indexOf('[');
+    let startIdx = -1;
+    let endIdx = -1;
+    let isArray = false;
+
+    if (firstBrace !== -1 && firstBracket !== -1) {
+      startIdx = Math.min(firstBrace, firstBracket);
+      isArray = startIdx === firstBracket;
+    } else if (firstBrace !== -1) {
+      startIdx = firstBrace;
+    } else if (firstBracket !== -1) {
+      startIdx = firstBracket;
+      isArray = true;
+    }
+
+    if (startIdx !== -1) {
+      endIdx = isArray ? cleanText.lastIndexOf(']') : cleanText.lastIndexOf('}');
+      if (endIdx !== -1 && endIdx > startIdx) {
+        cleanText = cleanText.substring(startIdx, endIdx + 1);
+      }
+    }
+
+    return JSON.parse(cleanText);
+  } catch (err) {
+    logger.error(`[aiClient] JSON Extract Error: ${err.message}. Original text: ${text.substring(0, 100)}...`);
+    throw new Error('No se pudo parsear el JSON de la respuesta de la IA.');
+  }
+}
+
 module.exports = {
   generateAIContent,
   generateSingleContent,
   useLocalModel,
+  extractJson
 };

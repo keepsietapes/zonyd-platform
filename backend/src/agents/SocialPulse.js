@@ -1,5 +1,5 @@
 const logger = require('../utils/logger');
-const { generateSingleContent } = require('../utils/aiClient');
+const { generateSingleContent, extractJson } = require('../utils/aiClient');
 
 /**
  * SOCIAL PULSE — Agente de Contenido y Redes Sociales
@@ -56,12 +56,7 @@ Asegúrate de que el formato sea JSON válido y no devuelvas texto fuera del JSO
     const rawResponse = await generateSingleContent(prompt);
     
     // Extraer JSON del texto (por si hay markdown de código)
-    const jsonMatch = rawResponse.match(/\[\s*\{[\s\S]*\}\s*\]/);
-    if (!jsonMatch) {
-      throw new Error('El modelo no devolvió un JSON válido.');
-    }
-    
-    const ideas = JSON.parse(jsonMatch[0]);
+    const ideas = extractJson(rawResponse);
     return { success: true, platform, count: ideas.length, ideas };
   } catch (err) {
     logger.error(`[SocialPulse] Error generando ideas: ${err.message}`);

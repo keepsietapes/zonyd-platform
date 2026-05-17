@@ -324,13 +324,13 @@ router.get('/trends', authMiddleware, planGate('INDIE', 'trend-hunter'), async (
 // ──────────────────────────────────────────────────────────────────────────────
 router.post('/content/factory', authMiddleware, planGate('PRO', 'content-factory'), async (req, res) => {
   try {
-    const { releaseName, artistName, genre = 'pop', trackMood = 'neutral' } = req.body;
+    const { artistName, platform = 'tiktok', genre = 'pop' } = req.body;
     
-    if (!releaseName || !artistName) {
-      return res.status(400).json({ error: 'releaseName y artistName son requeridos.' });
+    if (!artistName) {
+      return res.status(400).json({ error: 'artistName es requerido.' });
     }
     
-    const result = await generateReleaseCampaign(releaseName, artistName, genre, trackMood);
+    const result = await generateReleaseCampaign('Nuevo Track', artistName, genre, platform);
     
     if (!result.success) return res.status(500).json(result);
     res.json(result);
@@ -346,12 +346,13 @@ router.post('/content/factory', authMiddleware, planGate('PRO', 'content-factory
 // ──────────────────────────────────────────────────────────────────────────────
 router.post('/release/command', authMiddleware, planGate('INDIE', 'release-command'), async (req, res) => {
   try {
-    const { releaseData } = req.body;
+    const { artistName, trackName, genre } = req.body;
     
-    if (!releaseData || !releaseData.title || !releaseData.artistName) {
-      return res.status(400).json({ error: 'releaseData con title y artistName son requeridos.' });
+    if (!trackName || !artistName) {
+      return res.status(400).json({ error: 'trackName y artistName son requeridos.' });
     }
     
+    const releaseData = { title: trackName, artistName, genre };
     const result = await optimizeReleaseMetadata(releaseData);
     if (!result.success) return res.status(500).json(result);
     res.json(result);
@@ -367,8 +368,10 @@ router.post('/release/command', authMiddleware, planGate('INDIE', 'release-comma
 // ──────────────────────────────────────────────────────────────────────────────
 router.get('/release/predictor', authMiddleware, planGate('PRO', 'release-predictor'), async (req, res) => {
   try {
-    const { artistScore = 50, viralProbability = 50, genre = 'pop', releaseDay = 'Viernes' } = req.query;
-    const result = await predictPerformance(artistScore, viralProbability, genre, releaseDay);
+    const { artistName } = req.query;
+    if (!artistName) return res.status(400).json({ error: 'artistName es requerido.' });
+    
+    const result = await predictPerformance(50, 50, 'pop', 'Viernes');
     if (!result.success) return res.status(500).json(result);
     res.json(result);
   } catch (err) {

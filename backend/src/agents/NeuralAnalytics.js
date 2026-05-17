@@ -1,7 +1,7 @@
 const logger = require('../utils/logger');
 const prisma = require('../utils/prisma');
 const { calculateZonydScore } = require('../services/zonydScoreEngine');
-const { generateSingleContent } = require('../utils/aiClient');
+const { generateSingleContent, extractJson } = require('../utils/aiClient');
 
 /**
  * NEURAL ANALYTICS — Agente de Análisis Predictivo

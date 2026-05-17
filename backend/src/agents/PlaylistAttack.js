@@ -1,5 +1,5 @@
 const logger = require('../utils/logger');
-const { generateSingleContent } = require('../utils/aiClient');
+const { generateSingleContent, extractJson } = require('../utils/aiClient');
 
 /**
  * PLAYLIST ATTACK — Agente de Pitching a Curadores
@@ -40,12 +40,7 @@ Solo devuelve JSON válido.`;
     const rawResponse = await generateSingleContent(prompt);
     
     // Extraer JSON
-    const jsonMatch = rawResponse.match(/\{\s*"submithub_pitch"[\s\S]*\}\s*/);
-    if (!jsonMatch) {
-      throw new Error('El modelo no devolvió un JSON válido.');
-    }
-    
-    const result = JSON.parse(jsonMatch[0]);
+    const result = extractJson(rawResponse);
     return { success: true, ...result };
   } catch (err) {
     logger.error(`[PlaylistAttack] Error generando pitch: ${err.message}`);

@@ -2,7 +2,7 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
-const { generateSingleContent } = require('../utils/aiClient');
+const { generateSingleContent, extractJson } = require('../utils/aiClient');
 
 /**
  * SPECTRAL ENGINE — Agente de Análisis y Masterización de Audio

@@ -1,5 +1,5 @@
 const logger = require('../utils/logger');
-const { generateSingleContent } = require('../utils/aiClient');
+const { generateSingleContent, extractJson } = require('../utils/aiClient');
 
 /**
  * LIVE CIRCUIT — Agente de Booking
@@ -26,8 +26,8 @@ Devuelve JSON estricto:
 
   try {
     const rawResponse = await generateSingleContent(prompt);
-    const jsonMatch = rawResponse.match(/\{\s*"email_subject"[\s\S]*\}\s*/);
-    return { success: true, ...JSON.parse(jsonMatch[0]) };
+    const parsedData = extractJson(rawResponse);
+    return { success: true, ...parsedData };
   } catch (err) {
     logger.error(`[LiveCircuit] Error: ${err.message}`);
     return { success: false, error: 'Error generando pitch de booking.' };

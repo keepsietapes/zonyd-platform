@@ -1,5 +1,5 @@
 const logger = require('../utils/logger');
-const { generateSingleContent } = require('../utils/aiClient');
+const { generateSingleContent, extractJson } = require('../utils/aiClient');
 
 /**
  * CONTENT FACTORY — Generador Masivo de Assets Post-Lanzamiento
@@ -54,12 +54,7 @@ REGLAS ESTRICTAS:
     const rawResponse = await generateSingleContent(prompt);
     
     // Extraer JSON del texto
-    const jsonMatch = rawResponse.match(/\{\s*"campaign_title"[\s\S]*\}\s*/);
-    if (!jsonMatch) {
-      throw new Error('El modelo no devolvió un JSON válido.');
-    }
-    
-    const campaign = JSON.parse(jsonMatch[0]);
+    const campaign = extractJson(rawResponse);
     return { success: true, ...campaign };
   } catch (err) {
     logger.error(`[ContentFactory] Error generando campaña: ${err.message}`);

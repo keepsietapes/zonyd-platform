@@ -1,5 +1,5 @@
 const logger = require('../utils/logger');
-const { generateSingleContent } = require('../utils/aiClient');
+const { generateSingleContent, extractJson } = require('../utils/aiClient');
 
 /**
  * RELEASE PREDICTOR — Agente de Predicción de Performance
@@ -41,12 +41,7 @@ Solo devuelve JSON. No vendas humo ni exageres los números.`;
     const rawResponse = await generateSingleContent(prompt);
     
     // Extraer JSON
-    const jsonMatch = rawResponse.match(/\{\s*"streams_prediction_range"[\s\S]*\}\s*/);
-    if (!jsonMatch) {
-      throw new Error('El modelo no devolvió un JSON válido.');
-    }
-    
-    const result = JSON.parse(jsonMatch[0]);
+    const result = extractJson(rawResponse);
     return { success: true, ...result };
   } catch (err) {
     logger.error(`[ReleasePredictor] Error prediciendo: ${err.message}`);

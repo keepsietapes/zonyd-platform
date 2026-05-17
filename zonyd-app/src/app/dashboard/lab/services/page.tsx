@@ -12,7 +12,7 @@ import { authFetch } from '@/lib/api';
 
 const AGENTS = [
   { id: 'content', name: 'Content Factory', icon: Camera, color: '#E4405F', desc: 'Genera guiones y estrategias de contenido post-lanzamiento.', endpoint: '/api/lab/content/factory', method: 'POST', params: ['artistName', 'genre', 'platform'] },
-  { id: 'trend', name: 'Trend Hunter', icon: TrendingUp, color: '#00F2FE', desc: 'Analiza tendencias virales actuales por género.', endpoint: '/api/lab/trend/hunter', method: 'GET', params: ['genre'] },
+  { id: 'trend', name: 'Trend Hunter', icon: TrendingUp, color: '#00F2FE', desc: 'Analiza tendencias virales actuales por género.', endpoint: '/api/lab/trends', method: 'GET', params: ['genre', 'country'] },
   { id: 'release', name: 'Release Command', icon: Zap, color: '#FF9F0A', desc: 'Optimiza la metadata y la narrativa de tu lanzamiento.', endpoint: '/api/lab/release/command', method: 'POST', params: ['artistName', 'trackName', 'genre'] },
   { id: 'predictor', name: 'Release Predictor', icon: Sparkles, color: '#34C759', desc: 'Predice el rendimiento de tu lanzamiento en la primera semana.', endpoint: '/api/lab/release/predictor', method: 'GET', params: ['artistName'] },
   { id: 'playlist', name: 'Playlist Attack', icon: Music, color: '#1DB954', desc: 'Genera pitches ultra-optimizados para curadores de Spotify.', endpoint: '/api/lab/playlist/attack', method: 'POST', params: ['artistName', 'trackName', 'genre'] },

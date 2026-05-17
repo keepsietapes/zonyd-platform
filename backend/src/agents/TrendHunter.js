@@ -1,5 +1,5 @@
 const logger = require('../utils/logger');
-const { generateSingleContent } = require('../utils/aiClient');
+const { generateSingleContent, extractJson } = require('../utils/aiClient');
 
 /**
  * TREND HUNTER — Agente de Tendencias en Tiempo Real
@@ -39,12 +39,7 @@ CERO EXPLICACIONES EXTERNAS. SOLO JSON VÁLIDO.`;
     const rawResponse = await generateSingleContent(prompt);
     
     // Extraer JSON del texto
-    const jsonMatch = rawResponse.match(/\[\s*\{[\s\S]*\}\s*\]/);
-    if (!jsonMatch) {
-      throw new Error('El modelo no devolvió un JSON válido.');
-    }
-    
-    const trends = JSON.parse(jsonMatch[0]);
+    const trends = extractJson(rawResponse);
     return { success: true, genre, country, trends, timestamp: new Date().toISOString() };
   } catch (err) {
     logger.error(`[TrendHunter] Error cazando tendencias: ${err.message}`);
