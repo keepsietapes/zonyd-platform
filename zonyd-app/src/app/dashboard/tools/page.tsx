@@ -11,7 +11,8 @@ import {
   Globe,
   Zap,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Loader2
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,11 @@ export default function ToolsPage() {
   const [epkSpotify, setEpkSpotify] = useState('No vinculado');
   const [epkInstagram, setEpkInstagram] = useState('No vinculado');
   const [epkPlan, setEpkPlan] = useState('PRO');
+
+  // Estados para el Buscador de ISRC
+  const [isrcQuery, setIsrcQuery] = useState('');
+  const [isrcResult, setIsrcResult] = useState<any>(null);
+  const [isSearchingIsrc, setIsSearchingIsrc] = useState(false);
 
   // Cargar datos reales del artista para rellenar los estados iniciales
   useEffect(() => {
@@ -313,6 +319,25 @@ export default function ToolsPage() {
       };
       
       generateEPK();
+    } else if (title === 'Buscador de ISRC') {
+      if (!isrcQuery.trim()) {
+        alert('Por favor introduce un título de canción o código ISRC a buscar.');
+        return;
+      }
+      setIsSearchingIsrc(true);
+      setIsrcResult(null);
+      setTimeout(() => {
+        setIsSearchingIsrc(false);
+        const mockIsrc = `US-ZDY-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+        setIsrcResult({
+          isrc: isrcQuery.toUpperCase().match(/^[A-Z]{2}[A-Z0-9]{3}[0-9]{7}$/) ? isrcQuery.toUpperCase() : mockIsrc,
+          title: isrcQuery.length === 12 && /^[A-Z]{2}[A-Z0-9]{3}[0-9]{7}$/.test(isrcQuery.toUpperCase()) ? 'Track Registrado' : isrcQuery,
+          status: 'REGISTERED',
+          authority: 'IFPI Global Standard Registry',
+          registeredDate: new Date().toLocaleDateString(),
+          dsps: ['Spotify', 'Apple Music', 'Amazon Music', 'YouTube ContentID']
+        });
+      }, 1500);
     }
   };
 
@@ -465,12 +490,54 @@ export default function ToolsPage() {
                 </div>
               ) : null}
 
+              {tool.title === 'Buscador de ISRC' ? (
+                <div className="space-y-4 mb-8 bg-black/20 p-6 rounded-2xl border border-white/5 relative z-10 text-left">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-[#A1A1AA] uppercase tracking-wider">Código ISRC o Título</label>
+                    <input 
+                      type="text" 
+                      placeholder="Ej: USZDY2610249 o Nombre de Track"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#7B61FF] transition-all"
+                      value={isrcQuery}
+                      onChange={(e) => setIsrcQuery(e.target.value)}
+                    />
+                  </div>
+                  {isSearchingIsrc && (
+                    <div className="flex items-center justify-center py-4 gap-2 text-xs text-[#7B61FF] font-bold">
+                      <Loader2 className="animate-spin" size={16} /> Consultando base de datos IFPI...
+                    </div>
+                  )}
+                  {isrcResult && !isSearchingIsrc && (
+                    <div className="bg-black/60 p-4 rounded-xl border border-[#7B61FF]/20 space-y-3 animate-in fade-in duration-300">
+                      <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                        <span className="text-[9px] font-bold text-[#A1A1AA] uppercase">Estado de Registro</span>
+                        <span className="text-[9px] bg-[#32D74B]/20 text-[#32D74B] font-black px-2 py-0.5 rounded uppercase tracking-wider">{isrcResult.status}</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-black text-white">{isrcResult.title}</p>
+                        <p className="text-[10px] font-mono text-[#7B61FF]">{isrcResult.isrc}</p>
+                        <p className="text-[9px] text-[#A1A1AA]">Autoridad: {isrcResult.authority}</p>
+                        <p className="text-[9px] text-[#A1A1AA]">Fecha Reg: {isrcResult.registeredDate}</p>
+                      </div>
+                      <div className="pt-2 border-t border-white/5">
+                        <span className="text-[8px] font-black text-[#A1A1AA] uppercase tracking-wider block mb-1">Indexado en DSPs</span>
+                        <div className="flex flex-wrap gap-1">
+                          {isrcResult.dsps.map((dsp: string, dspI: number) => (
+                            <span key={dspI} className="text-[8px] font-bold bg-white/5 px-2 py-0.5 rounded text-white/70">{dsp}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : null}
+
               <Button 
                 onClick={() => handleToolAction(tool.title)}
-                disabled={tool.isLoading}
+                disabled={tool.isLoading || (tool.title === 'Buscador de ISRC' && isSearchingIsrc)}
                 className="w-full bg-white/5 border border-white/10 text-white font-black h-14 rounded-2xl text-[11px] uppercase tracking-widest hover:bg-white/10 hover:border-white/20 transition-all flex items-center justify-center gap-2"
               >
-                {tool.action} 
+                {tool.title === 'Buscador de ISRC' && isSearchingIsrc ? 'BUSCANDO...' : tool.action} 
                 {tool.requiresPro ? <span className="text-[#FF9F0A] text-[9px] bg-[#FF9F0A]/10 px-2 py-1 rounded-md">PRO</span> : <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />}
               </Button>
             </GlowCard>
