@@ -51,6 +51,23 @@ export default function TheLabPage() {
     };
   }, [audioUrl]);
 
+  const applyAudioEffect = (preset: 'warm' | 'bright' | 'club') => {
+    if (!audioRef.current) return;
+    
+    const player = audioRef.current;
+    if (preset === 'warm') {
+      player.style.filter = 'sepia(0.3) saturate(1.2) contrast(1.1)';
+    } else if (preset === 'bright') {
+      player.style.filter = 'brightness(1.1) saturate(1.1) contrast(1.2)';
+    } else if (preset === 'club') {
+      player.style.filter = 'saturate(1.5) contrast(1.3) drop-shadow(0 0 5px rgba(255,159,10,0.5))';
+    }
+  };
+
+  useEffect(() => {
+    if (audioUrl) applyAudioEffect(selectedPreset);
+  }, [selectedPreset, audioUrl]);
+
   if (!mounted) return null;
 
   const togglePlay = () => {
@@ -243,24 +260,6 @@ export default function TheLabPage() {
     }
   };
 
-  const applyAudioEffect = (preset: 'warm' | 'bright' | 'club') => {
-    if (!audioRef.current) return;
-    
-    // Usamos filtros CSS para una previsualización rápida y ligera en el navegador
-    // Esto simula el cambio de color tonal sin la complejidad de Web Audio Nodes para el Prev
-    const player = audioRef.current;
-    if (preset === 'warm') {
-      player.style.filter = 'sepia(0.3) saturate(1.2) contrast(1.1)';
-    } else if (preset === 'bright') {
-      player.style.filter = 'brightness(1.1) saturate(1.1) contrast(1.2)';
-    } else if (preset === 'club') {
-      player.style.filter = 'saturate(1.5) contrast(1.3) drop-shadow(0 0 5px rgba(255,159,10,0.5))';
-    }
-  };
-
-  useEffect(() => {
-    if (audioUrl) applyAudioEffect(selectedPreset);
-  }, [selectedPreset, audioUrl]);
 
   const handleExportWav = async () => {
     if (!file) { alert('Primero selecciona un archivo de audio para exportar.'); return; }
