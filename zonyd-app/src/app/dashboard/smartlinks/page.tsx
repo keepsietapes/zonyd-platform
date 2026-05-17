@@ -264,14 +264,38 @@ export default function SmartLinksPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-[#A1A1AA] uppercase tracking-wider">URL de la Portada (Imagen)</label>
-                    <input 
-                      type="text" 
-                      className="w-full bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#FF9F0A] transition-all"
-                      value={editCoverUrl}
-                      onChange={(e) => setEditCoverUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/..."
-                    />
+                    <label className="text-[10px] font-black text-[#A1A1AA] uppercase tracking-wider">Portada (Imagen)</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        className="flex-1 bg-black/40 border border-[#232733] rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-[#FF9F0A] transition-all"
+                        value={editCoverUrl}
+                        onChange={(e) => setEditCoverUrl(e.target.value)}
+                        placeholder="Pegar URL de imagen o subir archivo"
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e: any) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setEditCoverUrl(reader.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          };
+                          input.click();
+                        }}
+                        className="bg-[#151821] border border-[#232733] text-white hover:bg-white/5 font-bold text-xs rounded-xl px-4 shrink-0"
+                      >
+                        SUBIR
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="pt-4 border-t border-white/5 space-y-4">

@@ -73,6 +73,21 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleRejectRelease = async (id: string) => {
+    const reason = prompt('Por favor, indica la razón del rechazo del lanzamiento:', 'No cumple políticas de distribución.');
+    if (reason === null) return;
+    try {
+      await authFetch(`/api/admin/releases/${id}/reject`, {
+        method: 'POST',
+        body: JSON.stringify({ reason })
+      });
+      alert('Lanzamiento rechazado con éxito.');
+      fetchAdminData();
+    } catch (err) {
+      alert('Error al rechazar lanzamiento.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -149,7 +164,7 @@ export default function AdminDashboard() {
                     </div>
                   ) : (
                     pendingReleases.map((release) => (
-                      <ReleaseRow key={release.id} release={release} onApprove={() => handleApproveRelease(release.id)} />
+                      <ReleaseRow key={release.id} release={release} onApprove={() => handleApproveRelease(release.id)} onReject={() => handleRejectRelease(release.id)} />
                     ))
                   )}
                 </CardContent>
@@ -258,7 +273,7 @@ export default function AdminDashboard() {
                                 {release.status === 'PENDING_APPROVAL' && (
                                   <>
                                     <Button onClick={() => handleApproveRelease(release.id)} size="sm" className="bg-[#34C759] hover:bg-[#34C759]/90 text-white text-[9px] font-black h-8 px-3 uppercase">Aprobar</Button>
-                                    <Button size="sm" variant="outline" className="border-[#FF453A]/30 text-[#FF453A] hover:bg-[#FF453A]/10 text-[9px] font-black h-8 px-3 uppercase">Rechazar</Button>
+                                    <Button onClick={() => handleRejectRelease(release.id)} size="sm" variant="outline" className="border-[#FF453A]/30 text-[#FF453A] hover:bg-[#FF453A]/10 text-[9px] font-black h-8 px-3 uppercase">Rechazar</Button>
                                   </>
                                 )}
                                 {release.status === 'APPROVED' && (
@@ -419,7 +434,7 @@ function TabButton({ active, onClick, label, badge }: { active: boolean, onClick
   );
 }
 
-function ReleaseRow({ release, onApprove }: { release: any, onApprove: () => void }) {
+function ReleaseRow({ release, onApprove, onReject }: { release: any, onApprove: () => void, onReject: () => void }) {
   return (
     <div className="p-6 border-b border-white/5 hover:bg-black/10 transition-colors flex items-center justify-between group">
       <div className="flex items-center gap-6">
@@ -440,7 +455,7 @@ function ReleaseRow({ release, onApprove }: { release: any, onApprove: () => voi
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <Button variant="outline" className="border-white/5 text-[10px] font-black uppercase h-10 hover:bg-white/5">Inspeccionar</Button>
+        <Button onClick={onReject} variant="outline" className="border-[#FF453A]/30 text-[#FF453A] hover:bg-[#FF453A]/10 text-[10px] font-black uppercase h-10 px-4">Rechazar</Button>
         <Button onClick={onApprove} className="bg-[#34C759] hover:bg-[#34C759]/90 text-white font-black px-6 h-10 text-[10px] uppercase tracking-widest shadow-lg shadow-[#34C759]/10">Aprobar Entrega</Button>
       </div>
     </div>

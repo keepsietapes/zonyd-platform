@@ -61,6 +61,35 @@ export default function ToolsPage() {
     lastAction: ''
   });
 
+  // Estados personalizables para el Generador de Press Kit (EPK)
+  const [epkStageName, setEpkStageName] = useState('Artista Principal');
+  const [epkBio, setEpkBio] = useState('Artista independiente enfocado en la innovación y creación musical de vanguardia.');
+  const [epkFollowers, setEpkFollowers] = useState(0);
+  const [epkSpotify, setEpkSpotify] = useState('No vinculado');
+  const [epkInstagram, setEpkInstagram] = useState('No vinculado');
+  const [epkPlan, setEpkPlan] = useState('PRO');
+
+  // Cargar datos reales del artista para rellenar los estados iniciales
+  useEffect(() => {
+    const loadArtistForEPK = async () => {
+      try {
+        const { authFetch } = await import('@/lib/api');
+        const artist = await authFetch('/api/artist/profile').catch(() => null);
+        if (artist) {
+          if (artist.stageName) setEpkStageName(artist.stageName);
+          if (artist.bio) setEpkBio(artist.bio);
+          if (artist.spotifyFollowers) setEpkFollowers(artist.spotifyFollowers);
+          if (artist.spotifyUrl) setEpkSpotify(artist.spotifyUrl);
+          if (artist.instagramUrl) setEpkInstagram(artist.instagramUrl);
+          if (artist.plan) setEpkPlan(artist.plan);
+        }
+      } catch (e) {
+        console.error('Error cargando artista para EPK:', e);
+      }
+    };
+    loadArtistForEPK();
+  }, []);
+
   const handleToolAction = (title: string) => {
     setToolsState(prev => ({ ...prev, lastAction: title }));
     
@@ -83,17 +112,7 @@ export default function ToolsPage() {
       
       const generateEPK = async () => {
         try {
-          const { authFetch } = await import('@/lib/api');
-          // Obtener perfil real del artista
-          const artist = await authFetch('/api/artist/profile').catch(() => null);
-          const stageName = artist?.stageName || 'Artista Principal';
-          const bio = artist?.bio || 'Artista independiente enfocado en la innovación y creación musical de vanguardia.';
-          const followers = artist?.spotifyFollowers || 0;
-          const plan = artist?.plan || 'PRO';
-          const spotify = artist?.spotifyUrl || 'No vinculado';
-          const instagram = artist?.instagramUrl || 'No vinculado';
-          
-          // Abrir ventana de impresión
+          // Abrir ventana de impresión con los campos editados por el usuario
           const printWindow = window.open('', '_blank');
           if (!printWindow) {
             alert('Por favor, permite las ventanas emergentes en tu navegador para descargar tu Press Kit.');
@@ -103,7 +122,7 @@ export default function ToolsPage() {
           printWindow.document.write(`
             <html>
               <head>
-                <title>Press Kit - ${stageName}</title>
+                <title>Press Kit - ${epkStageName}</title>
                 <style>
                   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
                   body {
@@ -242,32 +261,32 @@ export default function ToolsPage() {
                 <div class="epk-container">
                   <div class="header">
                     <div>
-                      <h1 class="title">${stageName}</h1>
+                      <h1 class="title">${epkStageName}</h1>
                       <div class="subtitle">Official Electronic Press Kit</div>
                     </div>
                     <div class="logo">ZO<span>NYD</span></div>
                   </div>
                   
                   <div class="section-title">Biografía Oficial</div>
-                  <div class="bio-card">${bio}</div>
+                  <div class="bio-card">${epkBio}</div>
                   
                   <div class="grid">
                     <div class="card">
                       <div class="section-title" style="margin-bottom: 10px;">Estadísticas Clave</div>
-                      <div class="metric-value">${followers.toLocaleString()}</div>
+                      <div class="metric-value">${epkFollowers.toLocaleString()}</div>
                       <div class="metric-label">Spotify Followers</div>
                     </div>
                     <div class="card">
                       <div class="section-title" style="margin-bottom: 10px;">Nivel de Cuenta</div>
-                      <div class="metric-value" style="color: #FF9F0A;">${plan}</div>
+                      <div class="metric-value" style="color: #FF9F0A;">${epkPlan}</div>
                       <div class="metric-label">Zonyd Membership Plan</div>
                     </div>
                   </div>
 
                   <div class="section-title">Presencia Digital y Enlaces</div>
                   <div class="bio-card" style="margin-bottom: 0;">
-                    <div style="margin-bottom: 10px;"><strong>Spotify Profile:</strong> <span style="font-family: monospace; font-size: 12px; color: #FF9F0A;">${spotify}</span></div>
-                    <div><strong>Instagram Handle:</strong> <span style="font-family: monospace; font-size: 12px; color: #FF9F0A;">${instagram}</span></div>
+                    <div style="margin-bottom: 10px;"><strong>Spotify Profile:</strong> <span style="font-family: monospace; font-size: 12px; color: #FF9F0A;">${epkSpotify}</span></div>
+                    <div><strong>Instagram Handle:</strong> <span style="font-family: monospace; font-size: 12px; color: #FF9F0A;">${epkInstagram}</span></div>
                   </div>
                   
                   <div class="footer">
@@ -382,6 +401,67 @@ export default function ToolsPage() {
                   <p className="text-[10px] text-[#A1A1AA] uppercase font-bold text-center">
                     Basado en <span className="text-white">{calcStreams.toLocaleString()}</span> streams
                   </p>
+                </div>
+              ) : null}
+
+              {tool.title === 'Generador de Press Kit' ? (
+                <div className="space-y-4 mb-8 bg-black/20 p-6 rounded-2xl border border-white/5 relative z-10 text-left">
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-[#A1A1AA] uppercase tracking-wider">Nombre Artístico</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#34C759] transition-all"
+                      value={epkStageName}
+                      onChange={(e) => setEpkStageName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-[#A1A1AA] uppercase tracking-wider">Biografía Oficial</label>
+                    <textarea 
+                      rows={3}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#34C759] transition-all resize-none custom-scrollbar"
+                      value={epkBio}
+                      onChange={(e) => setEpkBio(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-[#A1A1AA] uppercase tracking-wider">Spotify Followers</label>
+                      <input 
+                        type="number" 
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#34C759] transition-all"
+                        value={epkFollowers}
+                        onChange={(e) => setEpkFollowers(parseInt(e.target.value) || 0)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-[#A1A1AA] uppercase tracking-wider">Plan de Cuenta</label>
+                      <input 
+                        type="text" 
+                        className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#34C759] transition-all uppercase"
+                        value={epkPlan}
+                        onChange={(e) => setEpkPlan(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-[#A1A1AA] uppercase tracking-wider">Spotify URL</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#34C759] transition-all"
+                      value={epkSpotify}
+                      onChange={(e) => setEpkSpotify(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black text-[#A1A1AA] uppercase tracking-wider">Instagram URL</label>
+                    <input 
+                      type="text" 
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-[#34C759] transition-all"
+                      value={epkInstagram}
+                      onChange={(e) => setEpkInstagram(e.target.value)}
+                    />
+                  </div>
                 </div>
               ) : null}
 
