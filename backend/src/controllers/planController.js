@@ -1,6 +1,16 @@
 const prisma = require('../utils/prisma');
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// Lazy initialization: evita crash al arrancar si STRIPE_SECRET_KEY no está configurada
+let _stripe = null;
+const getStripe = () => {
+  if (!_stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY no está configurada en las variables de entorno de Render.');
+    }
+    _stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  }
+  return _stripe;
+};
 
 async function upgradePlan(req, res) {
   const { plan } = req.body;
@@ -30,7 +40,7 @@ async function upgradePlan(req, res) {
   };
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
@@ -69,7 +79,7 @@ async function confirmPayment(req, res) {
   }
 
   try {
-    const session = await stripe.checkout.sessions.retrieve(session_id);
+    const session = await getStripe().checkout.sessions.retrieve(session_id);
     if (session.payment_status === 'paid') {
       const planUpper = plan.toUpperCase();
       const artist = await prisma.artist.updateMany({

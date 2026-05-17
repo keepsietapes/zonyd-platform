@@ -102,6 +102,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       // Si ya estamos en /onboarding, no redirigir (evita el bucle)
       if (pathname === '/onboarding') return;
 
+      // Si ya completó el onboarding anteriormente, no volver a verificar
+      const onboardingDone = localStorage.getItem('zonyd_onboarding_complete');
+
       try {
         const { authFetch } = await import('@/lib/api');
         const res = await authFetch('/api/user/me');
@@ -110,10 +113,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         const profile = res.artistProfiles?.[0];
 
-        // Si no tiene perfil de artista y su rol es ARTIST o TEAM_MEMBER, enviar al onboarding
-        if (!profile && (res.role === 'ARTIST' || res.role === 'TEAM_MEMBER')) {
+        // Solo redirigir al onboarding si NO tiene perfil Y no ha completado antes
+        if (!profile && res.role !== 'ADMIN' && res.role !== 'SUPERADMIN' && !onboardingDone) {
           router.push('/onboarding');
           return;
+        }
+
+        // Si tiene perfil, marcar onboarding como completo
+        if (profile) {
+          localStorage.setItem('zonyd_onboarding_complete', 'true');
         }
 
         if (profile?.stageName) {

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Plus, Link as LinkIcon, Share2, MousePointer2, Zap, Loader2, Save, Sparkles, AlertCircle, Play } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Link as LinkIcon, Share2, MousePointer2, Zap, Loader2, Save, Sparkles, AlertCircle, Play, Upload } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { authFetch } from '@/lib/api';
@@ -19,6 +19,8 @@ export default function SmartLinksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Estados de edición del SmartLink seleccionado
   const [editTitle, setEditTitle] = useState('');
@@ -132,6 +134,35 @@ export default function SmartLinksPage() {
       alert('Error al guardar el SmartLink. Revisa la conexión.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    setIsUploadingImage(true);
+    try {
+      // Intentar subir al backend S3
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data: { session } } = await (await import('@/lib/supabase')).supabase.auth.getSession();
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const res = await fetch(`${API_URL}/api/uploads/image`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token}` },
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEditCoverUrl(data.url || data.imageUrl || data.fileUrl);
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch {
+      // Fallback: previsualización local con base64
+      const reader = new FileReader();
+      reader.onloadend = () => setEditCoverUrl(reader.result as string);
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
@@ -273,29 +304,31 @@ export default function SmartLinksPage() {
                         onChange={(e) => setEditCoverUrl(e.target.value)}
                         placeholder="Pegar URL de imagen o subir archivo"
                       />
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(file);
+                        }}
+                      />
                       <Button
                         type="button"
-                        onClick={() => {
-                          const input = document.createElement('input');
-                          input.type = 'file';
-                          input.accept = 'image/*';
-                          input.onchange = (e: any) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                setEditCoverUrl(reader.result as string);
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          };
-                          input.click();
-                        }}
-                        className="bg-[#151821] border border-[#232733] text-white hover:bg-white/5 font-bold text-xs rounded-xl px-4 shrink-0"
+                        onClick={() => imageInputRef.current?.click()}
+                        disabled={isUploadingImage}
+                        className="bg-[#151821] border border-[#232733] text-white hover:bg-white/5 font-bold text-xs rounded-xl px-4 shrink-0 flex items-center gap-1"
                       >
-                        SUBIR
+                        {isUploadingImage ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                        {isUploadingImage ? 'SUBIENDO...' : 'SUBIR'}
                       </Button>
                     </div>
+                    {editCoverUrl && (
+                      <div className="mt-2 w-16 h-16 rounded-xl overflow-hidden border border-white/10">
+                        <img src={editCoverUrl} alt="preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="pt-4 border-t border-white/5 space-y-4">

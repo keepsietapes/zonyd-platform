@@ -354,11 +354,6 @@ export default function TheLabPage() {
         </div>
 
         <div className="flex gap-2">
-           <Link href="/dashboard/lab/console">
-             <Button variant="outline" className="border-[#232733] bg-[#151821] text-xs font-bold rounded-xl h-12 px-6">
-               <Settings2 size={16} className="mr-2" /> AJUSTES DE AUDIO
-             </Button>
-           </Link>
            <Button onClick={handleExportWav} className="bg-[#FF9F0A] text-black font-black px-6 h-12 rounded-xl shadow-lg shadow-[#FF9F0A]/20 hover:scale-105 transition-all">
               <Download size={16} className="mr-2" /> EXPORTAR WAV
            </Button>
@@ -428,14 +423,13 @@ export default function TheLabPage() {
                         </div>
                         {!isMastering ? (
                             <div className="flex gap-4">
-                               <Link href="/dashboard/lab/console">
-                                 <Button 
-                                   variant="outline"
-                                   className="border-[#FF9F0A] text-[#FF9F0A] font-black px-6 h-12 rounded-xl hover:bg-[#FF9F0A]/10 transition-all"
-                                 >
-                                   <Maximize2 size={16} className="mr-2" /> FULL CONSOLE
-                                 </Button>
-                               </Link>
+                               <Button 
+                                 variant="outline"
+                                 onClick={() => document.getElementById('audioUpload')?.click()}
+                                 className="border-[#FF9F0A] text-[#FF9F0A] font-black px-6 h-12 rounded-xl hover:bg-[#FF9F0A]/10 transition-all"
+                               >
+                                 <Maximize2 size={16} className="mr-2" /> VER ANÁLISIS
+                               </Button>
                                <input 
                                  type="file" 
                                  id="audioUpload" 
