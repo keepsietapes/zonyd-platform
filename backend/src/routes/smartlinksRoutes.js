@@ -72,4 +72,23 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// DELETE /api/smartlinks/:id — Eliminar SmartLink
+router.delete('/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const artist = await prisma.artist.findFirst({ where: { userId: req.user.id } });
+    const link = await prisma.smartLink.findFirst({ where: { id: req.params.id, artistId: artist?.id } });
+    if (!link) return res.status(404).json({ error: 'SmartLink no encontrado.' });
+
+    await prisma.smartLink.delete({ where: { id: req.params.id } });
+    
+    try {
+      await prisma.auditLog.create({
+        data: { userId: req.user.id, action: 'SMARTLINK_DELETED', details: JSON.stringify({ linkId: req.params.id }) },
+      });
+    } catch (e) {}
+
+    res.json({ success: true });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Link as LinkIcon, Share2, MousePointer2, Zap, Loader2, Save, Sparkles, AlertCircle, Play, Upload } from 'lucide-react';
+import { Plus, Link as LinkIcon, Share2, MousePointer2, Zap, Loader2, Save, Sparkles, AlertCircle, Play, Upload, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { authFetch } from '@/lib/api';
@@ -134,6 +134,22 @@ export default function SmartLinksPage() {
       alert('Error al guardar el SmartLink. Revisa la conexión.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDeleteLink = async () => {
+    if (!selectedLink) return;
+    if (!confirm('¿Estás seguro de eliminar este SmartLink? Esta acción no se puede deshacer.')) return;
+    
+    try {
+      const data = await authFetch(`/api/smartlinks/${selectedLink.id}`, { method: 'DELETE' });
+      if (data?.success) {
+        alert('SmartLink eliminado.');
+        setLinks(prev => prev.filter(l => l.id !== selectedLink.id));
+        setSelectedLink(null);
+      }
+    } catch (err) {
+      alert('Error al eliminar. Revisa la conexión.');
     }
   };
 
@@ -382,11 +398,18 @@ export default function SmartLinksPage() {
                     </div>
                   </div>
 
-                  <div className="pt-4 flex justify-end gap-3">
+                  <div className="pt-4 flex justify-between gap-3 border-t border-white/5 mt-6">
+                    <Button
+                      onClick={handleDeleteLink}
+                      variant="outline"
+                      className="border-[#FF453A] text-[#FF453A] font-black px-6 h-12 rounded-xl hover:bg-[#FF453A]/10 transition-all flex items-center gap-2"
+                    >
+                      <Trash2 size={16} /> ELIMINAR
+                    </Button>
                     <Button
                       onClick={handleSaveLink}
                       disabled={isSaving}
-                      className="bg-white text-black font-black px-6 h-12 rounded-xl hover:scale-105 transition-all flex items-center gap-2"
+                      className="bg-[#FF9F0A] text-black font-black px-6 h-12 rounded-xl hover:scale-105 transition-all flex items-center gap-2 shadow-lg shadow-[#FF9F0A]/20"
                     >
                       {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                       {isSaving ? 'GUARDANDO...' : 'GUARDAR CAMBIOS'}
