@@ -89,6 +89,15 @@ router.patch('/society', authMiddleware, async (req, res, next) => {
     }
 
     const { society } = req.body;
+    
+    if (society === null || society === '') {
+      const updated = await prisma.artist.update({
+        where: { id: artist.id },
+        data: { proSociety: null }
+      });
+      return res.json({ success: true, proSociety: null });
+    }
+
     const validSocieties = ['SACM', 'ASCAP', 'BMI', 'SGAE', 'SESAC', 'SOCAN', 'PRS'];
     if (!validSocieties.includes(society)) {
       return res.status(400).json({ error: `Sociedad no válida. Opciones: ${validSocieties.join(', ')}` });

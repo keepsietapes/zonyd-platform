@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { authFetch } from '@/lib/api';
 
 const PRO_SOCIETIES = [
-  { name: 'SACM', region: 'México', url: 'https://www.sacm.org.mx', registrationUrl: 'https://www.sacm.org.mx/Afiliacion' },
+  { name: 'SACM', region: 'México', url: 'https://www.sacm.org.mx', registrationUrl: 'https://www.sacm.org.mx/Servicios/Afiliate' },
   { name: 'ASCAP', region: 'USA', url: 'https://www.ascap.com', registrationUrl: 'https://www.ascap.com/music-creators/join' },
   { name: 'BMI', region: 'USA', url: 'https://www.bmi.com', registrationUrl: 'https://www.bmi.com/affiliations/entry/songwriter' },
-  { name: 'SGAE', region: 'España', url: 'https://www.sgae.es', registrationUrl: 'https://www.sgae.es/es-ES/SitePages/afiliacion-sgae.aspx' },
+  { name: 'SGAE', region: 'España', url: 'https://www.sgae.es', registrationUrl: 'https://www.sgae.es/autores-editores/alta-online/' },
 ];
 
 // Modal de registro de obra
@@ -151,6 +151,9 @@ export default function PublishingPage() {
   };
 
   const handleLinkSociety = async (society: string) => {
+    const ipiNumber = prompt(`Introduce tu número IPI/CAE de compositor para ${society} (Opcional — deja en blanco para vincular solo la sociedad):`);
+    if (ipiNumber === null) return; // User cancelled
+    
     setIsLinkingSociety(society);
     try {
       const data = await authFetch('/api/publishing/society', {
@@ -160,9 +163,36 @@ export default function PublishingPage() {
       if (data?.success) {
         setLinkedSocieties([society]);
         setLinkedSociety(society);
+        if (ipiNumber.trim()) {
+          localStorage.setItem(`zonyd_ipi_${society}`, ipiNumber.trim());
+          alert(`¡Sociedad ${society} vinculada con éxito!\nCódigo CAE/IPI guardado: ${ipiNumber.trim()}`);
+        } else {
+          alert(`¡Sociedad ${society} vinculada con éxito!`);
+        }
       }
     } catch (err: any) {
       alert(`Error al vincular sociedad: ${err.message}`);
+    } finally {
+      setIsLinkingSociety(null);
+    }
+  };
+
+  const handleUnlinkSociety = async (society: string) => {
+    if (!confirm(`¿Estás seguro de que deseas desvincular tu sociedad de gestión ${society}?`)) return;
+    setIsLinkingSociety(society);
+    try {
+      const data = await authFetch('/api/publishing/society', {
+        method: 'PATCH',
+        body: JSON.stringify({ society: null }),
+      });
+      if (data?.success) {
+        setLinkedSocieties([]);
+        setLinkedSociety(null);
+        localStorage.removeItem(`zonyd_ipi_${society}`);
+        alert(`¡Sociedad ${society} desvinculada con éxito!`);
+      }
+    } catch (err: any) {
+      alert(`Error al desvincular sociedad: ${err.message}`);
     } finally {
       setIsLinkingSociety(null);
     }
@@ -382,16 +412,27 @@ export default function PublishingPage() {
               {PRO_SOCIETIES.map(pro => {
                 const isLinked = linkedSocieties.includes(pro.name);
                 const isLinking = isLinkingSociety === pro.name;
+                const savedIpi = typeof window !== 'undefined' ? localStorage.getItem(`zonyd_ipi_${pro.name}`) : null;
                 return (
                   <div key={pro.name} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${isLinked ? 'bg-[#FFD700]/10 border-[#FFD700]/40' : 'bg-white/5 border-white/5 hover:border-[#FFD700]/30'}`}>
                     <div>
                       <p className="text-xs font-black text-white">{pro.name}</p>
                       <p className="text-[9px] text-[#A1A1AA] font-bold">{pro.region}</p>
+                      {isLinked && savedIpi && (
+                        <p className="text-[8px] font-mono text-[#FFD700] mt-1 bg-[#FFD700]/10 px-1.5 py-0.5 rounded inline-block">IPI: {savedIpi}</p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       {isLinked ? (
                         <>
                           <span className="text-[8px] font-black uppercase px-2 py-1 rounded bg-[#32D74B] text-black">Linked</span>
+                          <button
+                            onClick={() => handleUnlinkSociety(pro.name)}
+                            disabled={!!isLinkingSociety}
+                            className="text-[8px] font-black uppercase px-2 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                          >
+                            DESVINCULAR
+                          </button>
                           <a href={pro.url} target="_blank" rel="noopener noreferrer" className="text-[#A1A1AA] hover:text-white transition-colors">
                             <ExternalLink size={12} />
                           </a>
